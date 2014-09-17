@@ -1,0 +1,53 @@
+<div class="row info">
+    <div class="col-sm-12">
+        <div class="container">
+
+            <div class="col-sm-9 text-center" style="padding-top:40px;">
+                <h2>Explore the behaviour of your candidate genes in the Blueprint datasets.</h2>
+                <p>The Blueprint project will provide at least 100 reference epigenomes to the scientific community. These epigenomes are characterized by: RNAseq, BisulfiteSeq, DNase-seq, and 8 Histone marks</p>
+                <p>Use this tool to explore the behaviour of your gene in the different cell types</p>
+                <p><b>Data release - August 2014</b></p>           
+            </div>
+            <div class="col-sm-3 text-center">
+                <img src="images/custom-icon-film-camera.png" style="height:250px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+  <div class="row" style="margin-top:70px;">
+    <div class="col-sm-12">
+      <form class="form-horizontal" role="form">
+        <div class="form-group form-group-lg">
+          <div class="col-sm-10">
+            <input ng-model="query" class="form-control" type="text" id="search" placeholder="Search: chr1:3000-60000, Myc, REACT_172633.3" style="background:#f5f5f5">
+            <!-- <p class="small">Chromosome regions should be shorter than 10Kb</p> -->
+          </div>
+          <div class="col-sm-2 text-right"><button ng-click="search()" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
+        </form>
+      </div>
+    </div>
+  </div> 
+  <div class="row" style="margin-top:80px;">
+    <div class="col-sm-12">
+      <p class="text-center">{{found}}</p>
+      <div class="col-centered" style="width: 100%;background: #f5f5f5;padding-bottom: 20px;-webkit-border-radius: 3px;-moz-border-radius: 3px;border-radius: 3px;border:1px solid #CCC;">
+        <div ng-repeat="item in chromosomes">
+          <div class="pull-left">
+            <img src="images/Chromosome_{{item.n}}.svg" class="img-center {{item.c}}">
+          </div>
+        </div> 
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  </div>
+  <div class="row-fluid" style="margin-top:40px;">
+    <div class="col-sm-12">
+      <d3-tree data="treedata" label="name"></d3-tree>      
+    </div>
+  </div>
+</div>
+
+
+

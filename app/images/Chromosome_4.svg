@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="175" height="584">
+  <defs>
+    <clipPath id="clip1">
+      <path d="M5 561.26c0 22.7 34 22.7 34 0v-380c0 -22.7 -34 -22.7 -34 0z m0 -414c0 22.7 34 22.7 34 0v-119c0 -22.7 -34 -22.7 -34 0z"/>
+    </clipPath>
+    <style type="text/css">
+      .locus { fill:url(#lograd); }
+      .dark1 { fill:url(#d1grad); }
+      .dark2 { fill:url(#d2grad); }
+      .line  { stroke:#EEE; stroke-width:1; }
+      .text  { font-size: 12px; fill: #000; font-family: DejaVu Sans Condensed; }
+    </style>
+    <linearGradient id="lograd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#FFF"/>
+      <stop offset="50%"  style="stop-color:#FFF"/>
+      <stop offset="100%" style="stop-color:#FFF"/>
+    </linearGradient>
+    <linearGradient id="d1grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#EEE"/>
+      <stop offset="50%"  style="stop-color:#EEE"/>
+      <stop offset="100%" style="stop-color:#EEE"/>
+    </linearGradient>
+    <linearGradient id="d2grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#CCC"/>
+      <stop offset="50%"  style="stop-color:#CCC"/>
+      <stop offset="100%" style="stop-color:#CCC"/>
+    </linearGradient>
+    <linearGradient id="bgrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#222"/>
+      <stop offset="50%"  style="stop-color:#222"/>
+      <stop offset="100%" style="stop-color:#222"/>
+    </linearGradient>
+  </defs>
+ <g id="Layer 1">
+
+     <g id="locii" clip-path="url(#clip1)">
+	 <rect x="0" y="0" width="40" height="773" fill="url(#bgrad)"/>
+	 <path class="locus" d="M0 578.22h40v-6.3h-40z"/>
+	 <path class="locus" d="M0 554.28h40v-11.34h-40z"/>
+	 <path class="locus" d="M0 539.16h40v-12.6h-40z"/>
+	 <path class="locus" d="M0 521.52h40v-15.12h-40z"/>
+	 <path class="locus" d="M0 500.1h40v-17.64h-40z"/>
+	 <path class="locus" d="M0 472.38h40v-7.56h-40z"/>
+	 <path class="locus" d="M0 458.52h40v-7.56h-40z"/>
+	 <path class="locus" d="M0 434.58h40v-26.46h-40z"/>
+	 <path class="locus" d="M0 399.3h40v-15.12h-40z"/>
+	 <path class="locus" d="M0 372.84h40v-17.64h-40z"/>
+	 <path class="locus" d="M0 337.56h40v-15.12h-40z"/>
+	 <path class="locus" d="M0 313.62h40v-11.34h-40z"/>
+	 <path class="locus" d="M0 294.72h40v-18.9h-40z"/>
+	 <path class="locus" d="M0 261.96h40v-6.3h-40z"/>
+	 <path class="locus" d="M0 251.88h40v-8.82h-40z"/>
+	 <path class="locus" d="M0 234.24h40v-13.86h-40z"/>
+	 <path class="locus" d="M0 212.82h40v-17.64h-40z"/>
+	 <path class="dark2" d="M0 178.8h40v-18.9h-40z"/>
+	 <path class="locus" d="M0 153.6h40v-11.34h-40z"/>
+	 <path class="locus" d="M0 124.62h40v-17.64h-40z"/>
+	 <path class="locus" d="M0 94.38h40v-13.86h-40z"/>
+	 <path class="locus" d="M0 69.1799999999999h40v-13.86h-40z"/>
+	 <path class="locus" d="M0 35.16h40v-8.82h-40z"/>
+</g>
+ </g>
+</svg>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Wikipedia User:Mysid
+     Creative Commons Attribution-Share Alike 3.0 -->
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="179" height="352">
+  <defs id="defs4105">
+    <clipPath id="clipPath3786">
+      <path d="m 8.0420871,52.202564 4.3560939,0 c 7.813064,0 14.103003,6.289939 14.103003,14.103003 0,7.813063 -6.289939,14.103002 -14.103003,14.103002 l -4.3560939,0 c -7.81306343,0 -14.1030026,-6.289939 -14.1030026,-14.103002 0,-7.813064 6.28993917,-14.103003 14.1030026,-14.103003 z M 10.354063,20.238346 c 9.093897,0 16.414978,2.984761 16.414978,6.692289 0,3.707529 -7.321081,6.69229 -16.414978,6.69229 -9.0938983,0 -16.4149785,-2.984761 -16.4149785,-6.69229 0,-3.707528 7.3210802,-6.692289 16.4149785,-6.692289 z m 0,60.178504 c 9.093897,0 16.414978,7.499651 16.414978,16.593549 l 0,229.304631 c 0,9.09389 -7.321081,16.41497 -16.414978,16.41497 -9.0938983,0 -16.4149785,-7.32108 -16.4149785,-16.41497 l 0,-229.304631 c 0,-9.093898 7.3210802,-16.593549 16.4149785,-16.593549 z" id="path3788" style="opacity:0.81025642;fill:none;stroke:#000000;stroke-width:1.00;" />
+    </clipPath>
+    <linearGradient x1="0" y1="0" x2="175.84084" y2="0" id="linearGradient3668" xlink:href="#bgrad" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.22747844,0,0,4.3960209,-9.6459385,10.445037)" />
+    <linearGradient x1="0" y1="0" x2="175.84084" y2="0" id="bgrad" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.22747844,0,0,4.3960209,42.475303,67.587894)">
+      <stop id="stop2281" style="stop-color:#000000;stop-opacity:1" offset="0" />
+      <stop id="stop2283" style="stop-color:#666666;stop-opacity:1" offset="0.5" />
+      <stop id="stop2285" style="stop-color:#000000;stop-opacity:1" offset="1" />
+    </linearGradient>
+    <linearGradient x1="0" y1="100.18794" x2="51.279625" y2="100.18794" id="linearGradient3678" xlink:href="#d1grad" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.7800369,0,0,1.2819906,-9.6459323,-113.71496)" />
+    <linearGradient x1="0" y1="100.18794" x2="51.279625" y2="100.18794" id="d1grad" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.7800369,0,0,1.2819906,-347.89607,294.14218)">
+      <stop id="stop2267" style="stop-color:#887777;stop-opacity:1" offset="0" />
+      <stop id="stop2269" style="stop-color:#ccbbbb;stop-opacity:1" offset="0.5" />
+      <stop id="stop2271" style="stop-color:#887777;stop-opacity:1" offset="1" />
+    </linearGradient>
+    <linearGradient x1="0" y1="218.19695" x2="23.5457" y2="218.19695" id="linearGradient3682" xlink:href="#d2grad" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.698824,0,0,0.78582744,-9.6675545,-102.22297)" />
+    <linearGradient x1="0" y1="218.19695" x2="23.5457" y2="218.19695" id="d2grad" gradientUnits="userSpaceOnUse" gradientTransform="scale(1.698824,0.58864251)">
+      <stop id="stop2274" style="stop-color:#443333;stop-opacity:1" offset="0" />
+      <stop id="stop2276" style="stop-color:#998888;stop-opacity:1" offset="0.5" />
+      <stop id="stop2278" style="stop-color:#443333;stop-opacity:1" offset="1" />
+    </linearGradient>
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3686" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.23899076,-9.6675543,88.714441)" />
+    <linearGradient x1="0" y1="0" x2="1" y2="0" id="lograd">
+      <stop id="stop2260" style="stop-color:#bbbbaa;stop-opacity:1" offset="0" />
+      <stop id="stop2262" style="stop-color:#ffffee;stop-opacity:1" offset="0.5" />
+      <stop id="stop2264" style="stop-color:#bbbbaa;stop-opacity:1" offset="1" />
+    </linearGradient>
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3690" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.23899076,-9.6675543,100.8573)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3694" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.33960433,-9.6675543,114.02718)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3698" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.64144492,-9.6675543,117.28683)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3702" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.2306063,-9.6675543,158.25684)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3706" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.39829553,-9.6675543,163.12331)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3710" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.51567797,-9.6675543,179.1727)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3714" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.51567797,-9.6675543,196.49413)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3718" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.57436919,-9.6675543,210.9474)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3722" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.28091309,-9.6675543,238.5025)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3726" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.70852056,-9.6675543,237.55486)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3730" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.4150644,-9.6675543,265.10997)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3734" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.29768193,-9.6675543,284.77487)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3738" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.36475762,-9.6675543,298.61432)" />
+    <linearGradient x1="0" y1="30.613365" x2="21.297888" y2="30.613365" id="linearGradient3742" xlink:href="#lograd" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1.8781206,0,0,0.39829547,-9.6675543,310.26618)" />
+  </defs>
+  <g transform="translate(-516.14217,-284.68779)" id="layer1">
+    <g transform="translate(537.20309,279.44944)" id="g3790">
+      <g clip-path="url(#clipPath3786)" id="g3761">
+        <rect width="40" height="773" x="-9.645937" y="10.445033" id="rect3666" style="fill:url(#linearGradient3668)" />
+        <path d="m -9.6459323,80.465036 39.9999903,0 0,-65.739997 -39.9999902,0 z" id="path3676" style="fill:url(#linearGradient3678)" />
+        <path d="m -9.6675545,87.745036 40.0000005,0 0,-18.502857 -40.0000005,0 z" id="path3680" style="fill:url(#linearGradient3682)" />
+        <g transform="translate(0.0216169,0)" id="g3744">
+          <path d="m -9.6675543,101.12075 40.0000003,0 0,-5.089997 -40.0000003,0 z" id="path3684" style="fill:url(#linearGradient3686)" />
+          <path d="m -9.6675543,113.26361 40.0000003,0 0,-5.09 -40.0000003,0 z" id="path3688" style="fill:url(#linearGradient3690)" />
+          <path d="m -9.6675543,131.65647 40.0000003,0 0,-7.23286 -40.0000003,0 z" id="path3692" style="fill:url(#linearGradient3694)" />
+          <path d="m -9.6675543,150.58504 40.0000003,0 0,-13.66143 -40.0000003,0 z" id="path3696" style="fill:url(#linearGradient3698)" />
+          <path d="m -9.6675543,170.2279 40.0000003,0 0,-4.91143 -40.0000003,0 z" id="path3700" style="fill:url(#linearGradient3702)" />
+          <path d="m -9.6675543,183.79933 40.0000003,0 0,-8.48286 -40.0000003,0 z" id="path3704" style="fill:url(#linearGradient3706)" />
+          <path d="m -9.6675543,205.94219 40.0000003,0 0,-10.98286 -40.0000003,0 z" id="path3708" style="fill:url(#linearGradient3710)" />
+          <path d="m -9.6675543,223.26362 40.0000003,0 0,-10.98286 -40.0000003,0 z" id="path3712" style="fill:url(#linearGradient3714)" />
+          <path d="m -9.6675543,240.76362 40.0000003,0 0,-12.23286 -40.0000003,0 z" id="path3716" style="fill:url(#linearGradient3718)" />
+          <path d="m -9.6675543,253.08505 40.0000003,0 0,-5.98286 -40.0000003,0 z" id="path3720" style="fill:url(#linearGradient3722)" />
+          <path d="m -9.6675543,274.33505 40.0000003,0 0,-15.09 -40.0000003,0 z" id="path3724" style="fill:url(#linearGradient3726)" />
+          <path d="m -9.6675543,286.65648 40.0000003,0 0,-8.84 -40.0000003,0 z" id="path3728" style="fill:url(#linearGradient3730)" />
+          <path d="m -9.6675543,300.22791 40.0000003,0 0,-6.34 -40.0000003,0 z" id="path3732" style="fill:url(#linearGradient3734)" />
+          <path d="m -9.6675543,317.54934 40.0000003,0 0,-7.76857 -40.0000003,0 z" id="path3736" style="fill:url(#linearGradient3738)" />
+          <path d="m -9.6675543,330.9422 40.0000003,0 0,-8.48286 -40.0000003,0 z" id="path3740" style="fill:url(#linearGradient3742)" />
+        </g>
+      </g>
+      <path d="m 1.3362053,39.732774 18.0357147,0" id="path3607" style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;" />
+      <path d="m 1.3362053,46.092698 18.0357147,0" id="path3609" style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;" />
+    </g>
+
+  </g>
+</svg>

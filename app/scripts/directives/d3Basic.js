@@ -100,6 +100,7 @@
       return {
         restrict: 'EA',
         scope: {
+          style:"=",
           data: "=",
           label: "@",
           onClick: "&"
@@ -117,7 +118,7 @@
           var diagonal = d3.svg.diagonal();
           var treew;
           var matirxw;
-          var experiments = ['Bisulfite-Seq','DNase-Seq','RNA-Seq','ChIP Input','H3K27ac','H3K27me3','H3K4me1','H3K4me3','H3K9me3','H3K36me3','H2A.Zac','H3K9/14ac']
+          var experiments = ['Bisulfite-Seq','DNase-Seq','RNA-Seq','H3K27ac','H3K27me3','H3K4me1','H3K4me3','H3K9me3','H3K36me3','H2A.Zac','H3K9/14ac']
 
           // on window resize, re-render d3 canvas
           window.onresize = function() {
@@ -227,7 +228,7 @@
                     .attr("y",-15)
                     .attr("dy", ".35em")
                     .attr("text-anchor", function(d) { return "start"; })
-                    .text(function(d) { return (v != 0)?v:"--"})
+                    .text(function(d) { return (v != 0 && v!='NaN')?v:"--"})
                     .style("fill", "rgb(0,0,0)"); 
                     })
 
@@ -300,64 +301,72 @@
             // remove all previous items before render
             svg.selectAll("*").remove();
 
-
-
-            // setup variables
-            width = d3.select(iElement[0])[0][0].offsetWidth;
-            treew = width*0.20;
-            height = 6000;
-            max = 98;
-            root = data;
-
-
             //Draw headers
-            experiments.forEach(function(d,i){
-                svg.append("svg:g")
-                  .attr("transform", "translate(" + (treew+165+i*60 ) + "," + 100 + ")") 
-                  .append("svg:text")
-                  .attr("transform","rotate(-70)")
-                  .text(function() { return d; });
+            if(data){
+
+              // setup variables
+              width = d3.select(iElement[0])[0][0].offsetWidth;
+              treew = width*0.27;
+              height = (scope.style == 'detailed')?6000:1840;
+              max = 98;
+              root = data;
+
+              experiments.forEach(function(d,i){
+                  svg.append("svg:g")
+                    .attr("transform", "translate(" + (treew+165+i*60 ) + "," + 100 + ")") 
+                    .append("svg:foreignObject")
+                    .attr("width","150")
+                    .attr("height","50")
+                    .attr("transform","rotate(-70)")
+                    .append("xhtml:body")
+                    .attr("style","background:transparent")
+                    .html(function() { return '<p>'+d+'</p>'; });
 
 
-                //Display headers vertical lines
-                svg.append("line")
-                         .attr("x1", treew+145+i*60)
-                         .attr("y1", 200)
-                         .attr("x2", treew+145+i*60)
-                         .attr("y2", height)
-                         .attr("stroke-width", 1)
-                         .attr("stroke", function(d){return "#EEE"});  
-            });  
+                  //Display headers vertical lines
+                  svg.append("line")
+                           .attr("x1", treew+145+i*60)
+                           .attr("y1", 200)
+                           .attr("x2", treew+145+i*60)
+                           .attr("y2", height)
+                           .attr("stroke-width", 1)
+                           .attr("stroke", function(d){return "#EEE"});  
+              });
 
-            //margins
-            var m = [20, 20, 20, 20],
-            w = width - m[1] - m[3],
-            h = height - m[0] - m[2];
 
-            root.x0 = h / 2;
-            root.y0 = 0;
+              //margins
+              var m = [20, 20, 20, 20],
+              w = width - m[1] - m[3],
+              h = height - m[0] - m[2];
 
-            vis = svg.attr("width", w + m[1] + m[3])
-              .attr("height", h + m[0] + m[2])
-              .append("svg:g")
-              .attr("transform", "translate(" + m[3] + ",-200)");    
+              root.x0 = h / 2;
+              root.y0 = 0;
 
-            diagonal.projection(function(d) { return [d.y, d.x]; });
+              vis = svg.attr("width", w + m[1] + m[3])
+                .attr("height", h + m[0] + m[2])
+                .append("svg:g")
+                .attr("transform", "translate(" + m[3] + ",-200)");    
 
-            //create the graph
-            tree.size([h, w]);
-            tree.separation(function(a,b){
-              return a.parent == b.parent ? 1 : 2;
-            })
+              diagonal.projection(function(d) { return [d.y, d.x]; });
 
-            // Initialize the display to show a few nodes.
-            // root.children.forEach(scope.toggleAll);
-            // scope.toggle(root.children[1]);
-            // scope.toggle(root.children[1].children[2]);
-            // scope.toggle(root.children[9]);
-            // scope.toggle(root.children[9].children[0]);  
+              //create the graph
+              tree.size([h, w]);
+              tree.separation(function(a,b){
+                return a.parent == b.parent ? 1 : 2;
+              })
 
-            scope.update(root);
+              // Initialize the display to show a few nodes.
+              // root.children.forEach(scope.toggleAll);
+              // scope.toggle(root.children[1]);
+              // scope.toggle(root.children[1].children[2]);
+              // scope.toggle(root.children[9]);
+              // scope.toggle(root.children[9].children[0]);  
+
+              scope.update(root);  
+
+            };  
+
+            
 
           };
         }

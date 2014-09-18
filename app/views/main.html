@@ -6,7 +6,9 @@
                 <h2>Explore the behaviour of your candidate genes in the Blueprint datasets.</h2>
                 <p>The Blueprint project will provide at least 100 reference epigenomes to the scientific community. These epigenomes are characterized by: RNAseq, BisulfiteSeq, DNase-seq, and 8 Histone marks</p>
                 <p>Use this tool to explore the behaviour of your gene in the different cell types</p>
-                <p><b>Data release - August 2014</b></p>           
+                <p>
+                <a href="#" tooltip-placement="bottom" tooltip="This release includes data from monocytes, granulocyte neutrophils, eosinophils, macrophages ( M0 , M1 and M2 ), naive CD4+ and naive CD8+ cells apart from 7 cell line samples. "><b>Data release - August 2014</b></a>
+                </p>           
             </div>
             <div class="col-sm-3 text-center">
                 <img src="images/custom-icon-macbook.png" style="height:250px;">
@@ -27,10 +29,29 @@
           <div class="col-sm-2 text-right"><button ng-click="search()" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
         </form>
       </div>
-      <p>Examples: <a ng-click="query='myc'" style="cursor: pointer;">Myc</a>, <a ng-click="query='chr1:1-248956422'" style="cursor: pointer;">chr1:1-248956422</a></p>
+      <p>Examples: <a ng-click="query='myc'" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'" style="cursor: pointer;">chr1:1-248956422</a></p>    
     </div>
   </div> 
-  <div class="row" style="margin-top:80px;">
+
+  <div class="row" style="margin-top:20px;">
+    <div class="col-sm-12">
+<label>Display options</label>
+<div class="form-group">
+    <label class="checkbox-inline">
+        <input type="radio" name="display" ng-model="display" value="compact"> Compact
+    </label>
+    <label class="checkbox-inline">
+        <input type="radio" name="display" ng-model="display" value="detailed"> Detailed
+    </label>
+</div>
+</div>
+</div>
+
+
+
+
+
+  <div class="row" style="margin-top:40px;">
     <div class="col-sm-12">
       <p class="text-center">{{found}}</p>
       <div class="col-centered" style="width: 100%;background: #f5f5f5;padding-bottom: 20px;-webkit-border-radius: 3px;-moz-border-radius: 3px;border-radius: 3px;border:1px solid #CCC;">
@@ -45,7 +66,7 @@
   </div>
   <div class="row-fluid" style="margin-top:40px;">
     <div class="col-sm-12">
-      <d3-tree data="treedata" label="name"></d3-tree>      
+      <d3-tree data="treedata" label="name" style="display"></d3-tree>      
     </div>
   </div>
 </div>

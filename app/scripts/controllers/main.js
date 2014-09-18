@@ -164,9 +164,11 @@ angular.module('blueprintApp')
     $scope.bisulfiteSeq = [];
     $scope.rnaSeq = [];
     $scope.chipSeq = [];
+    $scope.dnaseSeq = [];
     $scope.treedata = null;
     $scope.rangeQuery = {};
     $scope.geneQuery = null;
+    $scope.display = 'compact';
     $scope.chromosomes = [{n:1,c:"chr"},
                     {n:2,c:"chr"},
                     {n:3,c:"chr"},
@@ -404,6 +406,68 @@ angular.module('blueprintApp')
       return deferred.promise;
     };
 
+    var getDnaseData = function() {      
+      var deferred = $q.defer();
+      es.search({
+        size:10000000,  
+        type: 'rreg.p',
+        search_type: 'count',
+        body: {
+          query: {
+            filtered: {
+              filter: {
+                bool: {
+                  must: [{
+                    term: {
+                      chromosome: $scope.rangeQuery.chr
+                    }
+                  }, {
+                    range: {
+                      chromosome_start: {
+                        gte:  $scope.rangeQuery.start
+                      }
+                    }
+                  }, {
+                    range: {
+                      chromosome_end: {
+                        lte:  $scope.rangeQuery.end 
+                      }
+                    }
+                  }, ]
+                }
+              }
+            }
+          },
+          aggs: {
+            analyses:{
+              terms:{
+                field: 'analysis_id'
+              },
+              aggs:{
+                peak_size: {
+                  sum: {
+                    script: "doc['chromosome_end'].value - doc['chromosome_start'].value" 
+                  }
+                }
+              }
+            }
+          }
+
+
+        }
+      },function(err,resp) {
+        if(typeof(resp.aggregations) !== undefined){  
+          resp.aggregations.analyses.buckets.forEach(function(d, i) {
+            $scope.dnaseSeq.push(d)
+          });
+          deferred.resolve();
+        }else{
+          return deferred.reject(err); 
+        }
+      });
+      
+      return deferred.promise;
+    };
 
     var getChipSeqData = function() {      
       var deferred = $q.defer();
@@ -526,7 +590,7 @@ angular.module('blueprintApp')
         });
         if(exp > 0){
           var region = $scope.rangeQuery.end - $scope.rangeQuery.start;
-          value = ((value/region)*100).toPrecision(2);
+          value = (((value/region)*100).toPrecision(2));
         }
         return value; 
     }
@@ -534,7 +598,8 @@ angular.module('blueprintApp')
     var populateBasicTree = function(o) {
         for (var i in o) {
             if (typeof(o[i])=="object") {
-
+                var aggregated_statistics = [0,0,0,0,0,0,0,0,0,0,0,0];
+                var childrens = [0,0,0,0,0,0,0,0,0,0,0,0];
                 $scope.samples.forEach(function(s){
                     if(s.ontology == o[i].o){
                       o[i].analized = true;
@@ -553,12 +618,26 @@ angular.module('blueprintApp')
                                 });
                             });
                             if(methExp > 0){
-                              statistics[0] = ((statistics[0]/methExp)*100).toPrecision(2);
+                              statistics[0] = (((statistics[0]/methExp)*100).toPrecision(2));
+                              childrens[0]++;
                             }
-                            //statistics[0]++;
+                            
                           }
                           if(d.experiment_type == 'Chromatin Accessibility'){
-                            statistics[1]++;
+                            var dnaseSeqExp = 0;
+                            d.analyses.forEach(function(v,k){
+                                $scope.dnaseSeq.forEach(function(a,b){
+                                  if(a.key == v){
+                                      statistics[1] += a.peak_size.value;
+                                      dnaseSeqExp++;
+                                  }
+                                });
+                            });
+                            if(dnaseSeqExp > 0){
+                              var region = $scope.rangeQuery.end - $scope.rangeQuery.start;
+                              statistics[1] = (((statistics[1]/region)*100).toPrecision(2));
+                              childrens[1]++;
+                            }
                           }
                           if(d.experiment_type == 'mRNA-seq'){
                             var rnaSeqExp = 0;
@@ -571,56 +650,97 @@ angular.module('blueprintApp')
                                 });
                             });
                             if(rnaSeqExp > 0){
-                              statistics[2] = ((statistics[2]/rnaSeqExp)*100).toPrecision(2);
+                              statistics[2] = (((statistics[2]/rnaSeqExp)*100).toPrecision(2));
+                              childrens[2]++;
                             }
-                            //statistics[2]++;
-                          }
-                          if(d.experiment_type == 'ChIP-Seq Input'){
-                            statistics[3]++;
                           }
                           if(d.experiment_type == 'Histone H3K27ac'){
  
-                            statistics[4] = getHistoneData(d,'H3K27ac');
+                            statistics[3] = getHistoneData(d,'H3K27ac');
+                            if(statistics[3]>0){
+                              childrens[3]++;
+                            }
                           }
                           if(d.experiment_type == 'Histone H3K27me3'){
                             
-                            statistics[5] = getHistoneData(d,'H3K27me3');
+                            statistics[4] = getHistoneData(d,'H3K27me3');
+                            if(statistics[4]>0){
+                              childrens[4]++;
+                            }
                           }
                           if(d.experiment_type == 'Histone H3K4me1'){
                             
-                            statistics[6] = getHistoneData(d,'H3K4me1');
+                            statistics[5] = getHistoneData(d,'H3K4me1');
+                            if(statistics[5]>0){
+                              childrens[5]++;
+                            }
                           }
                           if(d.experiment_type == 'Histone H3K4me3'){
                             
-                            statistics[7] = getHistoneData(d,'H3K4me3');
+                            statistics[6] = getHistoneData(d,'H3K4me3');
+                            if(statistics[6]>0){
+                              childrens[6]++;
+                            }
                           }
                           if(d.experiment_type == 'Histone H3K9me3'){
                             
-                            statistics[8] = getHistoneData(d,'H3K9me3');
+                            statistics[7] = getHistoneData(d,'H3K9me3');
+                            if(statistics[7]>0){
+                              childrens[7]++;
+                            }
                           }
                           if(d.experiment_type == 'Histone H3K36me3'){
                             
-                            statistics[9] = getHistoneData(d,'H3K36me3');
+                            statistics[8] = getHistoneData(d,'H3K36me3');
+                            if(statistics[8]>0){
+                              childrens[8]++;
+                            }
                           }
                           if(d.experiment_type == 'Histone H2A.Zac'){
                             
-                            statistics[10] = getHistoneData(d,'H2A_Zac');
+                            statistics[9] = getHistoneData(d,'H2A_Zac');
+                            if(statistics[9]>0){
+                              childrens[9]++;
+                            }
                           }
                           if(d.experiment_type == 'Histone H3K9/14ac'){
                             
-                            statistics[11] = getHistoneData(d,'H3K9/14ac');
+                            statistics[10] = getHistoneData(d,'H3K9/14ac');
+                            if(statistics[10]>0){
+                              childrens[10]++;
+                            }
                           }
                       })
-                      newNode.expData =  statistics[0]+','+statistics[1]+','+statistics[2]+','+statistics[3]+','+statistics[4]+','+statistics[5]+','+statistics[6]+','+statistics[7]+','+statistics[8]+','+statistics[9]+','+statistics[10]+','+statistics[11];
+                      newNode.expData =  statistics[0]+','+statistics[1]+','+statistics[2]+','+statistics[3]+','+statistics[4]+','+statistics[5]+','+statistics[6]+','+statistics[7]+','+statistics[8]+','+statistics[9]+','+statistics[10];
+                      
+                      aggregated_statistics[0] += parseFloat(statistics[0]);
+                      aggregated_statistics[1] += parseFloat(statistics[1]);
+                      aggregated_statistics[2] += parseFloat(statistics[2]);
+                      aggregated_statistics[3] += parseFloat(statistics[3]);
+                      aggregated_statistics[4] += parseFloat(statistics[4]);
+                      aggregated_statistics[5] += parseFloat(statistics[5]);
+                      aggregated_statistics[6] += parseFloat(statistics[6]);
+                      aggregated_statistics[7] += parseFloat(statistics[7]);
+                      aggregated_statistics[8] += parseFloat(statistics[8]);
+                      aggregated_statistics[9] += parseFloat(statistics[9]);
+
+
+
                       newNode.name = s.sample_id;
                       newNode.experimentsCount = s.experiments.length;
 
                       if(typeof(o[i].children) == 'undefined'){
                         o[i].children = [];
                       }  
-                      o[i].children.push(newNode);
+                      if($scope.display == 'detailed'){
+                        o[i].children.push(newNode);
+                      }
                     }
-                });                
+                });
+                if(typeof(o[i].expData) == 'undefined'){
+                  //console.log(o[i]);
+                  o[i].expData = (aggregated_statistics[0]/childrens[0]).toPrecision(2)+','+(aggregated_statistics[1]/childrens[1]).toPrecision(2)+','+(aggregated_statistics[2]/childrens[2]).toPrecision(2)+','+(aggregated_statistics[3]/childrens[3]).toPrecision(2)+','+(aggregated_statistics[4]/childrens[4]).toPrecision(2)+','+(aggregated_statistics[5]/childrens[5]).toPrecision(2)+','+(aggregated_statistics[6]/childrens[6]).toPrecision(2)+','+(aggregated_statistics[7]/childrens[7]).toPrecision(2)+','+(aggregated_statistics[8]/childrens[8]).toPrecision(2)+','+(aggregated_statistics[9]/childrens[9]).toPrecision(2)+','+(aggregated_statistics[10]/childrens[20]).toPrecision(2);
+                }
                 populateBasicTree(o[i]);
             }
         }
@@ -727,6 +847,7 @@ angular.module('blueprintApp')
                          .then(getWgbsData)
                          .then(getRnaSeqData)
                          .then(getChipSeqData)
+                         .then(getDnaseData)
                          .then(getSamples)
                          .then(preprocessQuery)
                          .then(initTree);

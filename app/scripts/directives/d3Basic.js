@@ -227,7 +227,7 @@
                     .attr("y",-15)
                     .attr("dy", ".35em")
                     .attr("text-anchor", function(d) { return "start"; })
-                    .text(function(d) { return (v != 0)?v:""})
+                    .text(function(d) { return (v != 0)?v:"--"})
                     .style("fill", "rgb(0,0,0)"); 
                     })
 

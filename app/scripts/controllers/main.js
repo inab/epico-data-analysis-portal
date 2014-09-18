@@ -448,9 +448,9 @@ angular.module('blueprintApp')
                     field: 'analysis_id'
                   },
                   aggs:{
-                    ave_rank: {
-                      avg: {
-                        field: 'log10_pvalue'
+                    peak_size: {
+                      sum: {
+                        script: "doc['chromosome_end'].value - doc['chromosome_start'].value" 
                       }
                     }
                   }
@@ -517,7 +517,7 @@ angular.module('blueprintApp')
                 //console.log(a);
                 a.analyses.buckets.forEach(function(c,d){
                   if(c.key == v){
-                      value += c.ave_rank.value;
+                      value += c.peak_size.value;
                       exp++;
                   }
                 });
@@ -525,7 +525,8 @@ angular.module('blueprintApp')
             });
         });
         if(exp > 0){
-          value = ((value/exp)*100).toPrecision(2);
+          var region = $scope.rangeQuery.end - $scope.rangeQuery.start;
+          value = ((value/region)*100).toPrecision(2);
         }
         return value; 
     }

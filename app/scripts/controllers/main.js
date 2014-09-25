@@ -597,7 +597,7 @@ angular.module('blueprintApp')
 
     var populateBasicTree = function(o) {
         for (var i in o) {
-            if (typeof(o[i])=="object") {
+            if (typeof(o[i])=="object" && typeof(o[i].expData) == 'undefined') {
                 var aggregated_statistics = [0,0,0,0,0,0,0,0,0,0,0,0];
                 var childrens = [0,0,0,0,0,0,0,0,0,0,0,0];
                 $scope.samples.forEach(function(s){
@@ -605,7 +605,7 @@ angular.module('blueprintApp')
                       o[i].analized = true;
                       var newNode = {};
                       var statistics = [0,0,0,0,0,0,0,0,0,0,0,0];
-                      s.experiments.forEach(function(d,i){
+                      s.experiments.forEach(function(d,j){
                           //console.log(d);
                           if(d.experiment_type == 'DNA Methylation'){
                             var methExp = 0;
@@ -644,13 +644,14 @@ angular.module('blueprintApp')
                             d.analyses.forEach(function(v,k){
                                 $scope.rnaSeq.forEach(function(a,b){
                                   if(a.key == v){
-                                      statistics[2] += a.ave_normalized_read_count.value;
+                                      statistics[2] += parseFloat(a.ave_normalized_read_count.value).toPrecision(2);
                                       rnaSeqExp++;
                                   }
                                 });
                             });
                             if(rnaSeqExp > 0){
-                              statistics[2] = (((statistics[2]/rnaSeqExp)*100).toPrecision(2));
+                              statistics[2] = (statistics[2]/rnaSeqExp);
+                              
                               childrens[2]++;
                             }
                           }
@@ -748,7 +749,7 @@ angular.module('blueprintApp')
     } 
 
     var initTree = function(){
-
+      console.log("initializing tree");
       $scope.treedata = populateBasicTree(treedata); 
       $scope.searchButtonText = "Search";
     }
@@ -837,6 +838,20 @@ angular.module('blueprintApp')
 
 
     $scope.search = function(){
+
+        $scope.found = "";
+        $scope.samplesOnt = [];
+        $scope.samples = [];
+        $scope.labs = [];
+        $scope.analyses = [];
+        $scope.bisulfiteSeq = [];
+        $scope.rnaSeq = [];
+        $scope.chipSeq = [];
+        $scope.dnaseSeq = [];
+        $scope.treedata = null;
+        $scope.rangeQuery = {};
+        $scope.geneQuery = null;
+
         $scope.searchButtonText = "Searching...";
 
         var deferred = $q.defer();

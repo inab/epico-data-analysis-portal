@@ -487,13 +487,13 @@ angular.module('blueprintApp')
                   }, {
                     range: {
                       chromosome_start: {
-                        gte:  $scope.rangeQuery.start
+                        gte:  $scope.rangeQuery.start-500
                       }
                     }
                   }, {
                     range: {
                       chromosome_end: {
-                        lte:  $scope.rangeQuery.end 
+                        lte:  $scope.rangeQuery.end+500 
                       }
                     }
                   }, ]
@@ -581,7 +581,7 @@ angular.module('blueprintApp')
                 //console.log(a);
                 a.analyses.buckets.forEach(function(c,d){
                   if(c.key == v){
-                      value += c.peak_size.value;
+                      value += parseFloat(c.peak_size.value);
                       exp++;
                   }
                 });
@@ -589,7 +589,9 @@ angular.module('blueprintApp')
             });
         });
         if(exp > 0){
-          var region = $scope.rangeQuery.end - $scope.rangeQuery.start;
+         
+          var region = ($scope.rangeQuery.end+500) - ($scope.rangeQuery.start-500);
+           console.log(region);
           value = (((value/region)*100).toPrecision(2));
         }
         return value; 
@@ -620,6 +622,8 @@ angular.module('blueprintApp')
                             if(methExp > 0){
                               statistics[0] = (((statistics[0]/methExp)*100).toPrecision(2));
                               childrens[0]++;
+                            }else{
+                              statistics[0] = -1;
                             }
                             
                           }
@@ -637,6 +641,8 @@ angular.module('blueprintApp')
                               var region = $scope.rangeQuery.end - $scope.rangeQuery.start;
                               statistics[1] = (((statistics[1]/region)*100).toPrecision(2));
                               childrens[1]++;
+                            }else{
+                              statistics[1] = -1;
                             }
                           }
                           if(d.experiment_type == 'mRNA-seq'){
@@ -651,8 +657,10 @@ angular.module('blueprintApp')
                             });
                             if(rnaSeqExp > 0){
                               statistics[2] = (statistics[2]/rnaSeqExp);
-                              
+            
                               childrens[2]++;
+                            }else{
+                              statistics[2] = -1;
                             }
                           }
                           if(d.experiment_type == 'Histone H3K27ac'){
@@ -660,6 +668,8 @@ angular.module('blueprintApp')
                             statistics[3] = getHistoneData(d,'H3K27ac');
                             if(statistics[3]>0){
                               childrens[3]++;
+                            }else{
+                              statistics[3] = -1;
                             }
                           }
                           if(d.experiment_type == 'Histone H3K27me3'){
@@ -667,6 +677,8 @@ angular.module('blueprintApp')
                             statistics[4] = getHistoneData(d,'H3K27me3');
                             if(statistics[4]>0){
                               childrens[4]++;
+                            }else{
+                              statistics[4] = -1;
                             }
                           }
                           if(d.experiment_type == 'Histone H3K4me1'){
@@ -674,6 +686,8 @@ angular.module('blueprintApp')
                             statistics[5] = getHistoneData(d,'H3K4me1');
                             if(statistics[5]>0){
                               childrens[5]++;
+                            }else{
+                              statistics[5] = -1;
                             }
                           }
                           if(d.experiment_type == 'Histone H3K4me3'){
@@ -681,6 +695,8 @@ angular.module('blueprintApp')
                             statistics[6] = getHistoneData(d,'H3K4me3');
                             if(statistics[6]>0){
                               childrens[6]++;
+                            }else{
+                              statistics[6] = -1;
                             }
                           }
                           if(d.experiment_type == 'Histone H3K9me3'){
@@ -688,6 +704,8 @@ angular.module('blueprintApp')
                             statistics[7] = getHistoneData(d,'H3K9me3');
                             if(statistics[7]>0){
                               childrens[7]++;
+                            }else{
+                              statistics[7] = -1;
                             }
                           }
                           if(d.experiment_type == 'Histone H3K36me3'){
@@ -695,6 +713,8 @@ angular.module('blueprintApp')
                             statistics[8] = getHistoneData(d,'H3K36me3');
                             if(statistics[8]>0){
                               childrens[8]++;
+                            }else{
+                              statistics[8] = -1;
                             }
                           }
                           if(d.experiment_type == 'Histone H2A.Zac'){
@@ -702,6 +722,8 @@ angular.module('blueprintApp')
                             statistics[9] = getHistoneData(d,'H2A_Zac');
                             if(statistics[9]>0){
                               childrens[9]++;
+                            }else{
+                              statistics[9] = -1;
                             }
                           }
                           if(d.experiment_type == 'Histone H3K9/14ac'){
@@ -709,21 +731,33 @@ angular.module('blueprintApp')
                             statistics[10] = getHistoneData(d,'H3K9/14ac');
                             if(statistics[10]>0){
                               childrens[10]++;
+                            }else{
+                              statistics[10] = -1;
                             }
                           }
                       })
                       newNode.expData =  statistics[0]+','+statistics[1]+','+statistics[2]+','+statistics[3]+','+statistics[4]+','+statistics[5]+','+statistics[6]+','+statistics[7]+','+statistics[8]+','+statistics[9]+','+statistics[10];
                       
-                      aggregated_statistics[0] += parseFloat(statistics[0]);
-                      aggregated_statistics[1] += parseFloat(statistics[1]);
-                      aggregated_statistics[2] += parseFloat(statistics[2]);
-                      aggregated_statistics[3] += parseFloat(statistics[3]);
-                      aggregated_statistics[4] += parseFloat(statistics[4]);
-                      aggregated_statistics[5] += parseFloat(statistics[5]);
-                      aggregated_statistics[6] += parseFloat(statistics[6]);
-                      aggregated_statistics[7] += parseFloat(statistics[7]);
-                      aggregated_statistics[8] += parseFloat(statistics[8]);
-                      aggregated_statistics[9] += parseFloat(statistics[9]);
+                      if(statistics[0] != -1)
+                        aggregated_statistics[0] += parseFloat(statistics[0]);
+                      if(statistics[1] != -1)
+                        aggregated_statistics[1] += parseFloat(statistics[1]);
+                      if(statistics[2] != -1)
+                        aggregated_statistics[2] += parseFloat(statistics[2]);
+                      if(statistics[3] != -1)
+                        aggregated_statistics[3] += parseFloat(statistics[3]);
+                      if(statistics[4] != -1)
+                        aggregated_statistics[4] += parseFloat(statistics[4]);
+                      if(statistics[5] != -1)
+                        aggregated_statistics[5] += parseFloat(statistics[5]);
+                      if(statistics[6] != -1)
+                        aggregated_statistics[6] += parseFloat(statistics[6]);
+                      if(statistics[7] != -1)
+                        aggregated_statistics[7] += parseFloat(statistics[7]);
+                      if(statistics[8] != -1)
+                        aggregated_statistics[8] += parseFloat(statistics[8]);
+                      if(statistics[9] != -1)
+                        aggregated_statistics[9] += parseFloat(statistics[9]);
 
 
 

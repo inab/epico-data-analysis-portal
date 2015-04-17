@@ -4,7 +4,7 @@ angular.module('blueprintApp.elasticsearch',[])
     .factory('es', function (esFactory) {
   
       return esFactory({
-        host: 'limtox.cnio.es:9201',
+        host: 'blueprint-dev.bioinfo.cnio.es/es/',
         // ...
     });
 });

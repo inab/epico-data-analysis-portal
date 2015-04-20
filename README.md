@@ -1,5 +1,5 @@
-About
------
+About BLUEPRINT Data Portal
+---------------------------
 
 The main goal of this project is to create the [BLUEPRINT](http://www.blueprint-epigenome.eu/) data portal software to provide answers beyond the metadata, primary and secondary analysis from the project. 
 

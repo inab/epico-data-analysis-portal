@@ -1,6 +1,7 @@
 {
   "name": "blueprint",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "description": "BLUEPRINT Data Portal",
   "dependencies": {
     "angular": "1.2.16",
     "json3": "~3.3.1",
@@ -19,5 +20,14 @@
     "angular-mocks": "1.2.16",
     "angular-scenario": "1.2.16"
   },
+  "authors": [
+    { "name": "Víctor de la Torre", "email": "vdelatorre@cnio.es" },
+    { "name": "José María Fernández", "email": "jmfernandez@cnio.es" }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inab/blueprint"
+  },
+  "private": true,
   "appPath": "app"
 }

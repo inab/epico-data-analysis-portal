@@ -313,12 +313,12 @@ module.exports = function (grunt) {
     // ngmin tries to make the code safe for minification automatically by
     // using the Angular long form for dependency injection. It doesn't work on
     // things like resolve or inject so those have to be done manually.
-    ngmin: {
+    ngAnnotate: {
       dist: {
         files: [{
           expand: true,
           cwd: '.tmp/concat/scripts',
-          src: '*.js',
+          src: ['*.js'],
           dest: '.tmp/concat/scripts'
         }]
       }
@@ -411,6 +411,15 @@ module.exports = function (grunt) {
     grunt.log.warn('The `server` task has been deprecated. Use `grunt serve` to start a server.');
     grunt.task.run(['serve:' + target]);
   });
+  
+  grunt.registerTask('bower-install', 'install bower dependencies', function() {
+    var exec = require('child_process').exec;
+    var cb = this.async();
+    exec('bower install', function(err, stdout, stderr) {
+      console.log(stdout);
+      cb();
+    });
+  });
 
   grunt.registerTask('test', [
     'clean:server',
@@ -422,12 +431,13 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build', [
     'clean:dist',
+    'bower-install',
     'wiredep',
     'useminPrepare',
     'concurrent:dist',
     'autoprefixer',
     'concat',
-    'ngmin',
+    'ngAnnotate',
     'copy:dist',
     'cdnify',
     'cssmin',
@@ -442,4 +452,5 @@ module.exports = function (grunt) {
     'test',
     'build'
   ]);
+  
 };

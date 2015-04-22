@@ -59,3 +59,5 @@ export PATH
 mkdir -p dist
 grunt build
 ```
+
+8) Congratulations! The [DocumentRoot](http://httpd.apache.org/docs/current/mod/core.html#documentroot) of BLUEPRINT Data Portal is available at the `dist` subdirectory.

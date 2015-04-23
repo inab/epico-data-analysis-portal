@@ -20,6 +20,16 @@ module.exports = function (grunt) {
     app: require('./bower.json').appPath || 'app',
     dist: 'dist'
   };
+  
+  var dataportalConfigFile = process.env.BLUEPRINT_DATAPORTAL_CONFIG || 'default-config';
+  if(dataportalConfigFile.indexOf('/') == -1 ) {
+	  dataportalConfigFile = './' + dataportalConfigFile;
+  }
+  var extension = '.json';
+  if(dataportalConfigFile.substr(dataportalConfigFile.length-extension.length-1,dataportalConfigFile.length) != extension) {
+	  dataportalConfigFile += extension;
+  }
+  var dataportalConfig = require(dataportalConfigFile);
 
   // Define the configuration for all the tasks
   grunt.initConfig({
@@ -143,6 +153,17 @@ module.exports = function (grunt) {
         }]
       },
       server: '.tmp'
+    },
+
+    template: {
+      config: {
+        options: {
+          data: dataportalConfig
+        },
+        files: {
+          '.tmp/scripts/config.js': [ '<%= yeoman.app %>/scripts/config.js.tpl' ]
+        }
+      }
     },
 
     // Add vendor prefixed styles
@@ -439,6 +460,7 @@ module.exports = function (grunt) {
     'clean:dist',
     'bower-install',
     'wiredep',
+    'template',
     'useminPrepare',
     'concurrent:dist',
     'autoprefixer',

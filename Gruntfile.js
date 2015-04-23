@@ -26,7 +26,7 @@ module.exports = function (grunt) {
 	  dataportalConfigFile = './' + dataportalConfigFile;
   }
   var extension = '.json';
-  if(dataportalConfigFile.substr(dataportalConfigFile.length-extension.length-1,dataportalConfigFile.length) != extension) {
+  if(dataportalConfigFile.substring(dataportalConfigFile.length-extension.length) !== extension) {
 	  dataportalConfigFile += extension;
   }
   var dataportalConfig = require(dataportalConfigFile);

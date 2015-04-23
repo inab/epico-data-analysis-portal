@@ -11,7 +11,7 @@ Please use the wiki pages to add new use cases, one per page. Please document th
 Setup
 -----
 
-If you have a custom setup, like having elasticsearch server in a different place, you have to either change (default-config.json)[default-config.json] or copy/move it to another path (keeping the `.json` extension) and declare `BLUEPRINT_DATAPORTAL_CONFIG` environment variable with the path for `grunt` calls.
+If you have a custom setup, like having elasticsearch server in a different place, you have to either change [default-config.json](default-config.json) or copy/move it to another path (keeping the `.json` extension) and declare `BLUEPRINT_DATAPORTAL_CONFIG` environment variable with the path for `grunt` calls.
 
 ```
 BLUEPRINT_DATAPORTAL_CONFIG=/newpath/newconfig.json

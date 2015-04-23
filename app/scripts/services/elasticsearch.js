@@ -4,7 +4,8 @@ angular.module('blueprintApp.elasticsearch',['blueprintApp.config'])
     .factory('es', function (esFactory,portalConfig) {
   
       return esFactory({
-        host: portalConfig.esPath,
+        host: portalConfig.esHost,
+        path: portalConfig.esPath,
         // ...
     });
 });

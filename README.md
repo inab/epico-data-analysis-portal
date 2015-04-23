@@ -8,10 +8,25 @@ Wiki
 
 Please use the wiki pages to add new use cases, one per page. Please document the use case as much as possible before to start asking for pull requests.
 
-Installation
-------------
+Setup
+-----
 
-1) Download [Elasticsearch] (https://www.elastic.co/downloads/elasticsearch) and extract the content in a folder of the machine which will host it. As Elasticsearch needs LOTS of RAM, we must dedicate at least 24GB for the instance. The latest Java JVM and Elasticsearch versions, the better. In elastichsearc.yml you should set: a `cluster.name` (so the node has its own identity); explicit `http.port` and `transport.tcp.port` (to assure they are always the same); `http.compression` and `http.cors.enabled` to `true`, so it can be queried from everywhere and the results are sent compressed; and setup `script.disable_dynamic: true`
+If you have a custom setup, like having elasticsearch server in a different place, you have to either change (default-config.json) or copy/move it to another path (keeping the `.json` extension) and declare `BLUEPRINT_DATAPORTAL_CONFIG` environment variable with the path for `grunt` calls.
+
+```
+BLUEPRINT_DATAPORTAL_CONFIG=/newpath/newconfig.json
+export BLUEPRINT_DATAPORTAL_CONFIG
+```
+
+The configuration parameters are:
+
+* esHost: The host of the Elasticsearch instance as a URL without the path, optionally giving the port.
+* esPath: The path inside the host to reach the Elasticsearch instance.
+
+Installation
+-----------
+
+1) Download [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) and extract the content in a folder of the machine which will host it. As Elasticsearch needs LOTS of RAM, we must dedicate at least 24GB for the instance. The latest Java JVM and Elasticsearch versions, the better. In elastichsearc.yml you should set: a `cluster.name` (so the node has its own identity); explicit `http.port` and `transport.tcp.port` (to assure they are always the same); `http.compression` and `http.cors.enabled` to `true`, so it can be queried from everywhere and the results are sent compressed; and setup `script.disable_dynamic: true`
 
 Then run
 

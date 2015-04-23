@@ -1,10 +1,10 @@
 'use strict';
 
-angular.module('blueprintApp.elasticsearch',[])
-    .factory('es', function (esFactory) {
+angular.module('blueprintApp.elasticsearch',['blueprintApp.config'])
+    .factory('es', function (esFactory,portalConfig) {
   
       return esFactory({
-        host: 'blueprint-dev.bioinfo.cnio.es/es/',
+        host: portalConfig.esPath,
         // ...
     });
 });

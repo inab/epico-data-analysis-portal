@@ -1,4 +1,3 @@
 {
-	"esHost": "http://blueprint-data.bsc.es",
-	"esPath": "/elasticsearch"
+	"esHost": "http://blueprint-data.bsc.es/elasticsearch"
 }

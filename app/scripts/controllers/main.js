@@ -14,61 +14,80 @@ angular.module('blueprintApp')
     var perPage = 50;
     var treedata = {
       'name': 'Hematopoietic cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000988',
       'o': 'CL:0000988',
       'children': [{
         'name': 'Hematopoietic precursor cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_00080001',
         'o': 'CL:00080001',
         'children': [{
           'name': 'Hematopoietic multipotent progenitor cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000837',
           'o': 'CL:0000837'
         }, {
           'name': 'Hematopoietic oligopotent progenitor cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0002032',
           'o': 'CL:0002032',
           'children': [{
             'name': 'Common lymphoid progenitor',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000051',
             'o': 'CL:0000051'
           }, {
             'name': 'Common myeloid progenitor',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000049',
             'o': 'CL:0000049'
           }]
         }, {
           'name': 'Haematopoietic Stem Cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000037',
           'o': 'CL:0000037'
         }]
       }, {
         'name': 'Leukocyte',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000738',
         'o': 'CL:0000738',
         'children': [{
           'name': 'Non granular Leukocyte',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0002087',
           'o': 'CL:0002087',
           'children': [{
             'name': 'Monocyte',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000576',
             'o': 'CL:0000576',
             'children': [{
               'name': 'CD14-positive, CD16-negative classical monocyte',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0002057',
               'o': 'CL:0002057'
             }]
           }]
         }, {
           'name': 'Lymphocyte',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000542',
           'o': 'CL:0000542',
           'children': [{
               'name': 'Lymphocyte of B linage',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000945',
               'o': 'CL:0000945',
               'children': [{
                 'name': 'Antibody secreting cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000946',
                 'o': 'Cl:0000946',
-                'children':[
-                  {'name':'Plasma cell','o':'CL:0000786'}
-                ]
+                'children':[{
+                  'name':'Plasma cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000786',
+                  'o':'CL:0000786'
+                }]
               }, {
                 'name': 'B cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000236',
                 'o': 'CL:0000236',
                 'children': [{
                   'name': 'Mature B cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000785',
                   'o': 'CL:0000785',
                   'children': [{
                     'name': 'Germinal center B cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000844',
                     'o': 'CL:0000844'
                   }]
                 }]
@@ -77,19 +96,26 @@ angular.module('blueprintApp')
 
             {
               'name': 'T cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000084',
               'o': 'CL:0000084',
               'children': [{
                 'name': 'Mature T cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0002419',
                 'o': 'CL:0002419',
                 'children': [{
                   'name': 'Mature alpha-beta T cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000791',
                   'o': 'CL:0000791',
                   'children': [{
                     'name': 'CD8-positive, alpha-beta T cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000625',
                     'o': 'CL:0000625'
                   },
-                  {'name':'CD4-positive, alpha-beta T cell','o':'CL:0000624'}  
-                  ]
+                  {
+                    'name':'CD4-positive, alpha-beta T cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000624',
+                    'o':'CL:0000624'
+                  }]
                 }]
               }]
             }
@@ -99,51 +125,65 @@ angular.module('blueprintApp')
         }]
       }, {
         'name': 'Myeloid cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000763',
         'o': 'CL:0000763',
         'children': [{
           'name': 'Granulocyte monocyte progenitor cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000557',
           'o': 'CL:0000557'
         }, {
           'name': 'Erythroid linage cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000764',
           'o': 'CL:0000764',
           'children': [{
             'name': 'Erythroblast',
-            'o': 'CL:0000765 '
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000765',
+            'o': 'CL:0000765'
           }]
         }, {
           'name': 'Megacaryocite',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000556',
           'o': 'CL:0000556',
           'children': [{
             'name': 'CD34-negative, CD41-positive, CD42-positive megakaryocyte cell',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0002026',
             'o': 'CL:0002026'
           }]
         }, {
           'name': 'Myeloid leukocyte',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000766',
           'o': 'CL:0000766',
           'children': [{
             'name': 'Granulocyte',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000094',
             'o': 'CL:0000094',
             'children': [{
               'name': 'Neutrophil',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000775',
               'o': 'CL:0000775',
               'children': [{
                 'name': 'Mature neutrophil',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000096',
                 'o': 'CL:0000096'
               }]
             }]
           }, {
             'name': 'Macrophage',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000235',
             'o': 'CL:0000235',
             'children': [{
               'name': 'Elicited Macrophage',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000861',
               'o': 'CL:0000861',
               'children': [
               {
                 'name': 'Alternatively activated Macrophage',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000890',
                 'o': 'CL:0000890'
               },
               {
                 'name': 'Inflammatory Macrophage',
+      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000863',
                 'o': 'CL:0000863'
               }]
             }]
@@ -162,7 +202,8 @@ angular.module('blueprintApp')
     $scope.labs = [];
     $scope.analyses = [];
     $scope.bisulfiteSeq = [];
-    $scope.rnaSeq = [];
+    $scope.rnaSeqG = [];
+    $scope.rnaSeqT = [];
     $scope.chipSeq = [];
     $scope.dnaseSeq = [];
     $scope.treedata = null;
@@ -189,8 +230,11 @@ angular.module('blueprintApp')
                     {n:18,c:"chr",f:"images/Chromosome_18.svg"},
                     {n:19,c:"chr",f:"images/Chromosome_19.svg"},
                     {n:20,c:"chr",f:"images/Chromosome_20.svg"},
+                    {n:21,c:"chr",f:"images/Chromosome_21.svg"},
+                    {n:22,c:"chr",f:"images/Chromosome_22.svg"},
                     {n:"X",c:"chr",f:"images/Chromosome_X.svg"},
-                    {n:"Y",c:"chr",f:"images/Chromosome_Y.svg"}
+                    {n:"Y",c:"chr",f:"images/Chromosome_Y.svg"},
+                    {n:"MT",c:"chr",f:"images/Chromosome_MT.svg"}
                   ];
 
     $scope.results = null;
@@ -207,7 +251,7 @@ angular.module('blueprintApp')
                       bool:{
                         must:[
                             {exists : { field : 'experiment_id' }},
-                            {missing : { field : 'experiment_type' }}
+                            {exists : { field : 'analysis_id' }}
                         ]  
                       }
                       
@@ -246,6 +290,7 @@ angular.module('blueprintApp')
                       bool:{
                         must:[
                             {exists : { field : 'experiment_id' }},
+                            // {exists : { field : 'analized_sample_id' }}
                             {exists : { field : 'experiment_type' }}
                         ]  
                       }
@@ -288,7 +333,7 @@ angular.module('blueprintApp')
       var deferred = $q.defer();
       es.search({
         size:10000000,  
-        type: 'dlat.cpg',
+        type: 'dlat.mr',
         search_type: 'count',
         body: {
           query: {
@@ -307,7 +352,7 @@ angular.module('blueprintApp')
                     }
                   }, {
                     range: {
-                      chromosome_start: {
+                      chromosome_end: {
                         lte:  $scope.rangeQuery.end 
                       }
                     }
@@ -322,8 +367,8 @@ angular.module('blueprintApp')
                 field: 'analysis_id'
               },
               aggs: {
-                ave_meth_level: {
-                  avg: {
+                stats_meth_level: {
+                  extended_stats: {
                     field: 'meth_level'
                   }
                 }
@@ -345,7 +390,7 @@ angular.module('blueprintApp')
       return deferred.promise;
     };
 
-    var getRnaSeqData = function() {      
+    var getRnaSeqGData = function() {      
       var deferred = $q.defer();
       es.search({
         size:10000000,  
@@ -383,8 +428,8 @@ angular.module('blueprintApp')
                 field: 'analysis_id'
               },
               aggs: {
-                ave_normalized_read_count: {
-                  avg: {
+                stats_normalized_read_count: {
+                  extended_stats: {
                     field: 'normalized_read_count'
                   }
                 }
@@ -395,7 +440,68 @@ angular.module('blueprintApp')
       },function(err,resp) {
         if(typeof(resp.aggregations) !== undefined){  
           resp.aggregations.analyses.buckets.forEach(function(d, i) {
-            $scope.rnaSeq.push(d)
+            $scope.rnaSeqG.push(d)
+          });
+          deferred.resolve();
+        }else{
+          return deferred.reject(err); 
+        }
+      });
+      
+      return deferred.promise;
+    };
+
+    var getRnaSeqTData = function() {      
+      var deferred = $q.defer();
+      es.search({
+        size:10000000,  
+        type: 'exp.t',
+        search_type: 'count',
+        body: {
+          query: {
+            filtered: {
+              filter: {
+                bool: {
+                  must: [{
+                    term: {
+                      chromosome: $scope.rangeQuery.chr
+                    }
+                  }, {
+                    range: {
+                      chromosome_start: {
+                        gte:  $scope.rangeQuery.start
+                      }
+                    }
+                  }, {
+                    range: {
+                      chromosome_end: {
+                        lte:  $scope.rangeQuery.end 
+                      }
+                    }
+                  }, ]
+                }
+              }
+            }
+          },
+          aggs: {
+            analyses: {
+              terms: {
+                field: 'analysis_id'
+              },
+              aggs: {
+                stats_normalized_read_count: {
+                  extended_stats: {
+                    field: 'normalized_read_count'
+                  }
+                }
+              }
+            }
+          }
+        }
+      },function(err,resp) {
+        if(typeof(resp.aggregations) !== undefined){  
+          resp.aggregations.analyses.buckets.forEach(function(d, i) {
+            $scope.rnaSeqT.push(d)
           });
           deferred.resolve();
         }else{
@@ -446,6 +552,7 @@ angular.module('blueprintApp')
               aggs:{
                 peak_size: {
                   sum: {
+                    lang: "groovy",
                     script: "doc['chromosome_end'].value - doc['chromosome_start'].value" 
                   }
                 }
@@ -514,6 +621,7 @@ angular.module('blueprintApp')
                   aggs:{
                     peak_size: {
                       sum: {
+                        lang: "groovy",
                         script: "doc['chromosome_end'].value - doc['chromosome_start'].value" 
                       }
                     }
@@ -595,7 +703,7 @@ angular.module('blueprintApp')
           value = (((value/region)*100).toPrecision(2));
         }
         return value; 
-    }
+    };
 
     var populateBasicTree = function(o) {
         for (var i in o) {
@@ -603,7 +711,7 @@ angular.module('blueprintApp')
                 var aggregated_statistics = [0,0,0,0,0,0,0,0,0,0,0,0];
                 var childrens = [0,0,0,0,0,0,0,0,0,0,0,0];
                 $scope.samples.forEach(function(s){
-                    if(s.ontology == o[i].o){
+                    if(s.ontology == o[i].o_uri){
                       o[i].analized = true;
                       var newNode = {};
                       var statistics = [0,0,0,0,0,0,0,0,0,0,0,0];
@@ -614,7 +722,7 @@ angular.module('blueprintApp')
                             d.analyses.forEach(function(v,k){
                                 $scope.bisulfiteSeq.forEach(function(a,b){
                                   if(a.key == v){
-                                      statistics[0] += a.ave_meth_level.value;
+                                      statistics[0] += a.stats_meth_level.avg;
                                       methExp++;
                                   }
                                 });
@@ -646,96 +754,116 @@ angular.module('blueprintApp')
                             }
                           }
                           if(d.experiment_type == 'mRNA-seq'){
-                            var rnaSeqExp = 0;
+                            var rnaSeqExpG = 0;
                             d.analyses.forEach(function(v,k){
                                 $scope.rnaSeq.forEach(function(a,b){
                                   if(a.key == v){
-                                      statistics[2] += parseFloat(a.ave_normalized_read_count.value).toPrecision(2);
-                                      rnaSeqExp++;
+                                      statistics[2] += parseFloat(a.stats_normalized_read_count.avg).toPrecision(2);
+                                      rnaSeqExpG++;
                                   }
                                 });
                             });
-                            if(rnaSeqExp > 0){
-                              statistics[2] = (statistics[2]/rnaSeqExp);
+                            if(rnaSeqExpG > 0){
+                              statistics[2] = (statistics[2]/rnaSeqExpG);
             
                               childrens[2]++;
                             }else{
                               statistics[2] = -1;
                             }
                           }
-                          if(d.experiment_type == 'Histone H3K27ac'){
- 
-                            statistics[3] = getHistoneData(d,'H3K27ac');
-                            if(statistics[3]>0){
-                              childrens[3]++;
-                            }else{
-                              statistics[3] = -1;
-                            }
-                          }
-                          if(d.experiment_type == 'Histone H3K27me3'){
+                          //if(d.experiment_type == 'mRNA-seq'){
+                          //  var rnaSeqExpT = 0;
+                          //  d.analyses.forEach(function(v,k){
+                          //      $scope.rnaSeq.forEach(function(a,b){
+                          //        if(a.key == v){
+                          //            statistics[2] += parseFloat(a.stats_normalized_read_count.avg).toPrecision(2);
+                          //            rnaSeqExpT++;
+                          //        }
+                          //      });
+                          //  });
+                          //  if(rnaSeqExpT > 0){
+                          //    statistics[2] = (statistics[2]/rnaSeqExpT);
+                          //
+                          //    childrens[2]++;
+                          //  }else{
+                          //    statistics[2] = -1;
+                          //  }
+                          //}
+                          if(d.experiment_type.indexOf('Histone ')==0) {
+                            if(d.experiment_type == 'Histone H3K27ac'){
                             
-                            statistics[4] = getHistoneData(d,'H3K27me3');
-                            if(statistics[4]>0){
-                              childrens[4]++;
-                            }else{
-                              statistics[4] = -1;
+                              statistics[3] = getHistoneData(d,'H3K27ac');
+                              if(statistics[3]>0){
+                                childrens[3]++;
+                              }else{
+                                statistics[3] = -1;
+                              }
+                            }
+                            if(d.experiment_type == 'Histone H3K27me3'){
+                              
+                              statistics[4] = getHistoneData(d,'H3K27me3');
+                              if(statistics[4]>0){
+                                childrens[4]++;
+                              }else{
+                                statistics[4] = -1;
+                              }
+                            }
+                            if(d.experiment_type == 'Histone H3K4me1'){
+                              
+                              statistics[5] = getHistoneData(d,'H3K4me1');
+                              if(statistics[5]>0){
+                                childrens[5]++;
+                              }else{
+                                statistics[5] = -1;
+                              }
+                            }
+                            if(d.experiment_type == 'Histone H3K4me3'){
+                              
+                              statistics[6] = getHistoneData(d,'H3K4me3');
+                              if(statistics[6]>0){
+                                childrens[6]++;
+                              }else{
+                                statistics[6] = -1;
+                              }
+                            }
+                            if(d.experiment_type == 'Histone H3K9me3'){
+                              
+                              statistics[7] = getHistoneData(d,'H3K9me3');
+                              if(statistics[7]>0){
+                                childrens[7]++;
+                              }else{
+                                statistics[7] = -1;
+                              }
+                            }
+                            if(d.experiment_type == 'Histone H3K36me3'){
+                              
+                              statistics[8] = getHistoneData(d,'H3K36me3');
+                              if(statistics[8]>0){
+                                childrens[8]++;
+                              }else{
+                                statistics[8] = -1;
+                              }
+                            }
+                            if(d.experiment_type == 'Histone H2A.Zac'){
+                              
+                              statistics[9] = getHistoneData(d,'H2A_Zac');
+                              if(statistics[9]>0){
+                                childrens[9]++;
+                              }else{
+                                statistics[9] = -1;
+                              }
+                            }
+                            if(d.experiment_type == 'Histone H3K9/14ac'){
+                              
+                              statistics[10] = getHistoneData(d,'H3K9/14ac');
+                              if(statistics[10]>0){
+                                childrens[10]++;
+                              }else{
+                                statistics[10] = -1;
+                              }
                             }
                           }
-                          if(d.experiment_type == 'Histone H3K4me1'){
-                            
-                            statistics[5] = getHistoneData(d,'H3K4me1');
-                            if(statistics[5]>0){
-                              childrens[5]++;
-                            }else{
-                              statistics[5] = -1;
-                            }
-                          }
-                          if(d.experiment_type == 'Histone H3K4me3'){
-                            
-                            statistics[6] = getHistoneData(d,'H3K4me3');
-                            if(statistics[6]>0){
-                              childrens[6]++;
-                            }else{
-                              statistics[6] = -1;
-                            }
-                          }
-                          if(d.experiment_type == 'Histone H3K9me3'){
-                            
-                            statistics[7] = getHistoneData(d,'H3K9me3');
-                            if(statistics[7]>0){
-                              childrens[7]++;
-                            }else{
-                              statistics[7] = -1;
-                            }
-                          }
-                          if(d.experiment_type == 'Histone H3K36me3'){
-                            
-                            statistics[8] = getHistoneData(d,'H3K36me3');
-                            if(statistics[8]>0){
-                              childrens[8]++;
-                            }else{
-                              statistics[8] = -1;
-                            }
-                          }
-                          if(d.experiment_type == 'Histone H2A.Zac'){
-                            
-                            statistics[9] = getHistoneData(d,'H2A_Zac');
-                            if(statistics[9]>0){
-                              childrens[9]++;
-                            }else{
-                              statistics[9] = -1;
-                            }
-                          }
-                          if(d.experiment_type == 'Histone H3K9/14ac'){
-                            
-                            statistics[10] = getHistoneData(d,'H3K9/14ac');
-                            if(statistics[10]>0){
-                              childrens[10]++;
-                            }else{
-                              statistics[10] = -1;
-                            }
-                          }
-                      })
+                      });
                       newNode.expData =  statistics[0]+','+statistics[1]+','+statistics[2]+','+statistics[3]+','+statistics[4]+','+statistics[5]+','+statistics[6]+','+statistics[7]+','+statistics[8]+','+statistics[9]+','+statistics[10];
                       
                       if(statistics[0] != -1)
@@ -758,6 +886,8 @@ angular.module('blueprintApp')
                         aggregated_statistics[8] += parseFloat(statistics[8]);
                       if(statistics[9] != -1)
                         aggregated_statistics[9] += parseFloat(statistics[9]);
+                      if(statistics[10] != -1)
+                        aggregated_statistics[10] += parseFloat(statistics[10]);
 
 
 
@@ -774,7 +904,7 @@ angular.module('blueprintApp')
                 });
                 if(typeof(o[i].expData) == 'undefined'){
                   //console.log(o[i]);
-                  o[i].expData = (aggregated_statistics[0]/childrens[0]).toPrecision(2)+','+(aggregated_statistics[1]/childrens[1]).toPrecision(2)+','+(aggregated_statistics[2]/childrens[2]).toPrecision(2)+','+(aggregated_statistics[3]/childrens[3]).toPrecision(2)+','+(aggregated_statistics[4]/childrens[4]).toPrecision(2)+','+(aggregated_statistics[5]/childrens[5]).toPrecision(2)+','+(aggregated_statistics[6]/childrens[6]).toPrecision(2)+','+(aggregated_statistics[7]/childrens[7]).toPrecision(2)+','+(aggregated_statistics[8]/childrens[8]).toPrecision(2)+','+(aggregated_statistics[9]/childrens[9]).toPrecision(2)+','+(aggregated_statistics[10]/childrens[20]).toPrecision(2);
+                  o[i].expData = (aggregated_statistics[0]/childrens[0]).toPrecision(2)+','+(aggregated_statistics[1]/childrens[1]).toPrecision(2)+','+(aggregated_statistics[2]/childrens[2]).toPrecision(2)+','+(aggregated_statistics[3]/childrens[3]).toPrecision(2)+','+(aggregated_statistics[4]/childrens[4]).toPrecision(2)+','+(aggregated_statistics[5]/childrens[5]).toPrecision(2)+','+(aggregated_statistics[6]/childrens[6]).toPrecision(2)+','+(aggregated_statistics[7]/childrens[7]).toPrecision(2)+','+(aggregated_statistics[8]/childrens[8]).toPrecision(2)+','+(aggregated_statistics[9]/childrens[9]).toPrecision(2)+','+(aggregated_statistics[10]/childrens[10]).toPrecision(2);
                 }
                 populateBasicTree(o[i]);
             }
@@ -894,7 +1024,8 @@ angular.module('blueprintApp')
                          .then(getAnalyses)
                          .then(getLabs)
                          .then(getWgbsData)
-                         .then(getRnaSeqData)
+                         .then(getRnaSeqGData)
+                         .then(getRnaSeqTData)
                          .then(getChipSeqData)
                          .then(getDnaseData)
                          .then(getSamples)

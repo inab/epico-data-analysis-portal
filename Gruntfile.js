@@ -22,7 +22,7 @@ module.exports = function (grunt) {
   };
   
   var dataportalConfigFile = process.env.BLUEPRINT_DATAPORTAL_CONFIG || 'default-config';
-  if(dataportalConfigFile.indexOf('/') == -1 ) {
+  if(dataportalConfigFile.indexOf('/') === -1 ) {
 	  dataportalConfigFile = './' + dataportalConfigFile;
   }
   var extension = '.json';
@@ -30,6 +30,80 @@ module.exports = function (grunt) {
 	  dataportalConfigFile += extension;
   }
   var dataportalConfig = require(dataportalConfigFile);
+  
+  var useminPrepare;
+  var buildTasks;
+  if(dataportalConfig.debug) {
+	useminPrepare = {
+	      html: '<%= yeoman.app %>/index.html',
+	      options: {
+		dest: '<%= yeoman.dist %>',
+		flow: {
+		  html: {
+		    steps: {
+		      // js: ['concat', 'uglifyjs'],
+		      // css: ['cssmin']
+		      js: ['concat'],
+		      css: ['concat']
+		    },
+		    post: {}
+		  }
+		}
+	      }
+	    };
+	buildTasks = [
+	    'clean:dist',
+	    'bower-install',
+	    'wiredep',
+	    'template',
+	    'useminPrepare',
+	    'concurrent:dist',
+	    'autoprefixer',
+	    'concat',
+	    'ngAnnotate',
+	    'copy:dist',
+	    'cdnify',
+	    //'cssmin',
+	    //'uglify',
+	    'filerev',
+	    'usemin',
+	    //'htmlmin'
+	  ];
+  } else {
+	useminPrepare = {
+	      html: '<%= yeoman.app %>/index.html',
+	      options: {
+		dest: '<%= yeoman.dist %>',
+		flow: {
+		  html: {
+		    steps: {
+		      js: ['concat', 'uglifyjs'],
+		      css: ['cssmin']
+		    },
+		    post: {}
+		  }
+		}
+	      }
+	    };
+	buildTasks = [
+	    'clean:dist',
+	    'bower-install',
+	    'wiredep',
+	    'template',
+	    'useminPrepare',
+	    'concurrent:dist',
+	    'autoprefixer',
+	    'concat',
+	    'ngAnnotate',
+	    'copy:dist',
+	    'cdnify',
+	    'cssmin',
+	    'uglify',
+	    'filerev',
+	    'usemin',
+	    'htmlmin'
+	  ];
+  }
 
   // Define the configuration for all the tasks
   grunt.initConfig({
@@ -240,21 +314,7 @@ module.exports = function (grunt) {
     // Reads HTML for usemin blocks to enable smart builds that automatically
     // concat, minify and revision files. Creates configurations in memory so
     // additional tasks can operate on them
-    useminPrepare: {
-      html: '<%= yeoman.app %>/index.html',
-      options: {
-        dest: '<%= yeoman.dist %>',
-        flow: {
-          html: {
-            steps: {
-              js: ['concat', 'uglifyjs'],
-              css: ['cssmin']
-            },
-            post: {}
-          }
-        }
-      }
-    },
+    useminPrepare: useminPrepare,
 
     // Performs rewrites based on filerev and the useminPrepare configuration
     usemin: {
@@ -456,24 +516,7 @@ module.exports = function (grunt) {
     'karma'
   ]);
 
-  grunt.registerTask('build', [
-    'clean:dist',
-    'bower-install',
-    'wiredep',
-    'template',
-    'useminPrepare',
-    'concurrent:dist',
-    'autoprefixer',
-    'concat',
-    'ngAnnotate',
-    'copy:dist',
-    'cdnify',
-    'cssmin',
-    'uglify',
-    'filerev',
-    'usemin',
-    'htmlmin'
-  ]);
+  grunt.registerTask('build', buildTasks);
 
   grunt.registerTask('default', [
     'newer:jshint',

@@ -26,7 +26,7 @@
         },
         link: function(scope, iElement, iAttrs) {
           var svg = d3.select(iElement[0])
-              .append("svg")
+              .append("svg:svg")
               .attr("width", "100%");
 
           // on window resize, re-render d3 canvas
@@ -64,10 +64,10 @@
             svg.attr('height', height);
 
             //create the rectangles for the bar chart
-            svg.selectAll("rect")
+            svg.selectAll("svg:rect")
               .data(data)
               .enter()
-                .append("rect")
+                .append("svg:rect")
                 .on("click", function(d, i){return scope.onClick({item: d});})
                 .attr("height", 30) // height of each bar
                 .attr("width", 0) // initial width of 0 for transition
@@ -81,10 +81,10 @@
                     return d.score/(max/width);
                   }); // width based on scale
 
-            svg.selectAll("text")
+            svg.selectAll("svg:text")
               .data(data)
               .enter()
-                .append("text")
+                .append("svg:text")
                 .attr("fill", "#fff")
                 .attr("y", function(d, i){return i * 35 + 22;})
                 .attr("x", 15)
@@ -108,7 +108,7 @@
         link: function(scope, iElement, iAttrs) {
 
           var svg = d3.select(iElement[0])
-              .append("svg")
+              .append("svg:svg")
               .attr("width", "100%");  
           var width, height, max;    
           var tree = d3.layout.tree();    
@@ -198,7 +198,7 @@
                 .style("fill-opacity", 1e-6);
 
             //Display node horizontal lines
-            nodeEnter.append("line")
+            nodeEnter.append("svg:line")
                          .attr("x1", 0)
                          .attr("y1", 0)
                          .attr("x2", 2500)
@@ -324,7 +324,7 @@
 
 
                   //Display headers vertical lines
-                  svg.append("line")
+                  svg.append("svg:line")
                            .attr("x1", treew+145+i*60)
                            .attr("y1", 200)
                            .attr("x2", treew+145+i*60)

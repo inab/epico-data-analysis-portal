@@ -210,8 +210,10 @@ angular.module('blueprintApp')
     $scope.chipSeq = [];
     $scope.dnaseSeq = [];
     $scope.treedata = null;
-    $scope.rangeQuery = {};
+    $scope.rangeQuery = [];
+    $scope.ensemblGeneId = null;
     $scope.geneQuery = null;
+    $scope.pathwayQuery = null;
     $scope.display = 'compact';
     $scope.chromosomes = [{n:1,c:"chr",f:"images/Chromosome_1.svg"},
                     {n:2,c:"chr",f:"images/Chromosome_2.svg"},
@@ -338,6 +340,32 @@ angular.module('blueprintApp')
 
     var getWgbsData = function() {      
       var deferred = $q.defer();
+      var shouldQuery = [];
+      $scope.rangeQuery.forEach(function(q,i) {
+		shouldQuery.push({
+			bool: {
+				must: [
+					{
+						term: {
+							chromosome: q.chr
+						}
+					}, {
+						range: {
+							chromosome_start: {
+								gte: q.start
+							}
+						}
+					}, {
+						range: {
+							chromosome_end: {
+								lte: q.end
+							}
+						}
+					}
+				]
+			}
+		});
+      });
       es.search({
         size:10000000,  
         type: 'dlat.mr',
@@ -347,23 +375,7 @@ angular.module('blueprintApp')
             filtered: {
               filter: {
                 bool: {
-                  must: [{
-                    term: {
-                      chromosome: $scope.rangeQuery.chr
-                    }
-                  }, {
-                    range: {
-                      chromosome_start: {
-                        gte:  $scope.rangeQuery.start
-                      }
-                    }
-                  }, {
-                    range: {
-                      chromosome_end: {
-                        lte:  $scope.rangeQuery.end 
-                      }
-                    }
-                  }, ]
+                  should: shouldQuery
                 }
               }
             }
@@ -399,6 +411,32 @@ angular.module('blueprintApp')
 
     var getRnaSeqGData = function() {      
       var deferred = $q.defer();
+      var shouldQuery = [];
+      $scope.rangeQuery.forEach(function(q,i) {
+		shouldQuery.push({
+			bool: {
+				must: [
+					{
+						term: {
+							chromosome: q.chr
+						}
+					}, {
+						range: {
+							chromosome_start: {
+								gte: q.start
+							}
+						}
+					}, {
+						range: {
+							chromosome_end: {
+								lte: q.end
+							}
+						}
+					}
+				]
+			}
+		});
+      });
       es.search({
         size:10000000,  
         type: 'exp.g',
@@ -408,23 +446,7 @@ angular.module('blueprintApp')
             filtered: {
               filter: {
                 bool: {
-                  must: [{
-                    term: {
-                      chromosome: $scope.rangeQuery.chr
-                    }
-                  }, {
-                    range: {
-                      chromosome_start: {
-                        gte:  $scope.rangeQuery.start
-                      }
-                    }
-                  }, {
-                    range: {
-                      chromosome_end: {
-                        lte:  $scope.rangeQuery.end 
-                      }
-                    }
-                  }, ]
+                  should: shouldQuery
                 }
               }
             }
@@ -460,6 +482,32 @@ angular.module('blueprintApp')
 
     var getRnaSeqTData = function() {      
       var deferred = $q.defer();
+      var shouldQuery = [];
+      $scope.rangeQuery.forEach(function(q,i) {
+		shouldQuery.push({
+			bool: {
+				must: [
+					{
+						term: {
+							chromosome: q.chr
+						}
+					}, {
+						range: {
+							chromosome_start: {
+								gte: q.start
+							}
+						}
+					}, {
+						range: {
+							chromosome_end: {
+								lte: q.end
+							}
+						}
+					}
+				]
+			}
+		});
+      });
       es.search({
         size:10000000,  
         type: 'exp.t',
@@ -469,23 +517,7 @@ angular.module('blueprintApp')
             filtered: {
               filter: {
                 bool: {
-                  must: [{
-                    term: {
-                      chromosome: $scope.rangeQuery.chr
-                    }
-                  }, {
-                    range: {
-                      chromosome_start: {
-                        gte:  $scope.rangeQuery.start
-                      }
-                    }
-                  }, {
-                    range: {
-                      chromosome_end: {
-                        lte:  $scope.rangeQuery.end 
-                      }
-                    }
-                  }, ]
+                  should: shouldQuery
                 }
               }
             }
@@ -521,6 +553,32 @@ angular.module('blueprintApp')
 
     var getDnaseData = function() {      
       var deferred = $q.defer();
+      var shouldQuery = [];
+      $scope.rangeQuery.forEach(function(q,i) {
+		shouldQuery.push({
+			bool: {
+				must: [
+					{
+						term: {
+							chromosome: q.chr
+						}
+					}, {
+						range: {
+							chromosome_start: {
+								gte: q.start
+							}
+						}
+					}, {
+						range: {
+							chromosome_end: {
+								lte: q.end
+							}
+						}
+					}
+				]
+			}
+		});
+      });
       es.search({
         size:10000000,  
         type: 'rreg.p',
@@ -530,23 +588,7 @@ angular.module('blueprintApp')
             filtered: {
               filter: {
                 bool: {
-                  must: [{
-                    term: {
-                      chromosome: $scope.rangeQuery.chr
-                    }
-                  }, {
-                    range: {
-                      chromosome_start: {
-                        gte:  $scope.rangeQuery.start
-                      }
-                    }
-                  }, {
-                    range: {
-                      chromosome_end: {
-                        lte:  $scope.rangeQuery.end 
-                      }
-                    }
-                  }, ]
+                  should: shouldQuery
                 }
               }
             }
@@ -583,8 +625,36 @@ angular.module('blueprintApp')
       return deferred.promise;
     };
 
+    var chipSeqWindow = 500;
+    
     var getChipSeqData = function() {      
       var deferred = $q.defer();
+      var shouldQuery = [];
+      $scope.rangeQuery.forEach(function(q,i) {
+		shouldQuery.push({
+			bool: {
+				must: [
+					{
+						term: {
+							chromosome: q.chr
+						}
+					}, {
+						range: {
+							chromosome_start: {
+								gte: q.start-chipSeqWindow
+							}
+						}
+					}, {
+						range: {
+							chromosome_end: {
+								lte: q.end+chipSeqWindow
+							}
+						}
+					}
+				]
+			}
+		});
+      });
       es.search({
         size:10000000,  
         type: 'pdna.p',
@@ -594,23 +664,7 @@ angular.module('blueprintApp')
             filtered: {
               filter: {
                 bool: {
-                  must: [{
-                    term: {
-                      chromosome: $scope.rangeQuery.chr
-                    }
-                  }, {
-                    range: {
-                      chromosome_start: {
-                        gte:  $scope.rangeQuery.start-500
-                      }
-                    }
-                  }, {
-                    range: {
-                      chromosome_end: {
-                        lte:  $scope.rangeQuery.end+500 
-                      }
-                    }
-                  }, ]
+                  should: shouldQuery
                 }
               }
             }
@@ -706,7 +760,17 @@ angular.module('blueprintApp')
         });
         if(exp > 0){
          
-          var region = ($scope.rangeQuery.end+500) - ($scope.rangeQuery.start-500);
+          // This can be a bit incorrect for pathways...
+          var region = 0;
+          $scope.rangeQuery.forEach(function(r,i) {
+		var end = r.end+chipSeqWindow;
+		var start = r.start-chipSeqWindow;
+		// Corner case
+		if(start < 1) {
+			start=1;
+		}
+		region += end - start + 1;
+	  });
            console.log(region);
           value = (((value/region)*100).toPrecision(2));
         }
@@ -754,7 +818,11 @@ angular.module('blueprintApp')
                                 });
                             });
                             if(dnaseSeqExp > 0){
-                              var region = $scope.rangeQuery.end - $scope.rangeQuery.start;
+				// This can be a bit incorrect for pathways...
+				var region = 0;
+				$scope.rangeQuery.forEach(function(r,i) {
+					region += r.end - r.start + 1;
+				});
                               statistics[1] = (((statistics[1]/region)*100).toPrecision(2));
                               childrens[1]++;
                             }else{
@@ -764,7 +832,7 @@ angular.module('blueprintApp')
                           if(d.experiment_type == 'mRNA-seq'){
                             var rnaSeqExpG = 0;
                             d.analyses.forEach(function(v,k){
-                                $scope.rnaSeq.forEach(function(a,b){
+                                $scope.rnaSeqG.forEach(function(a,b){
                                   if(a.key == v){
                                       statistics[2] += parseFloat(a.stats_normalized_read_count.avg).toPrecision(2);
                                       rnaSeqExpG++;
@@ -782,7 +850,7 @@ angular.module('blueprintApp')
                           //if(d.experiment_type == 'mRNA-seq'){
                           //  var rnaSeqExpT = 0;
                           //  d.analyses.forEach(function(v,k){
-                          //      $scope.rnaSeq.forEach(function(a,b){
+                          //      $scope.rnaSeqT.forEach(function(a,b){
                           //        if(a.key == v){
                           //            statistics[2] += parseFloat(a.stats_normalized_read_count.avg).toPrecision(2);
                           //            rnaSeqExpT++;
@@ -938,16 +1006,30 @@ angular.module('blueprintApp')
     };
 
     var updateChromosomes = function(){
-        console.log('Updating chromosome data '+$scope.rangeQuery.chr);
-        var chr = $scope.rangeQuery.chr;
-        $scope.chromosomes.forEach(function(d,i){
-            if(d.n == chr){
-              d.c = "chr_active";
-            }else{
-              d.c = "chr";
-            }
-        });
-
+	var regions = '';
+	$scope.chromosomes.forEach(function(d,i){
+		d.c = "chr";
+	});
+	$scope.rangeQuery.forEach(function(part,i) {
+		console.log('Updating chromosome data '+part.chr);
+		$scope.chromosomes.forEach(function(d,i){
+			if(d.n == part.chr) {
+				d.c = "chr_active";
+			}
+		});
+		
+		if(i>0) {
+			regions += ' ; ';
+		}
+		
+		regions += "chr"+part.chr+":"+part.start+"-"+part.end;
+	});
+	$scope.found = "Displaying information from region"+(($scope.rangeQuery.length > 1)?'s':'')+": "+regions;
+	if($scope.geneQuery !== null) {
+		$scope.found += " (Gene <a href='http://www.ensembl.org/Homo_sapiens/Gene/Summary?g="+$scope.ensemblGeneId+"&db=core' target='_blank'>"+$scope.geneQuery+" ["+$scope.ensemblGeneId+"]</a>)";
+	} else if($scope.pathwayQuery !== null) {
+		$scope.found += " (Pathway <a href='http://www.reactome.org/content/detail/"+$scope.pathwayQuery+"' target='_blank'>"+$scope.pathwayQuery+"</a>)";
+	}
     };
 
     var getGeneRange = function(){
@@ -974,10 +1056,12 @@ angular.module('blueprintApp')
       },function(err,resp){
 
         if(typeof(resp.hits.hits) !== undefined){
-          $scope.rangeQuery.chr = resp.hits.hits[0]._source.chromosome;
-          $scope.rangeQuery.start = resp.hits.hits[0]._source.chromosome_start;
-          $scope.rangeQuery.end = resp.hits.hits[0]._source.chromosome_end;
-          $scope.found = "Displaying information from region: Chr "+$scope.rangeQuery.chr+":"+$scope.rangeQuery.start+"-"+$scope.rangeQuery.end+ " (Gene: "+$scope.geneQuery+")";
+          $scope.rangeQuery.push({ chr: resp.hits.hits[0]._source.chromosome , start: resp.hits.hits[0]._source.chromosome_start, end: resp.hits.hits[0]._source.chromosome_end });
+          $scope.ensemblGeneId = resp.hits.hits[0]._source.feature_cluster_id;
+          //$scope.rangeQuery.chr = resp.hits.hits[0]._source.chromosome;
+          //$scope.rangeQuery.start = resp.hits.hits[0]._source.chromosome_start;
+          //$scope.rangeQuery.end = resp.hits.hits[0]._source.chromosome_end;
+          //$scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end+ " (Gene: "+$scope.geneQuery+")";
           updateChromosomes();
           deferred.resolve();
 
@@ -987,6 +1071,36 @@ angular.module('blueprintApp')
 
       });
       return deferred.promise;
+    };
+    
+    var getPathwayRanges = function(){
+	var deferred = $q.defer();
+	es.search({
+		type: 'external.reactome',
+		size: 1000,
+		body: {
+			query:{
+				filtered:{
+					query:{
+						match: {
+							pathway_id:$scope.pathwayQuery 
+						}
+					}
+				}
+			}
+		}
+	},function(err,resp){
+		if(typeof(resp.hits.hits) !== undefined){
+			resp.hits.hits[0]._source.participants.forEach(function(part,i) {
+				$scope.rangeQuery.push({ chr: part.chromosome , start: part.chromosome_start, end: part.chromosome_end });
+			});
+			updateChromosomes();
+			deferred.resolve();
+		} else {
+			return deferred.reject(err);
+		}
+	});
+	return deferred.promise;
     };
     
     var fetchCellTerms = function() {
@@ -1173,20 +1287,26 @@ angular.module('blueprintApp')
       var promise = deferred.promise;
       
       var q = $scope.query.trim();
-      var m = q.match('chr(.*):(.*)-(.*)');
-      var react = q.match('REACT_');
+      var m = q.match('^chr(.*):(.*)-(.*)$');
+      var react = q.indexOf('REACT_') === 0;
 
       //range query
       if(m){
-        $scope.rangeQuery.chr   = m[1];
-        $scope.rangeQuery.start = m[2];
-        $scope.rangeQuery.end   = m[3];
-        $scope.found = "Displaying information from region: Chr "+$scope.rangeQuery.chr+":"+$scope.rangeQuery.start+"-"+$scope.rangeQuery.end;
+        if(m[1] === 'M') {
+          // Normalizing mitochondrial chromosome name
+          m[1] = 'MT';
+        }
+        $scope.rangeQuery.push({chr: m[1], start: m[2], end: m[3]});
+        // $scope.rangeQuery.chr   = m[1];
+        // $scope.rangeQuery.start = m[2];
+        // $scope.rangeQuery.end   = m[3];
+        // $scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end;
         updateChromosomes();
       } else if(react) {
-        // TO BE DONE
+        $scope.pathwayQuery = q;
+        promise = promise.then(getPathwayRanges);
       } else {
-        $scope.geneQuery = q;  
+        $scope.geneQuery = q;
         promise = promise.then(getGeneRange);
       } 
       deferred.resolve();
@@ -1204,12 +1324,15 @@ angular.module('blueprintApp')
         //$scope.labs = [];
         //$scope.analyses = [];
         $scope.bisulfiteSeq = [];
-        $scope.rnaSeq = [];
+        $scope.rnaSeqG = [];
+        $scope.rnaSeqT = [];
         $scope.chipSeq = [];
         $scope.dnaseSeq = [];
         $scope.treedata = null;
-        $scope.rangeQuery = {};
+        $scope.rangeQuery = [];
         $scope.geneQuery = null;
+        $scope.ensemblGeneId = null;
+        $scope.pathwayQuery = null;
 
         $scope.searchButtonText = "Searching...";
 

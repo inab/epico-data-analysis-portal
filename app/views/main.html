@@ -29,7 +29,7 @@
           <div class="col-sm-2 text-right"><button ng-click="search()" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
         </form>
       </div>
-      <p>Examples: <a ng-click="query='myc'" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'" style="cursor: pointer;">chr1:1-248956422</a></p>    
+      <p>Examples: <a ng-click="query='myc'" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.1'" style="cursor: pointer;">REACT_160159.1</a></p>    
     </div>
   </div> 
 
@@ -53,7 +53,7 @@
 
   <div class="row" style="margin-top:40px;">
     <div class="col-sm-12">
-      <p class="text-center">{{found}}</p>
+      <p class="text-center" ng-bind-html="found"></p>
       <div class="col-centered" style="width: 100%;background: #f5f5f5;padding-bottom: 20px;-webkit-border-radius: 3px;-moz-border-radius: 3px;border-radius: 3px;border:1px solid #CCC;">
         <div ng-repeat="item in chromosomes">
           <div class="pull-left">

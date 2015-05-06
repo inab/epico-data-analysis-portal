@@ -1001,7 +1001,8 @@ angular.module('blueprintApp')
 
     var initTree = function(){
       console.log("initializing tree");
-      $scope.treedata = populateBasicTree(treedata); 
+      var clonedTreedata = angular.copy(treedata);
+      $scope.treedata = populateBasicTree(clonedTreedata);
       $scope.searchButtonText = "Search";
     };
 

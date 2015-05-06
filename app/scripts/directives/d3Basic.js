@@ -1,5 +1,7 @@
 (function () {
   'use strict';
+/* jshint camelcase: false , quotmark: false */
+/* global d3 */
 
   angular.module('blueprintApp.d3',[])
     .factory('d3',[function(){
@@ -111,7 +113,6 @@
           var diagonal = d3.svg.diagonal();
           var treew;
           var matirxw;
-          var experiments = ['Bisulfite-Seq','DNase-Seq','RNA-Seq','H3K27ac','H3K27me3','H3K4me1','H3K4me3','H3K9me3','H3K36me3','H2A.Zac','H3K9/14ac']
 
           // on window resize, re-render d3 canvas
           window.onresize = function() {
@@ -142,7 +143,7 @@
               d.children = d._children;
               d._children = null;
             }
-          }
+          };
 
           //define toogleAll function
           scope.toggleAll = function toggleAll(d) {
@@ -150,7 +151,7 @@
               d.children.forEach(toggleAll);
               scope.toggle(d);
             }
-          }
+          };
 
           //define update function
           scope.update =  function(source){
@@ -166,7 +167,7 @@
 
             // Normalize for treew/depth.
             var ystep = treew/11;
-            nodes.forEach(function(d) {d.y = d.depth*ystep;d.x = height-d.id*40 });
+            nodes.forEach(function(d) {d.y = d.depth*ystep; d.x = height-d.id*40; });
 
             
 
@@ -183,7 +184,7 @@
                          .attr("x2", 2500)
                          .attr("y2", 0)
                          .attr("stroke-width", 1)
-                         .attr("stroke", function(d){return (typeof(d.experimentsCount) != 'undefined')?"#EEE":  "#FFF"});
+                         .attr("stroke", function(d){return (typeof(d.experimentsCount) != 'undefined')?"#EEE":  "#FFF";});
             
             nodeEnter.append("svg:circle")
                 .attr("r", 1e-6)
@@ -221,9 +222,9 @@
                     .attr("y",-15)
                     .attr("dy", ".35em")
                     .attr("text-anchor", function(d) { return "start"; })
-                    .text(function(d) { return (v != -1 && v!='NaN' && v!='-Infinity')?v:"--"})
+                    .text(function(d) { return (v != -1 && v!='NaN' && v!='-Infinity')?v:"--";})
                     .style("fill", "rgb(0,0,0)"); 
-                    })
+                    });
 
               }
             });  
@@ -236,7 +237,7 @@
                 .attr("transform", function(d) {return "translate(" + d.y + "," + d.x + ")"; });
 
             nodeUpdate.select("circle")
-                .attr("r", function(d){return (d.experimentsCount && d.experimentsCount >0) ? 15: 10});
+                .attr("r", function(d){return (d.experimentsCount && d.experimentsCount >0) ? 15: 10; });
 
             nodeUpdate.select("text")
                 .style("fill-opacity", 1);
@@ -287,7 +288,7 @@
               d.x0 = d.x;
               d.y0 = d.y;
             });
-          }
+          };
 
           // define render function
           scope.render = function(data){
@@ -302,7 +303,8 @@
               treew = width*0.27;
               height = (scope.style == 'detailed')?6000:1840;
               max = 98;
-              root = data;
+              root = data.root;
+              var experiments = data.experiments;
 
               experiments.forEach(function(d,i){
                   svg.append("svg:g")
@@ -323,7 +325,7 @@
                            .attr("x2", treew+145+i*60)
                            .attr("y2", height)
                            .attr("stroke-width", 1)
-                           .attr("stroke", function(d){return "#EEE"});  
+                           .attr("stroke", function(d){return "#EEE"; });  
               });
 
 
@@ -346,7 +348,7 @@
               tree.size([h, w]);
               tree.separation(function(a,b){
                 return a.parent == b.parent ? 1 : 2;
-              })
+              });
 
               // Initialize the display to show a few nodes.
               // root.children.forEach(scope.toggleAll);
@@ -357,7 +359,7 @@
 
               scope.update(root);  
 
-            };  
+            }
 
             
 

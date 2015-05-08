@@ -14,185 +14,6 @@ angular.module('blueprintApp')
 
     var pageNum = 1;
     var perPage = 50;
-    var treedata = {
-      'name': 'Hematopoietic cell',
-      'o_uri': 'http://purl.obolibrary.org/obo/CL_0000988',
-      'o': 'CL:0000988',
-      'children': [{
-        'name': 'Hematopoietic precursor cell',
-        'o_uri': 'http://purl.obolibrary.org/obo/CL_00080001',
-        'o': 'CL:00080001',
-        'children': [{
-          'name': 'Hematopoietic multipotent progenitor cell',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0000837',
-          'o': 'CL:0000837'
-        }, {
-          'name': 'Hematopoietic oligopotent progenitor cell',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0002032',
-          'o': 'CL:0002032',
-          'children': [{
-            'name': 'Common lymphoid progenitor',
-            'o_uri': 'http://purl.obolibrary.org/obo/CL_0000051',
-            'o': 'CL:0000051'
-          }, {
-            'name': 'Common myeloid progenitor',
-            'o_uri': 'http://purl.obolibrary.org/obo/CL_0000049',
-            'o': 'CL:0000049'
-          }]
-        }, {
-          'name': 'Haematopoietic Stem Cell',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0000037',
-          'o': 'CL:0000037'
-        }]
-      }, {
-        'name': 'Leukocyte',
-        'o_uri': 'http://purl.obolibrary.org/obo/CL_0000738',
-        'o': 'CL:0000738',
-        'children': [{
-          'name': 'Non granular Leukocyte',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0002087',
-          'o': 'CL:0002087',
-          'children': [{
-            'name': 'Monocyte',
-            'o_uri': 'http://purl.obolibrary.org/obo/CL_0000576',
-            'o': 'CL:0000576',
-            'children': [{
-              'name': 'CD14-positive, CD16-negative classical monocyte',
-              'o_uri': 'http://purl.obolibrary.org/obo/CL_0002057',
-              'o': 'CL:0002057'
-            }]
-          }]
-        }, {
-          'name': 'Lymphocyte',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0000542',
-          'o': 'CL:0000542',
-          'children': [{
-              'name': 'Lymphocyte of B linage',
-              'o_uri': 'http://purl.obolibrary.org/obo/CL_0000945',
-              'o': 'CL:0000945',
-              'children': [{
-                'name': 'Antibody secreting cell',
-                'o_uri': 'http://purl.obolibrary.org/obo/CL_0000946',
-                'o': 'Cl:0000946',
-                'children':[{
-                  'name':'Plasma cell',
-                  'o_uri': 'http://purl.obolibrary.org/obo/CL_0000786',
-                  'o':'CL:0000786'
-                }]
-              }, {
-                'name': 'B cell',
-                'o_uri': 'http://purl.obolibrary.org/obo/CL_0000236',
-                'o': 'CL:0000236',
-                'children': [{
-                  'name': 'Mature B cell',
-                  'o_uri': 'http://purl.obolibrary.org/obo/CL_0000785',
-                  'o': 'CL:0000785',
-                  'children': [{
-                    'name': 'Germinal center B cell',
-                    'o_uri': 'http://purl.obolibrary.org/obo/CL_0000844',
-                    'o': 'CL:0000844'
-                  }]
-                }]
-              }]
-            },
-
-            {
-              'name': 'T cell',
-              'o_uri': 'http://purl.obolibrary.org/obo/CL_0000084',
-              'o': 'CL:0000084',
-              'children': [{
-                'name': 'Mature T cell',
-                'o_uri': 'http://purl.obolibrary.org/obo/CL_0002419',
-                'o': 'CL:0002419',
-                'children': [{
-                  'name': 'Mature alpha-beta T cell',
-                  'o_uri': 'http://purl.obolibrary.org/obo/CL_0000791',
-                  'o': 'CL:0000791',
-                  'children': [{
-                    'name': 'CD8-positive, alpha-beta T cell',
-                    'o_uri': 'http://purl.obolibrary.org/obo/CL_0000625',
-                    'o': 'CL:0000625'
-                  },
-                  {
-                    'name':'CD4-positive, alpha-beta T cell',
-                    'o_uri': 'http://purl.obolibrary.org/obo/CL_0000624',
-                    'o':'CL:0000624'
-                  }]
-                }]
-              }]
-            }
-
-
-          ]
-        }]
-      }, {
-        'name': 'Myeloid cell',
-        'o_uri': 'http://purl.obolibrary.org/obo/CL_0000763',
-        'o': 'CL:0000763',
-        'children': [{
-          'name': 'Granulocyte monocyte progenitor cell',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0000557',
-          'o': 'CL:0000557'
-        }, {
-          'name': 'Erythroid linage cell',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0000764',
-          'o': 'CL:0000764',
-          'children': [{
-            'name': 'Erythroblast',
-            'o_uri': 'http://purl.obolibrary.org/obo/CL_0000765',
-            'o': 'CL:0000765'
-          }]
-        }, {
-          'name': 'Megacaryocite',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0000556',
-          'o': 'CL:0000556',
-          'children': [{
-            'name': 'CD34-negative, CD41-positive, CD42-positive megakaryocyte cell',
-            'o_uri': 'http://purl.obolibrary.org/obo/CL_0002026',
-            'o': 'CL:0002026'
-          }]
-        }, {
-          'name': 'Myeloid leukocyte',
-          'o_uri': 'http://purl.obolibrary.org/obo/CL_0000766',
-          'o': 'CL:0000766',
-          'children': [{
-            'name': 'Granulocyte',
-            'o_uri': 'http://purl.obolibrary.org/obo/CL_0000094',
-            'o': 'CL:0000094',
-            'children': [{
-              'name': 'Neutrophil',
-              'o_uri': 'http://purl.obolibrary.org/obo/CL_0000775',
-              'o': 'CL:0000775',
-              'children': [{
-                'name': 'Mature neutrophil',
-                'o_uri': 'http://purl.obolibrary.org/obo/CL_0000096',
-                'o': 'CL:0000096'
-              }]
-            }]
-          }, {
-            'name': 'Macrophage',
-            'o_uri': 'http://purl.obolibrary.org/obo/CL_0000235',
-            'o': 'CL:0000235',
-            'children': [{
-              'name': 'Elicited Macrophage',
-              'o_uri': 'http://purl.obolibrary.org/obo/CL_0000861',
-              'o': 'CL:0000861',
-              'children': [
-              {
-                'name': 'Alternatively activated Macrophage',
-                'o_uri': 'http://purl.obolibrary.org/obo/CL_0000890',
-                'o': 'CL:0000890'
-              },
-              {
-                'name': 'Inflammatory Macrophage',
-                'o_uri': 'http://purl.obolibrary.org/obo/CL_0000863',
-                'o': 'CL:0000863'
-              }]
-            }]
-          }]
-        }]
-      }]
-    };
     var experimentLabels = ['Bisulfite-Seq','DNase-Seq','RNA-Seq'];
 
     var fetchedTreeData;
@@ -924,66 +745,6 @@ angular.module('blueprintApp')
 						} else {
 							console.log("Unmapped histone "+normalizedHistone);
 						}
-						
-						/*
-						if(d.experiment_type === 'Histone H3K27ac') {
-							statistics[3] = getHistoneData(d,'H3K27ac');
-							if(statistics[3]>0) {
-								childrens[3]++;
-							} else {
-								statistics[3] = NaN;
-							}
-						} else if(d.experiment_type === 'Histone H3K27me3') {
-							statistics[4] = getHistoneData(d,'H3K27me3');
-							if(statistics[4]>0) {
-								childrens[4]++;
-							} else {
-								statistics[4] = NaN;
-							}
-						} else if(d.experiment_type === 'Histone H3K4me1') {
-							statistics[5] = getHistoneData(d,'H3K4me1');
-							if(statistics[5]>0) {
-								childrens[5]++;
-							} else {
-								statistics[5] = NaN;
-							}
-						} else if(d.experiment_type === 'Histone H3K4me3') {
-							statistics[6] = getHistoneData(d,'H3K4me3');
-							if(statistics[6]>0) {
-								childrens[6]++;
-							} else {
-								statistics[6] = NaN;
-							}
-						} else if(d.experiment_type === 'Histone H3K9me3') {
-							statistics[7] = getHistoneData(d,'H3K9me3');
-							if(statistics[7]>0) {
-								childrens[7]++;
-							} else {
-								statistics[7] = NaN;
-							}
-						} else if(d.experiment_type === 'Histone H3K36me3') {
-							statistics[8] = getHistoneData(d,'H3K36me3');
-							if(statistics[8]>0) {
-								childrens[8]++;
-							} else {
-								statistics[8] = NaN;
-							}
-						} else if(d.experiment_type === 'Histone H2A.Zac') {
-							statistics[9] = getHistoneData(d,'H2A_Zac');
-							if(statistics[9]>0) {
-								childrens[9]++;
-							} else {
-								statistics[9] = NaN;
-							}
-						} else if(d.experiment_type === 'Histone H3K9/14ac') {
-							statistics[10] = getHistoneData(d,'H3K9/14ac');
-							if(statistics[10]>0) {
-								childrens[10]++;
-							} else {
-								statistics[10] = NaN;
-							}
-						}
-						*/
 					}
 				});
 				
@@ -1032,8 +793,11 @@ angular.module('blueprintApp')
 	
 	lastSearchMode = $scope.display;
 	var clonedTreeData = angular.copy(fetchedTreeData);
-	var numNodes = populateBasicTree(clonedTreeData);
-	$scope.treedata = {root: clonedTreeData, numNodes: numNodes, depth:((lastSearchMode==='detailed')?$scope.depth+1:$scope.depth), experiments: $scope.experimentLabels};
+	$scope.treedata = [];
+	clonedTreeData.forEach(function(cloned) {
+		var numNodes = populateBasicTree(cloned);
+		$scope.treedata.push({root: cloned, numNodes: numNodes, depth:((lastSearchMode==='detailed')?$scope.depth+1:$scope.depth), experiments: $scope.experimentLabels});
+	});
 	$scope.searchButtonText = "Search";
     };
 
@@ -1058,7 +822,7 @@ angular.module('blueprintApp')
 	});
 	$scope.found = "Displaying information from region"+(($scope.rangeQuery.length > 1)?'s':'')+": "+regions;
 	if($scope.geneQuery !== null) {
-		$scope.found += " (Gene <a href='http://www.ensembl.org/Homo_sapiens/Gene/Summary?g="+$scope.ensemblGeneId+"&db=core' target='_blank'>"+$scope.geneQuery+" ["+$scope.ensemblGeneId+"]</a>)";
+		$scope.found += " ("+$scope.geneQueryType+" <a href='http://www.ensembl.org/Homo_sapiens/Gene/Summary?g="+$scope.ensemblGeneId+"&db=core' target='_blank'>"+$scope.geneQuery+" ["+$scope.ensemblGeneId+"]</a>)";
 	} else if($scope.pathwayQuery !== null) {
 		$scope.found += " (Pathway <a href='http://www.reactome.org/content/detail/"+$scope.pathwayQuery+"' target='_blank'>"+$scope.pathwayQuery+"</a>)";
 	}
@@ -1090,6 +854,7 @@ angular.module('blueprintApp')
         if(typeof(resp.hits.hits) !== undefined){
           $scope.rangeQuery.push({ chr: resp.hits.hits[0]._source.chromosome , start: resp.hits.hits[0]._source.chromosome_start, end: resp.hits.hits[0]._source.chromosome_end });
           $scope.ensemblGeneId = resp.hits.hits[0]._source.feature_cluster_id;
+          $scope.geneQueryType = 'gene';
           //$scope.rangeQuery.chr = resp.hits.hits[0]._source.chromosome;
           //$scope.rangeQuery.start = resp.hits.hits[0]._source.chromosome_start;
           //$scope.rangeQuery.end = resp.hits.hits[0]._source.chromosome_end;
@@ -1168,12 +933,12 @@ angular.module('blueprintApp')
 						filter: {
 							and: {
 								filters: [{
-									term: {
-										ont: 'cv:CellOntology'
-									}
-									// terms: {
-									//	ont: ['cv:CellOntology','cv:EFO','cv:CellLineOntology']
+									//term: {
+									//	ont: 'cv:CellOntology'
 									//}
+									terms: {
+										ont: ['cv:CellOntology','cv:EFO','cv:CellLineOntology']
+									}
 								},{
 									terms: {
 										alt_id: theUris
@@ -1383,7 +1148,8 @@ angular.module('blueprintApp')
 							leafDeadNodes = nextDeadNodes;
 						}
 						
-						fetchedTreeData = roots[0];
+						// Sort by root uri
+						fetchedTreeData = roots.sort(function(a,b) { return a.o_uri.localeCompare(b.o_uri); });
 						deferred.resolve();
 					} else {
 						return deferred.reject(err);
@@ -1403,37 +1169,57 @@ angular.module('blueprintApp')
       var deferred = $q.defer();
       var promise = deferred.promise;
       
-      var q = $scope.query.trim();
-      var m = q.match('^chr(.*):(.*)-(.*)$');
-      var react = q.indexOf('REACT_') === 0;
-
-      //range query
-      if(m){
-        if(m[1] === 'M') {
-          // Normalizing mitochondrial chromosome name
-          m[1] = 'MT';
-        }
-        $scope.rangeQuery.push({chr: m[1], start: m[2], end: m[3]});
-        // $scope.rangeQuery.chr   = m[1];
-        // $scope.rangeQuery.start = m[2];
-        // $scope.rangeQuery.end   = m[3];
-        // $scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end;
-        updateChromosomes();
-      } else if(react) {
-        $scope.pathwayQuery = q;
-        promise = promise.then(getPathwayRanges);
+      if($scope.suggestedQuery) {
+          $scope.rangeQuery.push({ chr: $scope.suggestedQuery.chromosome , start: $scope.suggestedQuery.chromosome_start, end: $scope.suggestedQuery.chromosome_end });
+          $scope.ensemblGeneId = $scope.suggestedQuery.feature_cluster_id;
+          $scope.geneQuery = $scope.suggestedQuery.term;
+          $scope.geneQueryType = $scope.suggestedQuery.feature;
+          if($scope.suggestedQuery.feature!=='gene') {
+		  $scope.geneQueryType += ' from gene,';
+          }
+          //$scope.rangeQuery.chr = resp.hits.hits[0]._source.chromosome;
+          //$scope.rangeQuery.start = resp.hits.hits[0]._source.chromosome_start;
+          //$scope.rangeQuery.end = resp.hits.hits[0]._source.chromosome_end;
+          //$scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end+ " (Gene: "+$scope.geneQuery+")";
+          updateChromosomes();
       } else {
-        $scope.geneQuery = q;
-        promise = promise.then(getGeneRange);
-      } 
+      
+        var q = $scope.query.trim();
+        var m = q.match('^chr(.*):(.*)-(.*)$');
+        var react = q.indexOf('REACT_') === 0;
+        
+        //range query
+        if(m){
+          if(m[1] === 'M') {
+            // Normalizing mitochondrial chromosome name
+            m[1] = 'MT';
+          }
+          $scope.rangeQuery.push({chr: m[1], start: m[2], end: m[3]});
+          // $scope.rangeQuery.chr   = m[1];
+          // $scope.rangeQuery.start = m[2];
+          // $scope.rangeQuery.end   = m[3];
+          // $scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end;
+          updateChromosomes();
+        } else if(react) {
+          $scope.pathwayQuery = q;
+          promise = promise.then(getPathwayRanges);
+        } else {
+          $scope.geneQuery = q;
+          promise = promise.then(getGeneRange);
+        } 
+      }
       deferred.resolve();
       return promise;
     };
 
 
 
-    $scope.search = function(){
+    $scope.resultsSearch = [];
+    
+    $scope.search = function(theSuggest){
         $scope.found = "";
+        $scope.suggestedQuery = theSuggest;
+        $scope.resultsSearch = [];
         //$scope.samplesOnt = [];
         //$scope.samples = [];
         //$scope.labs = [];
@@ -1466,5 +1252,49 @@ angular.module('blueprintApp')
                          //.then(preprocessQuery)
                          .then(initTree);
         deferred.resolve();
-    };  
+    };
+    
+    
+    $scope.suggest = function() {
+	$scope.resultsSearch = [];
+	$scope.suggestedQuery = null;
+	
+	if($scope.query.length >= 3) {
+		var query = $scope.query.toLowerCase();
+		es.search({
+			type: 'external.gencode',
+			size: 5,
+			body: {
+				query:{
+					filtered: {
+						query: {
+							match_all: {}
+						},
+						filter: {
+							prefix: {
+								symbol: query
+							}
+						}
+					}
+				},
+				fields: ['symbol','chromosome','chromosome_start','chromosome_end','feature','feature_cluster_id']
+			}
+		},function(err,resp){
+			console.log(resp);
+			resp.hits.hits.forEach(function(sug) {
+				// A backup default
+				var theTerm = sug.fields.symbol[0];
+				sug.fields.symbol.some(function(term) {
+					console.log(term);
+					if(term.toLowerCase().indexOf(query)===0) {
+						theTerm = term;
+						return true;
+					}
+					return false;
+				});
+				$scope.resultsSearch.push({term:theTerm,id:sug._id,chromosome:sug.fields.chromosome[0],chromosome_start:sug.fields.chromosome_start[0],chromosome_end:sug.fields.chromosome_end[0],feature:sug.fields.feature[0],feature_cluster_id:sug.fields.feature_cluster_id[0]});
+			});
+ 		});
+	}
+    };
   });

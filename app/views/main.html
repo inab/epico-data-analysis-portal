@@ -28,12 +28,12 @@
           </div>
           <div class="col-sm-2 text-right"><button ng-click="search()" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
           <div class="col-sm-10" ng-repeat="suggest in resultsSearch">
-		  <a ng-click="query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.term}}</a>
+		  <a ng-click="query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.term}}</a> <i>({{suggest.feature}})</i>
 		  <br />
           </div>
         </form>
       </div>
-      <p>Examples: <a ng-click="query='myc'" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.1'" style="cursor: pointer;">REACT_160159.1</a></p>    
+      <p>Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'; search()" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.1'; search()" style="cursor: pointer;">REACT_160159.1</a></p>
     </div>
   </div> 
 

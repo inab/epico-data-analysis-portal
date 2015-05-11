@@ -14,7 +14,7 @@ angular.module('blueprintApp')
 
     var pageNum = 1;
     var perPage = 50;
-    var experimentLabels = ['Bisulfite-Seq','DNase-Seq','RNA-Seq'];
+    var experimentLabels = ['Bisulfite-Seq','DNase-Seq','Gene Exp (RNA-Seq)','Transcript Exp (RNA-Seq)'];
 
     var fetchedTreeData;
     var lastSearchMode;
@@ -696,12 +696,22 @@ angular.module('blueprintApp')
 						}
 						statistics[1] = theStat;
 					} else if(d.experiment_type === 'mRNA-seq') {
+						// Expression at Gene and Transcript levels
 						var rnaSeqExpG = 0;
+						var rnaSeqExpT = 0;
+						var theStatT = 0.0;
+						
 						d.analyses.forEach(function(v) {
 							$scope.rnaSeqG.forEach(function(a) {
 								if(a.key == v) {
 									theStat += a.stats_normalized_read_count.avg;
 									rnaSeqExpG++;
+								}
+							});
+							$scope.rnaSeqT.forEach(function(a) {
+								if(a.key == v) {
+									theStatT += a.stats_normalized_read_count.avg;
+									rnaSeqExpT++;
 								}
 							});
 						});
@@ -712,24 +722,14 @@ angular.module('blueprintApp')
 							theStat = NaN;
 						}
 						statistics[2] = theStat;
-					//if(d.experiment_type == 'mRNA-seq'){
-					//  var rnaSeqExpT = 0;
-					//  d.analyses.forEach(function(v,k){
-					//      $scope.rnaSeqT.forEach(function(a,b){
-					//        if(a.key == v){
-					//            statistics[2] += a.stats_normalized_read_count.avg;
-					//            rnaSeqExpT++;
-					//        }
-					//      });
-					//  });
-					//  if(rnaSeqExpT > 0){
-					//    statistics[2] = (statistics[2]/rnaSeqExpT);
-					//
-					//    childrens[2]++;
-					//  }else{
-					//    statistics[2] = -1;
-					//  }
-					//}
+						
+						if(rnaSeqExpT > 0) {
+							theStatT = theStatT/rnaSeqExpT;
+							childrens[3]++;
+						} else {
+							theStatT = NaN;
+						}
+						statistics[3] = theStatT;
 					} else if(d.experiment_type.indexOf('Histone ')===0) {
 						var normalizedHistone = d.features.CHIP_ANTIBODY.value.replace(/[.]/g,'_');
 						

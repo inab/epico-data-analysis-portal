@@ -92,6 +92,71 @@
 
 
     .directive('d3Tree', ['d3',function(d3) {
+	// This function is an evolution from the one available here
+	// http://bl.ocks.org/mbostock/7555321
+	function wrap(text, width) {
+		text.each(function() {
+			var text = d3.select(this);
+			
+			if(text.node().getComputedTextLength() > width) {
+				var words = text.text().split(/\s+/).reverse(),
+					lineNumber = 0,
+					lineHeight = 1.1, // ems
+					x = text.attr("x"),
+					y = text.attr("y"),
+					dy = text.attr("dy");
+				
+				if(x===null) {
+					x = 0;
+				}
+				if(y===null) {
+					y = 0;
+				}
+				if(dy!==null) {
+					dy = parseFloat(dy);
+				} else {
+					dy = 0.0;
+				}
+				text.text(null);
+				
+				var tspan;
+				var currLine;
+				var word = words.pop();
+				do {
+					var nextCurrLine;
+					if(!tspan) {
+						nextCurrLine = word;
+						tspan = text
+							.append("tspan")
+							.attr("x", x)
+							.attr("y", y)
+							.attr("dy", lineNumber * lineHeight + dy + "em");
+						lineNumber++;
+					} else {
+						nextCurrLine = currLine+' '+word;
+					}
+					tspan.text(nextCurrLine);
+					
+					if (tspan.node().getComputedTextLength() > width) {
+						// A multi-word line
+						if(currLine) {
+							// Return to previous state
+							tspan.text(currLine);
+						} else {
+							// Keep the too-long word
+							word = words.pop();
+						}
+						currLine = undefined;
+						tspan = undefined;
+					} else {
+						word = words.pop();
+						currLine = nextCurrLine;
+					}
+				} while(word || words.length > 0);
+			}
+		});
+	}
+	
       return {
         restrict: 'EA',
         scope: {
@@ -113,7 +178,8 @@
           var expRadius = 15;
           var clRadius = 10;
           var expHeight = expRadius*2+10;
-          var expLabelWH = 150;
+          var expLabelWH = 130;
+          var labelsHeight = expLabelWH+20;
           
           // These are global variables
           var width, height;    
@@ -210,18 +276,24 @@
                 .style("stroke", function(d) {return d.analized ? "rgb(232,0,0)" : ((typeof(d.experimentsCount) !== 'undefined')?"#4c00e2":  "#CCC"); })
 		.on("click", function(d) { scope.toggle(d); scope.update(d); });
 
-            nodeEnter.append("svg:a")
-		.attr("xlink:href",function(d) { return d.o_uri; })
-		.attr("target","_blank")
-		.append("svg:text")
-                .attr("x", function(d) { return d.children || d._children ? 30 : 30; })
-                // .attr("y",-10)
-                .attr("y",0)
-                .attr("dy", ".35em")
-                .classed({label:true})
-                .attr("text-anchor", function(d) { return d.children || d._children ? "start" : "start"; })
-                .text(function(d) { return d.name; })
-                .style("fill-opacity", 1e-6);
+		
+              //console.time("Jarl");
+		nodeEnter.append("svg:a")
+			.attr("xlink:href",function(d) { return d.o_uri; })
+			.attr("target","_blank")
+			.append("svg:text")
+			.attr("x", function(d) { return d.children || d._children ? 30 : 30; })
+			// .attr("y",-10)
+			.attr("y",0)
+			.attr("dy", ".35em")
+			.classed({label:true})
+			.attr("text-anchor", function(d) { return d.children || d._children ? "start" : "start"; })
+			.text(function(d) { return d.name; })
+			.style("fill-opacity", 1e-6)
+			.each(function(de) {
+				//console.log("Jarl: "+(treew+sepFromTree-d.y-(svgMargin/2)-30));
+				wrap(d3.select(this), treew+sepFromTree-de.y-svgMargin-30);
+			});
 
             // Display node data
 
@@ -229,7 +301,6 @@
             //console.log(nodeEnter);
             //nodeData.forEach(function(v,i){
             //});
-              // console.time("Jarl");
             nodeEnter.each(function(de){
                   
                 if (de.expData) {
@@ -241,6 +312,7 @@
                 nodeData.forEach(function(v,i){
 			var theText = (!isNaN(v) && isFinite(v) && v !== -1)?(v==0?'0':(v<0.01?v.toExponential(1):v.toPrecision(2))):"--";
 			var theX = treew+sepFromTree-de.y-(svgMargin/2)+expDataWidth*i;
+
                     thisnode.append("svg:text")
                     .attr("x", theX)
                     .attr("y",0)
@@ -338,7 +410,7 @@
 			width = d3.select(iElement[0])[0][0].offsetWidth;
 		}
 		
-		height = expLabelWH+numNodes*expHeight;
+		height = labelsHeight+numNodes*expHeight;
 		
 		//height = (scope.style === 'detailed')?6000:1840;
               
@@ -347,23 +419,28 @@
 			.enter()
 			.append("svg:g")
 			.classed({experiment:true})
-			.attr("transform", function(d,i) { return "translate(" + (treew+sepFromTree+i*expDataWidth ) + "," + 100 + ")";});
+			.attr("transform", function(d,i) { return "translate(" + (treew+sepFromTree+i*expDataWidth ) + "," + expLabelWH + ")";});
 		
-		gExp.append("svg:foreignObject")
-			.attr("width",expLabelWH)
-			.attr("height","50")
-			.attr("transform","rotate(-70)")
-			.append("xhtml:body")
-			//.attr("style","background:transparent")
-			//.html(function() { return '<p>'+d+'</p>'; });
-			.style("background","transparent")
-			.append("xhtml:p")
-			.text(function(d) { return d; });
+		//gExp.append("svg:foreignObject")
+		//	.attr("width",expLabelWH)
+		//	.attr("height","50")
+		//	.attr("transform","rotate(-70)")
+		//	.append("xhtml:body")
+		//	//.attr("style","background:transparent")
+		//	//.html(function() { return '<p>'+d+'</p>'; });
+		//	.style("background","transparent")
+		//	.append("xhtml:p")
+		//	.text(function(d) { return d; });
+		gExp.append("svg:text")
+			.attr("transform","translate(20,0) rotate(-70)")
+			.text(function(d) { return d; })
+			.call(wrap,expLabelWH);
+		
 		gExp.append("svg:line")
 			.attr("x1", 0)
 			.attr("y1", 10)
 			.attr("x2", 0)
-			.attr("y2", height-100)
+			.attr("y2", height-expLabelWH)
 			.attr("stroke-width", 1)
 			.attr("stroke", "#EEE");
 			

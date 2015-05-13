@@ -7,7 +7,7 @@
                 <p>The Blueprint project will provide at least 100 reference epigenomes to the scientific community. These epigenomes are characterized by: RNAseq, BisulfiteSeq, DNase-seq, and 8 Histone marks</p>
                 <p>Use this tool to explore the behaviour of your gene in the different cell types</p>
                 <p>
-                <a href="#" tooltip-placement="bottom" tooltip="This release includes data from monocytes, granulocyte neutrophils, eosinophils, macrophages ( M0 , M1 and M2 ), naive CD4+ and naive CD8+ cells apart from 7 cell line samples. "><b>Data release - August 2014</b></a>
+                <a href="#" tooltip-placement="bottom" tooltip="{{dataDesc}}"><b>Data release - {{dataRelease}}</b></a>
                 </p>           
             </div>
             <div class="col-sm-3 text-center">
@@ -61,7 +61,7 @@
       <div class="col-centered" style="width: 100%;background: #f5f5f5;padding-bottom: 20px;-webkit-border-radius: 3px;-moz-border-radius: 3px;border-radius: 3px;border:1px solid #CCC;">
         <div ng-repeat="item in chromosomes">
           <div class="pull-left">
-            <img src="{{item.f}}" class="img-center {{item.c}}">
+            <img src="{{item.f}}" class="img-center {{item.c}}" title="Chromosome {{item.n}}">
           </div>
         </div> 
         <div class="clearfix"></div>

@@ -324,7 +324,8 @@ module.exports = function (grunt) {
       options: {
         patterns: {
           js: [
-            [/(images\/Chromosome_[^.]+\.svg)/gm, 'Update the JS to reference our SVG images']
+            [/(images\/Chromosome_[^.]+\.svg)/gm, 'Update the JS to reference our SVG images'],
+            [/(images\/GRCh38_chromosome_[^.]+\.svg)/gm, 'Update the JS to reference our SVG images'],
           ]
         },
         assetsDirs: ['<%= yeoman.dist %>','<%= yeoman.dist %>/images']

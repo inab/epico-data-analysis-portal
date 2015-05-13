@@ -115,19 +115,19 @@ body{
 #search::-webkit-input-placeholder { color:#FFF; }
 #search::-moz-placeholder { color:#FFF; } /* firefox 19+ */
 
-.chr{
+.chr , .chr_active {
   margin-right:5px;
-  width:46px;
-  padding-top:20px;
+  width:47px;
+  padding-top:15px;
   padding-left:20px;
 }
 
-.chr_active{
-  margin-right:5px;
-  width:47px;
+.chr {
+  border-top: 5px solid transparent;
+}
+
+.chr_active {
   border-top:5px solid rgb(232, 0, 0);
-  padding-top:20px;
-  padding-left:20px;
 }
 
 .node circle {

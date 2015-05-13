@@ -77,6 +77,9 @@ angular.module('blueprintApp')
                   ];
 
     $scope.results = null;
+    
+    // If we set this to 1, we separate broad from narrow peaks
+    var CSpeakSplit;
 
     var getAnalyses = function() {
       if($scope.analyses.length === 0) {
@@ -182,8 +185,16 @@ angular.module('blueprintApp')
             histones.sort().forEach(function(histone) {
               var normalizedHistone = histone.replace(/[.]/g,'_');
               histoneMap[normalizedHistone] = iHis;
-              $scope.experimentLabels.push(histone);
-              iHis++;
+              
+              if(CSpeakSplit) {
+                // It uses two slots
+                $scope.experimentLabels.push(histone+' (peaks)');
+                $scope.experimentLabels.push(histone+' (broad peaks)');
+                iHis+=2;
+              } else {
+                $scope.experimentLabels.push(histone);
+                iHis++;
+              }
 	    });
 	    $scope.histoneMap = histoneMap;
             deferred.resolve();
@@ -539,37 +550,55 @@ angular.module('blueprintApp')
     var getHistoneData = function(d,histone){
         
         var exp = 0;
-        var value = 0;
-        d.analyses.forEach(function(v){
+        var value = 0.0;
+        var expB = 0;
+        var valueB = 0.0;
+        d.analyses.forEach(function(analysis_id){
+            var theValue = 0.0;
+            var theExp = 0;
             $scope.chipSeq.forEach(function(a){
               if(a.key == histone){
                 //console.log(a);
                 a.analyses.buckets.forEach(function(c){
-                  if(c.key == v){
-                      value += parseFloat(c.peak_size.value);
-                      exp++;
+                  if(c.key == analysis_id){
+                      theValue += parseFloat(c.peak_size.value);
+                      theExp++;
                   }
                 });
               }
             });
+            if(analysis_id.indexOf('_broad_')!=-1) {
+              expB += theExp;
+              valueB += theValue;
+            } else {
+              exp += theExp;
+              value += theValue;
+            }
         });
-        if(exp > 0){
-         
-          // This can be a bit incorrect for pathways...
+        
+        // This can be a bit incorrect for pathways...
+        if(exp > 0 || expB > 0) {
           var region = 0;
           $scope.rangeQuery.forEach(function(r) {
-		var end = r.end+chipSeqWindow;
-		var start = r.start-chipSeqWindow;
-		// Corner case
-		if(start < 1) {
-			start=1;
-		}
-		region += end - start + 1;
+	  	var end = r.end+chipSeqWindow;
+	  	var start = r.start-chipSeqWindow;
+	  	// Corner case
+	  	if(start < 1) {
+	  		start=1;
+	  	}
+	  	region += end - start + 1;
 	  });
-           console.log(region);
-          value = (value/region)*100.0;
+	  
+          // console.log(region);
+          if(exp > 0){
+             //console.log(region);
+            value = (value/region)*100.0;
+          }
+          if(expB > 0){
+            valueB = (valueB/region)*100.0;
+          }
         }
-        return value; 
+        return {notBroad:value, broad:valueB}; 
     };
 
     var populateBasicTree = function(o) {
@@ -681,11 +710,22 @@ angular.module('blueprintApp')
 						if(normalizedHistone in $scope.histoneMap) {
 							var expIdx = $scope.histoneMap[normalizedHistone];
 							
-							statistics[expIdx] = getHistoneData(d,normalizedHistone);
+							var histoneStats = getHistoneData(d,normalizedHistone);
+
+							statistics[expIdx] = CSpeakSplit ? histoneStats.notBroad : (histoneStats.notBroad+histoneStats.broad);
 							if(statistics[expIdx]>0) {
 								childrens[expIdx]++;
 							} else {
 								statistics[expIdx] = NaN;
+							}
+								
+							if(CSpeakSplit) {
+								statistics[expIdx+1] = histoneStats.broad;
+								if(statistics[expIdx+1]>0) {
+									childrens[expIdx+1]++;
+								} else {
+									statistics[expIdx+1] = NaN;
+								}
 							}
 						} else {
 							console.log("Unmapped histone "+normalizedHistone);

@@ -1,0 +1,6 @@
+{
+	"esHost": "http://limtox.cnio.es:9203",
+	"dataRelease": "Dev Version!",
+	"dataDesc": "This release includes data from monocytes, granulocyte neutrophils, eosinophils, macrophages ( M0 , M1 and M2 ), naive CD4+ and naive CD8+ cells apart from 7 cell line samples.",
+	"debug": true
+}

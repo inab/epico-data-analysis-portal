@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "BLUEPRINT Data Portal",
   "dependencies": {
-    "angular": "1.2.16",
+    "angular": "~1.2.28",
     "json3": "~3.3.1",
     "es5-shim": "~3.1.0",
     "d3": "~3.5.5",
@@ -23,8 +23,8 @@
     }
   },
   "devDependencies": {
-    "angular-mocks": "1.2.16",
-    "angular-scenario": "1.2.16"
+    "angular-mocks": "~1.2.28",
+    "angular-scenario": "~1.2.28"
   },
   "authors": [
     { "name": "Víctor de la Torre", "email": "vdelatorre@cnio.es" },

@@ -53,7 +53,7 @@ module.exports = function (grunt) {
 	    };
 	buildTasks = [
 	    'clean:dist',
-	    'bower-install',
+	    'bower-update',
 	    'wiredep',
 	    'template',
 	    'useminPrepare',
@@ -87,7 +87,7 @@ module.exports = function (grunt) {
 	    };
 	buildTasks = [
 	    'clean:dist',
-	    'bower-install',
+	    'bower-update',
 	    'wiredep',
 	    'template',
 	    'useminPrepare',
@@ -500,10 +500,10 @@ module.exports = function (grunt) {
     grunt.task.run(['serve:' + target]);
   });
   
-  grunt.registerTask('bower-install', 'install bower dependencies', function() {
+  grunt.registerTask('bower-update', 'install/update bower dependencies', function() {
     var exec = require('child_process').exec;
     var cb = this.async();
-    exec('bower install', function(err, stdout, stderr) {
+    exec('bower update', function(err, stdout, stderr) {
       console.log(stdout);
       cb();
     });

@@ -20,7 +20,7 @@ export BLUEPRINT_DATAPORTAL_CONFIG
 
 The configuration parameters are:
 
-* esHost: The host of the Elasticsearch instance as a URL with the path, optionally giving the port.
+* `esHost`: The host of the Elasticsearch instance as a URL with the path, optionally giving the port.
 
 Installation
 -----------
@@ -48,7 +48,7 @@ PATH="$(gem env gemdir)/bin:${PATH}"
 export PATH
 ```
 
-4) Install latest [NodeJs](http://nodejs.org/) release from 0.10 or 0.12 branches, either using your operating system / distribution package manager, or by hand.
+4) Install latest stable [NodeJs](http://nodejs.org/) release from 0.10 or 0.12 branches, either using your operating system / distribution package manager, or by hand.
 
 (If you have installed NodeJs by hand, remember to add its `bin` subdirectory to the `PATH` environment variable)
 

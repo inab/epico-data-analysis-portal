@@ -432,7 +432,7 @@ angular.module('blueprintApp')
               aggs:{
                 peak_size: {
                   sum: {
-                    lang: "groovy",
+                    lang: "expression",
                     script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
                   }
                 }
@@ -488,7 +488,7 @@ angular.module('blueprintApp')
                   aggs:{
                     peak_size: {
                       sum: {
-                        lang: "groovy",
+                        lang: "expression",
                         script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
                       }
                     }

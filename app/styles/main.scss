@@ -21,10 +21,10 @@ $icon-font-path: "../bower_components/bootstrap-sass-official/assets/fonts/boots
 .img-center {margin:0 auto;}
 
 .btn-primary{
-  background:#e80000!important;
-  border-color:#e80000!important;
+  background:#0b1996!important;
+  border-color:#0b1996!important;
 }
-a{color:#e80000!important;}
+a{color:#0b1996!important;}
 
 /* Main Container */
 #main-container{
@@ -40,7 +40,7 @@ a{color:#e80000!important;}
 
 /* Custom page header */
 body{
-  background:#1c1e20;
+  background:#00c0e4;
 }
 .header {
   background:#1c1e20;
@@ -109,7 +109,8 @@ body{
 #search{
   border: 1px solid rgb(81, 0, 255);
   color: rgb(255, 255, 255);
-  background: rgba(81, 0, 255, 0.7)!important;
+  background: #00c0e4 !important;
+  border-radius: 20px;
 }
 
 #search::-webkit-input-placeholder { color:#FFF; }

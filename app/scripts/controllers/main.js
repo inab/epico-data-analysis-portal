@@ -33,6 +33,7 @@ angular.module('blueprintApp')
     $scope.found = "";
     $scope.samplesOnt = [];
     $scope.samples = [];
+    $scope.donors = [];
     $scope.labs = [];
     $scope.analyses = [];
     $scope.experimentLabels = [];
@@ -78,6 +79,71 @@ angular.module('blueprintApp')
 
     $scope.results = null;
     
+	$scope.subtotals = {
+		options: {
+			chart: {
+				type: 'pieChart',
+				height: 400,
+				width: 400,
+				margin: {
+					top: 0,
+					right: 0,
+					bottom: 0,
+					left: 0
+				},
+				x: function(d) {return d.key;},
+				y: function(d) {return d.y;},
+				showLegend: false,
+				showLabels: true,
+				transitionDuration: 500,
+				labelThreshold: 0.01,
+				valueFormat: d3.format('d')
+			},
+			caption: {
+				enable: true,
+				text: 'Analysis',
+				css: {
+					'text-align': 'center'
+				}
+			}
+		},
+		data: [
+			{
+				key: "Loading",
+				y: 1
+			},
+		]
+	};
+    
+	$scope.analysisSubtotals = {
+		options: {
+			chart: {
+				type: 'pieChart',
+				height: 400,
+				width: 400,
+				margin: {
+					top: 0,
+					right: 0,
+					bottom: 0,
+					left: 0
+				},
+				x: function(d) {return d.key;},
+				y: function(d) {return d.y;},
+				showLegend: false,
+				showLabels: true,
+				transitionDuration: 500,
+				labelThreshold: 0.01,
+				valueFormat: d3.format('d')
+			},
+		},
+		data: [
+			{
+				key: "Loading",
+				y: 1
+			},
+		]
+	};
+    
     // If we set this to 1, we separate broad from narrow peaks
     var CSpeakSplit;
 
@@ -107,10 +173,8 @@ angular.module('blueprintApp')
         
           if(typeof(resp.hits.hits) !== undefined){
             resp.hits.hits.forEach(function(d) {
-              var  a = {};
-              a.experiment_id = d._source.experiment_id;
-              a.analysis_id = d._source.analysis_id;
-              $scope.analyses.push(a);
+              d._source._type = d._type;
+              $scope.analyses.push(d._source);
             });
             deferred.resolve();
           }else{
@@ -126,7 +190,7 @@ angular.module('blueprintApp')
       if($scope.labs.length===0) {
         var deferred = $q.defer();
         es.search({
-          size:1000,
+          size:100000,
           index: 'sample-tracking-data',
           body:{
               query : {
@@ -273,7 +337,8 @@ angular.module('blueprintApp')
       var deferred = $q.defer();
       var shouldQuery = genShouldQuery($scope.rangeQuery);
       es.search({
-        size:10000000,  
+        size:10000000,
+        index: 'primary',
         type: 'dlat.mr',
         search_type: 'count',
         body: {
@@ -320,6 +385,7 @@ angular.module('blueprintApp')
       var shouldQuery = genShouldQuery($scope.rangeQuery);
       es.search({
         size:10000000,  
+        index: 'primary',
         type: 'exp.g',
         search_type: 'count',
         body: {
@@ -366,6 +432,7 @@ angular.module('blueprintApp')
       var shouldQuery = genShouldQuery($scope.rangeQuery);
       es.search({
         size:10000000,  
+        index: 'primary',
         type: 'exp.t',
         search_type: 'count',
         body: {
@@ -412,6 +479,7 @@ angular.module('blueprintApp')
       var shouldQuery = genShouldQuery($scope.rangeQuery);
       es.search({
         size:10000000,  
+        index: 'primary',
         type: 'rreg.p',
         search_type: 'count',
         body: {
@@ -463,6 +531,7 @@ angular.module('blueprintApp')
       var shouldQuery = genShouldQuery($scope.rangeQuery);
       es.search({
         size:10000000,  
+        index: 'primary',
         type: 'pdna.p',
         search_type: 'count',
         body: {
@@ -512,40 +581,206 @@ angular.module('blueprintApp')
       return deferred.promise;
     };
 
-    var getSamples = function() {
-      if($scope.samples.length===0) {
-        var deferred = $q.defer();
-        es.search({
-          type: 'sdata.sample',
-          size: 1000,
-        },function(err,resp){
-        
-          if(typeof(resp.hits.hits) !== undefined){
-            resp.hits.hits.forEach(function(d) {
-              var s = {};
-              s.analyzed_sample_type_other = d._source.analyzed_sample_type_other;
-              s.sample_id = d._source.sample_id;
-              s.ontology = d._source.purified_cell_type;
-              s.markers = d._source.markers;
-              s.experiments = [];
-              $scope.labs.forEach(function(d){
-                 if(d.sample_id == s.sample_id){
-                    s.experiments.push(d);
-                 } 
-              });  
-              $scope.samplesOnt.push(s.ontology);
-              $scope.samples.push(s);
-            });
-            deferred.resolve();
-            //console.log($scope.samples);
-          }else{
-            return deferred.reject(err);
-          }
-        
-        });
-        return deferred.promise;
-      }
-    };
+	var getSamples = function() {
+		if($scope.samples.length===0) {
+			var deferred = $q.defer();
+			es.search({
+				index: 'sample-tracking-data',
+				type: 'sdata.sample',
+				size: 100000,
+			},function(err,resp){
+				if(typeof(resp.hits.hits) !== undefined) {
+					resp.hits.hits.forEach(function(d) {
+						var s = {};
+						s.analyzed_sample_type_other = d._source.analyzed_sample_type_other;
+						s.sample_id = d._source.sample_id;
+						s.ontology = d._source.purified_cell_type;
+						s.markers = d._source.markers;
+						s.experiments = [];
+						$scope.labs.forEach(function(d){
+							if(d.sample_id == s.sample_id){
+								s.experiments.push(d);
+							}
+						});
+						$scope.samplesOnt.push(s.ontology);
+						$scope.samples.push(s);
+					});
+					deferred.resolve();
+					//console.log($scope.samples);
+				} else {
+					return deferred.reject(err);
+				}
+			});
+			return deferred.promise;
+		}
+	};
+
+	var getDonors = function() {
+		if($scope.donors.length===0) {
+			var deferred = $q.defer();
+			es.search({
+				index: 'sample-tracking-data',
+				type: 'sdata.donor',
+				size: 100000,
+			},function(err,resp){
+				if(typeof(resp.hits.hits) !== undefined) {
+					resp.hits.hits.forEach(function(d) {
+						$scope.donors.push(d._source);
+					});
+					deferred.resolve();
+					//console.log($scope.donors);
+				} else {
+					return deferred.reject(err);
+				}
+			});
+			return deferred.promise;
+		}
+	};
+
+	var computeSubtotals = function() {
+		var subtotalsData = [];
+		
+		var numDonors = 0;
+		var numPooledDonors = 0;
+		var numCellularLines = 0;
+		var numOther = 0;
+		$scope.donors.forEach(function(d) {
+			switch(d.donor_kind) {
+				case 'd':
+					numDonors++;
+					break;
+				case 'p':
+					numPooledDonors++;
+					break;
+				case 'c':
+					numCellularLines++;
+					break;
+				default:
+					numOther++;
+			}
+		});
+		subtotalsData.push({
+				key: 'Donors',
+				y: numDonors
+			},
+			{
+				key: 'Cellular Lines',
+				y: numCellularLines
+			},
+			{
+				key: 'Pooled Donors',
+				y: numPooledDonors
+			}
+		);
+		
+		if(numOther>0) {
+			subtotalsData.push({
+					key: 'Other kind of donors',
+					y: numOther
+				}
+			);
+		}
+		
+		var numSamples = $scope.samples.length;
+		
+		subtotalsData.push({
+				key: 'Samples',
+				y: numSamples
+			}
+		);
+		
+		$scope.subtotals.data = subtotalsData;
+		
+		// Now, the analysis subtotals
+		var numDlatHyper = 0;
+		var numDlatHypo = 0;
+		var numDlatOther = 0;
+		
+		var numCSbroad = 0;
+		var numCSnarrow = 0;
+		
+		var numExpG = 0;
+		var numExpT = 0;
+		
+		var numRReg = 0;
+		var numAnOther = 0;
+		$scope.analyses.forEach(function(a) {
+			switch(a._type) {
+				case 'dlat.m':
+					switch(a.mr_type) {
+						case 'hyper':
+							numDlatHyper++;
+							break;
+						case 'hypo':
+							numDlatHypo++;
+							break;
+						default:
+							numDlatOther++;
+							break;
+					}
+					
+					break;
+				case 'pdna.m':
+					if(a.analysis_id.indexOf('_broad_')!=-1) {
+						numCSbroad++;
+					} else {
+						numCSnarrow++;
+					}
+					break;
+				case 'exp.m':
+					numExpG++;
+					numExpT++;
+					break;
+				case 'rreg.m':
+					numRReg++;
+					break;
+				default:
+					numAnOther++;
+			}
+		});
+		
+		var analysisSubtotals = [
+			{
+				key: 'Hyper-methylated regions',
+				y: numDlatHyper
+			},
+			{
+				key: 'Hypo-methylated regions',
+				y: numDlatHypo
+			},
+			{
+				key: 'Other methylated regions',
+				y: numDlatOther
+			},
+			{
+				key: 'ChIP-Seq (broad peaks)',
+				y: numCSbroad
+			},
+			{
+				key: 'ChIP-Seq (narrow peaks)',
+				y: numCSnarrow
+			},
+			{
+				key: 'Gene expression',
+				y: numExpG
+			},
+			{
+				key: 'Transcript expression',
+				y: numExpT
+			},
+			{
+				key: 'Chromatin accessibility',
+				y: numRReg
+			},
+			{
+				key: 'Other',
+				y: numAnOther
+			},
+		];
+		
+		$scope.analysisSubtotals.data = analysisSubtotals;
+	};
+
 
     var getHistoneData = function(d,histone){
         
@@ -1150,7 +1385,7 @@ angular.module('blueprintApp')
 
     var preprocessQuery = function(){
 
-      console.log('Runing preprocessQuery');
+      console.log('Running preprocessQuery');
       var deferred = $q.defer();
       var promise = deferred.promise;
       
@@ -1196,8 +1431,6 @@ angular.module('blueprintApp')
       deferred.resolve();
       return promise;
     };
-
-
 
     $scope.resultsSearch = [];
     
@@ -1282,4 +1515,17 @@ angular.module('blueprintApp')
  		});
 	}
     };
-  }]);
+
+	var init = function($q) {
+		var deferred = $q.defer();
+		var promise = deferred.promise;
+		promise = promise.then(getAnalyses)
+				 .then(getLabs)
+				 .then(getSamples)
+				 .then(getDonors)
+				 .then(computeSubtotals);
+		deferred.resolve();
+	};
+	
+	init($q);
+}]);

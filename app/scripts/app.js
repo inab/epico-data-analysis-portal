@@ -16,6 +16,7 @@ angular.module('blueprintApp', [
     'blueprintApp.d3',
     'blueprintApp.elasticsearch',
     'blueprintApp.controllers',
+    'nvd3',
     'ngAnimate',
     'ngCookies',
     'ngResource',

@@ -6,7 +6,8 @@
     "angular": "~1.2.28",
     "json3": "~3.3.1",
     "es5-shim": "~3.1.0",
-    "d3": "~3.5.5",
+    "d3": "~3.5.6",
+    "nvd3": "~1.8.1",
     "bootstrap-sass-official": "~3.2.0",
     "angular-resource": "~1.2.28",
     "angular-cookies": "~1.2.28",
@@ -15,7 +16,8 @@
     "angular-touch": "~1.2.28",
     "angular-route": "~1.2.28",
     "angular-bootstrap": "~0.11.0",
-    "elasticsearch": "~4.0.2"
+    "elasticsearch": "~4.0.2",
+    "angular-nvd3": "~1.0.0-rc.2"
   },
   "overrides": {
     "elasticsearch": {
@@ -27,8 +29,14 @@
     "angular-scenario": "~1.2.28"
   },
   "authors": [
-    { "name": "Víctor de la Torre", "email": "vdelatorre@cnio.es" },
-    { "name": "José María Fernández", "email": "jmfernandez@cnio.es" }
+    {
+      "name": "Víctor de la Torre",
+      "email": "vdelatorre@cnio.es"
+    },
+    {
+      "name": "José María Fernández",
+      "email": "jmfernandez@cnio.es"
+    }
   ],
   "repository": {
     "type": "git",

@@ -1,10 +1,8 @@
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
-    <div class="col-sm-12">
-        <div class="container">
             <div class="col-sm-3 text-center vertical-center">
 		    <nvd3 options="subtotals.options" data="subtotals.data"></nvd3>
             </div>
-            <div class="col-sm-6 text-center">
+            <div class="col-xs-6 text-center">
                 <h2>Explore the behaviour of your candidate genes, pathways or genome regions across the Blueprint datasets.</h2>
                 <p>The Blueprint project will provide at least 100 reference epigenomes to the scientific community. These epigenomes are characterized by: RNAseq, BisulfiteSeq, DNase-seq, and 8 Histone marks</p>
                 <p>Use this tool to explore the behaviour of your gene in the different cell types</p>
@@ -15,49 +13,42 @@
             <div class="col-sm-3 text-center vertical-center">
 		    <nvd3 options="analysisSubtotals.options" data="analysisSubtotals.data"></nvd3>
             </div>
-        </div>
-    </div>
 </div>
 
-<div class="container">
-  <div class="row" style="margin-top:70px;">
+  <div class="row">
     <div class="col-sm-12">
       <form class="form-horizontal" role="form">
         <div class="form-group form-group-lg">
-          <div class="col-sm-10">
-            <input ng-model="query" ng-change="suggest()" class="form-control" type="text" id="search" placeholder="Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" style="background:#f5f5f5">
+	<div class="col-sm-3 text-center">
+		<label>Display options</label>
+		<div class="form-group">
+			<label class="checkbox-inline">
+				<input type="radio" name="display" ng-model="display" value="compact"> Compact
+			</label>
+			<label class="checkbox-inline">
+				<input type="radio" name="display" ng-model="display" value="detailed"> Detailed
+			</label>
+		</div>
+	</div>
+          <div class="col-sm-6">
+            <input ng-model="query" ng-change="suggest()" ng-keypress="enterSearch($event)" class="form-control" type="text" id="search" placeholder="Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" style="background:#f5f5f5">
             <!-- <p class="small">Chromosome regions should be shorter than 10Kb</p> -->
+	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'; search()" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a></p>
+		<div class="suggest-container">
+		  <div ng-repeat="suggest in resultsSearch" class="suggest-item">
+			  <i>({{suggest.feature}})</i> <a ng-click="query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.fullTerm}}</a>
+			  <br />
+		  </div>
+		</div>
           </div>
-          <div class="col-sm-2 text-right"><button ng-click="search()" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
-          <div class="col-sm-10" ng-repeat="suggest in resultsSearch">
-		  <a ng-click="query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.term}}</a> <i>({{suggest.feature}})</i>
-		  <br />
-          </div>
-        </form>
-      </div>
-      <p>Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'; search()" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.1'; search()" style="cursor: pointer;">REACT_160159.1</a></p>
+          <div class="col-sm-3 text-center"><button ng-click="search()" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
+        </div>
+      </form>
     </div>
   </div> 
 
-  <div class="row" style="margin-top:20px;">
-    <div class="col-sm-12">
-<label>Display options</label>
-<div class="form-group">
-    <label class="checkbox-inline">
-        <input type="radio" name="display" ng-model="display" value="compact"> Compact
-    </label>
-    <label class="checkbox-inline">
-        <input type="radio" name="display" ng-model="display" value="detailed"> Detailed
-    </label>
-</div>
-</div>
-</div>
 
-
-
-
-
-  <div class="row" style="margin-top:40px;">
+  <div class="row" style="margin-top:10px;">
     <div class="col-sm-12">
       <p class="text-center" ng-bind-html="found"></p>
       <div class="col-centered" style="width: 100%;background: #f5f5f5;padding-bottom: 20px;-webkit-border-radius: 3px;-moz-border-radius: 3px;border-radius: 3px;border:1px solid #CCC;">
@@ -75,7 +66,6 @@
       <d3-tree data="ontology" label="name" style="display"></d3-tree>      
     </div>
   </div>
-</div>
 
 
 

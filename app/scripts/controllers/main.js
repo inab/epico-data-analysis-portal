@@ -10,8 +10,11 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$q','es','portalConfig',function($scope,$q, es, portalConfig) {
+  .controller('MainCtrl', ['$scope','$q','es','portalConfig','d3',function($scope,$q, es, portalConfig, d3) {
 
+	var REACT_PREFIX = 'REACT_';
+	var REACT_FEATURE = 'pathway';
+	
     var pageNum = 1;
     var perPage = 50;
     var experimentLabels = ['Bisulfite-Seq','DNase-Seq','Gene Exp (RNA-Seq)','Transcript Exp (RNA-Seq)'];
@@ -83,7 +86,7 @@ angular.module('blueprintApp')
 		options: {
 			chart: {
 				type: 'pieChart',
-				height: 400,
+				height: 475,
 				width: 400,
 				margin: {
 					top: 0,
@@ -93,33 +96,107 @@ angular.module('blueprintApp')
 				},
 				x: function(d) {return d.key;},
 				y: function(d) {return d.y;},
-				showLegend: false,
+				//showLegend: false,
 				showLabels: true,
+				donut:true,
+				title: "Donors & Samples",
+				labelsOutside: true,
+				labelSunbeamLayout: true,
+				labelType: "value",
 				transitionDuration: 500,
 				labelThreshold: 0.01,
 				valueFormat: d3.format('d')
 			},
-			caption: {
-				enable: true,
-				text: 'Analysis',
-				css: {
-					'text-align': 'center'
-				}
-			}
 		},
 		data: [
 			{
 				key: "Loading",
 				y: 1
 			},
-		]
+		],
 	};
     
+	//Format function for the tooltip values column
+	var valueFormatter = function(d,i) {
+		return d;
+	};
+	
+	//Format function for the tooltip header value.
+	var headerFormatter = function(d) {
+		return d;
+	};
+	
+	var keyFormatter = function(d, i) {
+		return d;
+	};
+	
+	var analysisPieTooltipGenerator = function (d) {
+		if (d === null) {
+			return '';
+		}
+		
+		var headerEnabled = undefined;
+		
+		var table = d3.select(document.createElement("table"));
+		if(headerEnabled) {
+			var theadEnter = table.selectAll("thead")
+				.data([d])
+				.enter().append("thead");
+			
+			theadEnter.append("tr")
+				.append("td")
+				.attr("colspan", 3)
+				.append("strong")
+				.classed("x-value", true)
+				.html(headerFormatter(d.value));
+		}
+		
+		var tbodyEnter = table.selectAll("tbody")
+			.data([d])
+			.enter().append("tbody");
+		
+		var trowEnter = tbodyEnter.selectAll("tr")
+			.data(function(p) { return p.series; })
+			.enter()
+			.append("tr")
+			.classed("highlight", function(p) { return p.highlight; });
+		
+		trowEnter.append("td")
+			.classed("legend-color-guide",true)
+			.append("div")
+			.style("background-color", function(p) { return p.color; });
+		
+		trowEnter.append("td")
+			.classed("key",true)
+			.html(function(p, i) { return keyFormatter(d.data.desc, i); });
+		
+		trowEnter.append("td")
+			.classed("value",true)
+			.html(function(p, i) { return valueFormatter(p.value, i); });
+		
+		trowEnter.selectAll("td").each(function(p) {
+			if (p.highlight) {
+				var opacityScale = d3.scale.linear().domain([0,1]).range(["#fff",p.color]);
+				var opacity = 0.6;
+				d3.select(this)
+				.style("border-bottom-color", opacityScale(opacity))
+				.style("border-top-color", opacityScale(opacity))
+				;
+			}
+		});
+		
+		var html = table.node().outerHTML;
+		if(d.footer !== undefined) {
+			html += "<div class='footer'>" + d.footer + "</div>";
+		}
+		return html;
+	};
+	
 	$scope.analysisSubtotals = {
 		options: {
 			chart: {
 				type: 'pieChart',
-				height: 400,
+				height: 475,
 				width: 400,
 				margin: {
 					top: 0,
@@ -129,12 +206,32 @@ angular.module('blueprintApp')
 				},
 				x: function(d) {return d.key;},
 				y: function(d) {return d.y;},
-				showLegend: false,
 				showLabels: true,
+				donut:true,
+				title: "Analysis",
+				labelsOutside: true,
+				labelSunbeamLayout: true,
+				labelType: "value",
+				tooltip: {
+					contentGenerator: analysisPieTooltipGenerator,
+				},
+				legend: {
+					margin: {
+						left: 3,
+					},
+					//key: function(d) { console.log(d) },
+				},
 				transitionDuration: 500,
 				labelThreshold: 0.01,
 				valueFormat: d3.format('d')
 			},
+			//caption: {
+			//	enable: true,
+			//	text: 'Analysis',
+			//	css: {
+			//		textAlign: 'center'
+			//	}
+			//}
 		},
 		data: [
 			{
@@ -147,44 +244,147 @@ angular.module('blueprintApp')
     // If we set this to 1, we separate broad from narrow peaks
     var CSpeakSplit;
 
-    var getAnalyses = function() {
-      if($scope.analyses.length === 0) {
-        var deferred = $q.defer();
-        es.search({
-          size:10000000,
-          index: 'metadata',
-          body:{
-              query : {
-                filtered : {
-                    filter : {
-                        bool:{
-                          must:[
-                              {exists : { field : 'experiment_id' }},
-                              {exists : { field : 'analysis_id' }}
-                          ]  
-                        }
-                        
-                    }
-                }
-            }
-        
-          }
-        },function(err,resp){
-        
-          if(typeof(resp.hits.hits) !== undefined){
-            resp.hits.hits.forEach(function(d) {
-              d._source._type = d._type;
-              $scope.analyses.push(d._source);
-            });
-            deferred.resolve();
-          }else{
-            return deferred.reject(err);
-          }
-        
-        });
-        return deferred.promise;
-      }
-    };
+	var getAnalyses = function() {
+		if($scope.analyses.length === 0) {
+			var deferred = $q.defer();
+			es.search({
+				size: 10000000,
+				index: 'metadata',
+				body: {
+					query: {
+						filtered: {
+							filter: {
+								bool: {
+									must: [
+										{exists : { field : 'experiment_id' }},
+										{exists : { field : 'analysis_id' }}
+									]  
+								}
+							}
+						}
+					}
+			
+				}
+			},function(err,resp){
+				if(typeof(resp.hits.hits) !== undefined) {
+					// Now, the analysis subtotals
+					var numDlatHyper = 0;
+					var numDlatHypo = 0;
+					var numDlatOther = 0;
+					
+					var numCSbroad = 0;
+					var numCSnarrow = 0;
+					
+					var numExpG = 0;
+					var numExpT = 0;
+					
+					var numRReg = 0;
+					var numAnOther = 0;
+					
+					resp.hits.hits.forEach(function(d) {
+						d._source._type = d._type;
+						switch(d._type) {
+							case 'dlat.m':
+								switch(d._source.mr_type) {
+									case 'hyper':
+										numDlatHyper++;
+										break;
+									case 'hypo':
+										numDlatHypo++;
+										break;
+									default:
+										numDlatOther++;
+										break;
+								}
+								
+								break;
+							case 'pdna.m':
+								if(d._source.analysis_id.indexOf('_broad_')!=-1) {
+									numCSbroad++;
+								} else {
+									numCSnarrow++;
+								}
+								break;
+							case 'exp.m':
+								numExpG++;
+								numExpT++;
+								break;
+							case 'rreg.m':
+								numRReg++;
+								break;
+							default:
+								numAnOther++;
+						}
+						$scope.analyses.push(d._source);
+					});
+					
+					var analysisSubtotals = [
+						{
+							key: 'Hyper-m regions',
+							desc: 'Hyper-methylated regions',
+							y: numDlatHyper
+						},
+						{
+							key: 'Hypo-m regions',
+							desc: 'Hypo-methylated regions',
+							y: numDlatHypo
+						},
+					];
+					
+					if(numDlatOther > 0) {
+						analysisSubtotals.push({
+							key: 'Other m regions',
+							desc: 'Other methylated regions',
+							y: numDlatOther
+						});
+					}
+					
+					analysisSubtotals.push(
+						{
+							key: 'CS broad',
+							desc: 'ChIP-Seq (broad peaks)',
+							y: numCSbroad
+						},
+						{
+							key: 'CS narrow',
+							desc: 'ChIP-Seq (narrow peaks)',
+							y: numCSnarrow
+						},
+						{
+							key: 'Gene exp',
+							desc: 'Gene expression',
+							y: numExpG
+						},
+						{
+							key: 'Transcript exp',
+							desc: 'Transcript expression',
+							y: numExpT
+						},
+						{
+							key: 'Chrom Acc',
+							desc: 'Chromatin accessibility',
+							y: numRReg
+						}
+					);
+					
+					if(numAnOther > 0) {
+						analysisSubtotals.push({
+							key: 'Other',
+							desc: 'Other',
+							y: numAnOther
+						});
+					}
+					
+					$scope.analysisSubtotals.data = analysisSubtotals;
+					
+					deferred.resolve();
+				} else {
+					return deferred.reject(err);
+				}
+			});
+			return deferred.promise;
+		}
+	};
 
     var getLabs = function() {
       if($scope.labs.length===0) {
@@ -605,6 +805,15 @@ angular.module('blueprintApp')
 						$scope.samplesOnt.push(s.ontology);
 						$scope.samples.push(s);
 					});
+					
+					var numSamples = $scope.samples.length;
+					
+					$scope.subtotals.data.push({
+							key: 'Samples',
+							y: numSamples
+						}
+					);
+					
 					deferred.resolve();
 					//console.log($scope.samples);
 				} else {
@@ -624,9 +833,52 @@ angular.module('blueprintApp')
 				size: 100000,
 			},function(err,resp){
 				if(typeof(resp.hits.hits) !== undefined) {
+					var subtotalsData = [];
+					
+					var numDonors = 0;
+					var numPooledDonors = 0;
+					var numCellularLines = 0;
+					var numOther = 0;
 					resp.hits.hits.forEach(function(d) {
+						switch(d._source.donor_kind) {
+							case 'd':
+								numDonors++;
+								break;
+							case 'p':
+								numPooledDonors++;
+								break;
+							case 'c':
+								numCellularLines++;
+								break;
+							default:
+								numOther++;
+						}
 						$scope.donors.push(d._source);
 					});
+					subtotalsData.push({
+							key: 'Donors',
+							y: numDonors
+						},
+						{
+							key: 'Cellular Lines',
+							y: numCellularLines
+						},
+						{
+							key: 'Pooled Donors',
+							y: numPooledDonors
+						}
+					);
+					
+					if(numOther>0) {
+						subtotalsData.push({
+								key: 'Other kind of donors',
+								y: numOther
+							}
+						);
+					}
+					
+					$scope.subtotals.data = subtotalsData;
+					
 					deferred.resolve();
 					//console.log($scope.donors);
 				} else {
@@ -636,151 +888,6 @@ angular.module('blueprintApp')
 			return deferred.promise;
 		}
 	};
-
-	var computeSubtotals = function() {
-		var subtotalsData = [];
-		
-		var numDonors = 0;
-		var numPooledDonors = 0;
-		var numCellularLines = 0;
-		var numOther = 0;
-		$scope.donors.forEach(function(d) {
-			switch(d.donor_kind) {
-				case 'd':
-					numDonors++;
-					break;
-				case 'p':
-					numPooledDonors++;
-					break;
-				case 'c':
-					numCellularLines++;
-					break;
-				default:
-					numOther++;
-			}
-		});
-		subtotalsData.push({
-				key: 'Donors',
-				y: numDonors
-			},
-			{
-				key: 'Cellular Lines',
-				y: numCellularLines
-			},
-			{
-				key: 'Pooled Donors',
-				y: numPooledDonors
-			}
-		);
-		
-		if(numOther>0) {
-			subtotalsData.push({
-					key: 'Other kind of donors',
-					y: numOther
-				}
-			);
-		}
-		
-		var numSamples = $scope.samples.length;
-		
-		subtotalsData.push({
-				key: 'Samples',
-				y: numSamples
-			}
-		);
-		
-		$scope.subtotals.data = subtotalsData;
-		
-		// Now, the analysis subtotals
-		var numDlatHyper = 0;
-		var numDlatHypo = 0;
-		var numDlatOther = 0;
-		
-		var numCSbroad = 0;
-		var numCSnarrow = 0;
-		
-		var numExpG = 0;
-		var numExpT = 0;
-		
-		var numRReg = 0;
-		var numAnOther = 0;
-		$scope.analyses.forEach(function(a) {
-			switch(a._type) {
-				case 'dlat.m':
-					switch(a.mr_type) {
-						case 'hyper':
-							numDlatHyper++;
-							break;
-						case 'hypo':
-							numDlatHypo++;
-							break;
-						default:
-							numDlatOther++;
-							break;
-					}
-					
-					break;
-				case 'pdna.m':
-					if(a.analysis_id.indexOf('_broad_')!=-1) {
-						numCSbroad++;
-					} else {
-						numCSnarrow++;
-					}
-					break;
-				case 'exp.m':
-					numExpG++;
-					numExpT++;
-					break;
-				case 'rreg.m':
-					numRReg++;
-					break;
-				default:
-					numAnOther++;
-			}
-		});
-		
-		var analysisSubtotals = [
-			{
-				key: 'Hyper-methylated regions',
-				y: numDlatHyper
-			},
-			{
-				key: 'Hypo-methylated regions',
-				y: numDlatHypo
-			},
-			{
-				key: 'Other methylated regions',
-				y: numDlatOther
-			},
-			{
-				key: 'ChIP-Seq (broad peaks)',
-				y: numCSbroad
-			},
-			{
-				key: 'ChIP-Seq (narrow peaks)',
-				y: numCSnarrow
-			},
-			{
-				key: 'Gene expression',
-				y: numExpG
-			},
-			{
-				key: 'Transcript expression',
-				y: numExpT
-			},
-			{
-				key: 'Chromatin accessibility',
-				y: numRReg
-			},
-			{
-				key: 'Other',
-				y: numAnOther
-			},
-		];
-		
-		$scope.analysisSubtotals.data = analysisSubtotals;
-	};
-
 
     var getHistoneData = function(d,histone){
         
@@ -1051,6 +1158,7 @@ angular.module('blueprintApp')
     var getGeneRange = function(){
       var deferred = $q.defer();
       es.search({
+        index: 'external',
         type: 'external.gencode',
         size: 1000,
         body: {
@@ -1093,6 +1201,7 @@ angular.module('blueprintApp')
     var getPathwayRanges = function(){
 	var deferred = $q.defer();
 	es.search({
+		index: 'external',
 		type: 'external.reactome',
 		size: 1000,
 		body: {
@@ -1142,6 +1251,7 @@ angular.module('blueprintApp')
 		// theObj=undefined;
         
 		es.search({
+			index: 'meta-model',
 			type: 'cvterm',
 			size: 10000,
 			body: {
@@ -1217,6 +1327,7 @@ angular.module('blueprintApp')
 				
 				// Now, send the query to fetch all of them
 				es.search({
+					index: 'meta-model',
 					type: 'cvterm',
 					size: 10000,
 					body: {
@@ -1389,24 +1500,31 @@ angular.module('blueprintApp')
       var deferred = $q.defer();
       var promise = deferred.promise;
       
-      if($scope.suggestedQuery) {
-          $scope.rangeQuery.push({ chr: $scope.suggestedQuery.chromosome , start: $scope.suggestedQuery.chromosome_start, end: $scope.suggestedQuery.chromosome_end });
-          $scope.ensemblGeneId = $scope.suggestedQuery.feature_cluster_id;
-          $scope.geneQuery = $scope.suggestedQuery.term;
-          $scope.geneQueryType = $scope.suggestedQuery.feature;
-          if($scope.suggestedQuery.feature!=='gene') {
-		  $scope.geneQueryType += ' from gene,';
-          }
-          //$scope.rangeQuery.chr = resp.hits.hits[0]._source.chromosome;
-          //$scope.rangeQuery.start = resp.hits.hits[0]._source.chromosome_start;
-          //$scope.rangeQuery.end = resp.hits.hits[0]._source.chromosome_end;
-          //$scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end+ " (Gene: "+$scope.geneQuery+")";
-          updateChromosomes();
+	if($scope.suggestedQuery) {
+		if($scope.suggestedQuery.feature != REACT_FEATURE) {
+			$scope.rangeQuery.push({ chr: $scope.suggestedQuery.chromosome , start: $scope.suggestedQuery.chromosome_start, end: $scope.suggestedQuery.chromosome_end });
+			$scope.ensemblGeneId = $scope.suggestedQuery.feature_cluster_id;
+			$scope.geneQuery = $scope.suggestedQuery.term;
+			$scope.geneQueryType = $scope.suggestedQuery.feature;
+			if($scope.suggestedQuery.feature!=='gene') {
+				$scope.geneQueryType += ' from gene,';
+			}
+			//$scope.rangeQuery.chr = resp.hits.hits[0]._source.chromosome;
+			//$scope.rangeQuery.start = resp.hits.hits[0]._source.chromosome_start;
+			//$scope.rangeQuery.end = resp.hits.hits[0]._source.chromosome_end;
+			//$scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end+ " (Gene: "+$scope.geneQuery+")";
+		} else {
+			$scope.pathwayQuery = $scope.suggestedQuery.term;
+			$scope.suggestedQuery.participants.forEach(function(part) {
+				$scope.rangeQuery.push({ chr: part.chromosome , start: part.chromosome_start, end: part.chromosome_end });
+			});
+		}
+		updateChromosomes();
       } else {
       
         var q = $scope.query.trim();
         var m = q.match('^chr(.*):(.*)-(.*)$');
-        var react = q.indexOf('REACT_') === 0;
+        var react = q.indexOf(REACT_PREFIX) === 0;
         
         //range query
         if(m){
@@ -1473,57 +1591,154 @@ angular.module('blueprintApp')
     };
     
     
+	var my_feature_ranking = {
+		gene: 1,
+		transcript: 2,
+		exon: 3,
+		CDS: 4,
+		UTR: 5,
+		start_codon: 6,
+		stop_codon: 7,
+		Selenocysteine: 8
+	};
+	
     $scope.suggest = function() {
 	$scope.resultsSearch = [];
 	$scope.suggestedQuery = null;
 	
 	if($scope.query.length >= 3) {
-		var query = $scope.query.toLowerCase();
-		es.search({
-			type: 'external.gencode',
-			size: 5,
-			body: {
-				query:{
-					filtered: {
-						query: {
-							match_all: {}
-						},
-						filter: {
-							prefix: {
-								symbol: query
+		if($scope.query.indexOf(REACT_PREFIX) === 0) {
+			es.search({
+				index: 'external',
+				type: 'external.reactome',
+				size: 50,
+				body: {
+					query:{
+						filtered: {
+							query: {
+								match_all: {}
+							},
+							filter: {
+								prefix: {
+									pathway_id: $scope.query
+								}
 							}
 						}
-					}
-				},
-				fields: ['symbol','chromosome','chromosome_start','chromosome_end','feature','feature_cluster_id']
-			}
-		},function(err,resp){
-			console.log(resp);
-			resp.hits.hits.forEach(function(sug) {
-				// A backup default
-				var theTerm = sug.fields.symbol[0];
-				sug.fields.symbol.some(function(term) {
-					console.log(term);
-					if(term.toLowerCase().indexOf(query)===0) {
-						theTerm = term;
-						return true;
-					}
-					return false;
+					},
+				}
+			},function(err,resp) {
+				var resultsSearch = [];
+				
+				// Only process at most 50 suggestions
+				resp.hits.hits.forEach(function(sug) {
+					var pathway_id = sug._source.pathway_id;
+					resultsSearch.push({term: pathway_id, fullTerm: pathway_id, feature: REACT_FEATURE, participants: sug._source.participants});
 				});
-				$scope.resultsSearch.push({term:theTerm,id:sug._id,chromosome:sug.fields.chromosome[0],chromosome_start:sug.fields.chromosome_start[0],chromosome_end:sug.fields.chromosome_end[0],feature:sug.fields.feature[0],feature_cluster_id:sug.fields.feature_cluster_id[0]});
+				
+				$scope.resultsSearch = resultsSearch;
 			});
- 		});
+		} else {
+			var query = $scope.query.toLowerCase();
+			es.search({
+				index: 'external',
+				type: 'external.gencode',
+				size: 5000,
+				body: {
+					query:{
+						filtered: {
+							query: {
+								match_all: {}
+							},
+							filter: {
+								prefix: {
+									symbol: query
+								}
+							}
+						}
+					},
+					fields: ['symbol','chromosome','chromosome_start','chromosome_end','feature','feature_cluster_id'],
+				}
+			},function(err,resp){
+				var resultsSearch = [];
+				
+				resp.hits.hits.forEach(function(sug,i) {
+					var theTerm = undefined;
+					var theSecondTerm = undefined;
+					var isFirst = 0;
+					sug.fields.symbol.forEach(function(term) {
+						var termpos = term.toLowerCase().indexOf(query);
+						if(termpos===0) {
+							if(theTerm===undefined || term.length < theTerm.length) {
+								theTerm = term;
+							}
+						} else if(termpos!==-1) {
+							if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
+								theSecondTerm = term;
+							}
+						}
+					});
+					
+					// A backup default
+					if(theTerm===undefined) {
+						if(theSecondTerm !== undefined) {
+							isFirst = 1;
+							theTerm = theSecondTerm;
+						} else {
+							isFirst = 2;
+							theTerm = sug.fields.symbol[0];
+						}
+					}
+					var feature = sug.fields.feature[0];
+					var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
+					resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug.fields.symbol.join(", ")+')', id:sug._id,chromosome:sug.fields.chromosome[0],chromosome_start:sug.fields.chromosome_start[0],chromosome_end:sug.fields.chromosome_end[0],feature:feature,featureScore:featureScore, feature_cluster_id:sug.fields.feature_cluster_id[0]});
+				});
+				
+				resultsSearch.sort(function(a,b) {
+					if(a.featureScore != b.featureScore) {
+						return a.featureScore - b.featureScore;
+					} else if(a.isFirst != b.isFirst) {
+						return a.isFirst - b.isFirst;
+					} else if(a.term.length != b.term.length) {
+						return a.term.length - b.term.length;
+					} else {
+						return a.term.localeCompare(b.term);
+					}
+				});
+				
+				var curFeat = '';
+				var numFeat = 0;
+				resultsSearch.forEach(function(r) {
+					if(r.feature != curFeat) {
+						curFeat = r.feature;
+						numFeat = 0;
+					}
+					if(numFeat<4) {
+						$scope.resultsSearch.push(r);
+						numFeat++;
+					}
+				});
+			});
+		}
 	}
     };
+    
+	$scope.enterSearch = function(keyEvent) {
+		if(keyEvent.which === 13 && $scope.query.length > 0) {
+			//if($scope.resultsSearch.length > 0) {
+			//	$scope.search($scope.resultsSearch[0]);
+			//} else {
+				$scope.search();
+			//}
+		}
+	};
 
 	var init = function($q) {
 		var deferred = $q.defer();
 		var promise = deferred.promise;
-		promise = promise.then(getAnalyses)
-				 .then(getLabs)
-				 .then(getSamples)
-				 .then(getDonors)
-				 .then(computeSubtotals);
+		promise = promise.then(getDonors)
+				.then(getAnalyses)
+				.then(getLabs)
+				.then(getSamples);
 		deferred.resolve();
 	};
 	

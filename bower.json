@@ -17,7 +17,8 @@
     "angular-route": "~1.2.28",
     "angular-bootstrap": "~0.11.0",
     "elasticsearch": "~4.0.2",
-    "angular-nvd3": "~1.0.0-rc.2"
+    "angular-nvd3": "~1.0.0-rc.2",
+    "roboto-fontface": "~0.4.3"
   },
   "overrides": {
     "elasticsearch": {

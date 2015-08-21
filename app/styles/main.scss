@@ -1,4 +1,4 @@
-$icon-font-path: "../bower_components/bootstrap-sass-official/assets/fonts/bootstrap/";
+$icon-font-path: "../fonts/";
 // bower:scss
 @import "bootstrap-sass-official/assets/stylesheets/_bootstrap.scss";
 // endbower
@@ -10,7 +10,7 @@ $icon-font-path: "../bower_components/bootstrap-sass-official/assets/fonts/boots
 /* Boostrap resets */
 @media (min-width: 1200px){
   .container {
-    width: 1170px!important;
+    width: 1200px!important;
   }
 }
   
@@ -155,4 +155,33 @@ path.link {
 
 .vertical-center {
 	vertical-align: middle;
+}
+
+.suggest-container {
+	position:absolute;
+	z-index:1;
+	padding: 0.5em;
+	color: rgb(255, 255, 255);
+	background: #00c0e4 !important;
+	border-radius: 20px;
+	
+	/* This is for the different browsers */
+	width:100%;
+	width: -moz-available;
+	width: -webkit-fill-available;
+	
+	max-height: 10em;
+	overflow: auto;
+}
+.suggest-container::-webkit-input-placeholder { color:#FFF; }
+.suggest-container::-moz-placeholder { color:#FFF; } /* firefox 19+ */
+
+div.suggest-container:empty {
+	display: none;
+}
+
+.suggest-item {
+	overflow:hidden;
+	text-overflow: ellipsis;
+	white-space:nowrap;
 }

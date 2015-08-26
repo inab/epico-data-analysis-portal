@@ -13,9 +13,16 @@
     <link rel="stylesheet" href="bower_components/roboto-fontface/css/roboto-fontface.css" />
     <!-- endbower -->
     <!-- endbuild -->
+<!--[if gt IE 10]><!-->
     <!-- build:css(.tmp) styles/main.css -->
     <link rel="stylesheet" href="styles/main.css">
     <!-- endbuild -->
+<!--<![endif]-->
+<!--[if lte IE 10]>
+    <!-- build:css(.tmp) styles/main_for_ie.css -->
+    <link rel="stylesheet" href="styles/main_for_ie.css">
+    <!-- endbuild -->
+<!--[endif]-->
   </head>
   <body ng-app="blueprintApp">
     <!--[if lt IE 7]>

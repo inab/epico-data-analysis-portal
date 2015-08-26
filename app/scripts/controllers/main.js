@@ -10,7 +10,7 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$q','es','portalConfig','d3',function($scope,$q, es, portalConfig, d3) {
+  .controller('MainCtrl', ['$scope','$location','$q','es','portalConfig','d3',function($scope,$location,$q, es, portalConfig, d3) {
 	
 	var DATA_CHART_TYPE = 'lineChart';
 	var DATA_CHART_HEIGHT = 400;
@@ -157,7 +157,7 @@ angular.module('blueprintApp')
 			return '';
 		}
 		
-		var headerEnabled = undefined;
+		var headerEnabled;
 		
 		var table = d3.select(document.createElement("table"));
 		if(headerEnabled) {
@@ -324,7 +324,7 @@ angular.module('blueprintApp')
 							
 							break;
 						case 'pdna.m':
-							if(d._source.analysis_id.indexOf('_broad_')!=-1) {
+							if(d._source.analysis_id.indexOf('_broad_')!==-1) {
 								numCSbroad++;
 							} else {
 								numCSnarrow++;
@@ -994,7 +994,7 @@ angular.module('blueprintApp')
                 });
               }
             });
-            if(analysis_id.indexOf('_broad_')!=-1) {
+            if(analysis_id.indexOf('_broad_')!==-1) {
               expB += theExp;
               valueB += theValue;
             } else {
@@ -1216,15 +1216,20 @@ angular.module('blueprintApp')
 	};
 
 	var defaultSearchUri = 'http://www.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
+	var regionSearchUri = 'http://www.ensembl.org/Homo_sapiens/Location/View?r=';
 	var searchUris = {
 		gene: 'http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core&g=',
 		pathway: 'http://www.reactome.org/content/detail/',
 		transcript: 'http://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core&t=',
 		reaction: 'http://www.reactome.org/content/detail/',
-		region: 'http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core&r=',
+		region: regionSearchUri,
 	};
 	
-	var updateChromosomes = function(localScope,isRange){
+	var updateChromosomes = function(localScope) {
+		// First, let's update the query string
+		var qString = ( localScope.currentQueryType !== 'range' ) ? localScope.currentQueryType + ':' + localScope.currentQuery : localScope.currentQuery;
+		$location.search({q: qString});
+		
 		var regions = '';
 		//localScope.chromosomes.forEach(function(d){
 		//	d.c = "chr";
@@ -1244,7 +1249,7 @@ angular.module('blueprintApp')
 			}
 			var rangeStr = range.chr+":"+range.start+"-"+range.end;
 			
-			regions += "<a href='http://www.ensembl.org/Homo_sapiens/Location/View?r="+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
+			regions += "<a href='"+regionSearchUri+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
 			
 			// Preparing the charts!
 			var rangeData = {
@@ -1350,18 +1355,19 @@ angular.module('blueprintApp')
 			
 			localScope.graphData.push(rangeData);
 		});
-		localScope.found = "Displaying information from region"+((localScope.rangeQuery.length > 1)?'s':'')+": "+regions;
-		if(localScope.currentQuery !== null) {
-			var currentQueryType = isRange ? 'range' : localScope.currentQueryType;
-			var uri = (currentQueryType in searchUris) ? searchUris[currentQueryType] : defaultSearchUri;
-			localScope.found += " ("+localScope.currentQueryType+" <a href='"+uri+localScope.ensemblGeneId+"' target='_blank'>"+localScope.currentQuery+" ["+localScope.ensemblGeneId+"]</a>)";
-		//} else if(localScope.pathwayQuery !== null) {
-		//	localScope.found += " (Pathway <a href='http://www.reactome.org/content/detail/"+localScope.pathwayQuery+"' target='_blank'>"+localScope.pathwayQuery+"</a>)";
+		localScope.found = "Displaying information from ";
+		if(localScope.currentQueryType !== 'range') {
+			var uri = (localScope.currentQueryType in searchUris) ? searchUris[localScope.currentQueryType] : defaultSearchUri;
+			localScope.found += localScope.currentQueryType+" <a href='"+uri+localScope.ensemblGeneId+"' target='_blank'>"+localScope.currentQuery+" ["+localScope.ensemblGeneId+"]</a>, ";
 		}
+		localScope.found += "region"+((localScope.rangeQuery.length > 1)?'s':'')+": "+regions;
 	};
-
+	
+	var DEFAULT_QUERY_TYPES = ["gene","pathway","reaction"];
+	
 	var getRanges = function(localScope){
 		var deferred = $q.defer();
+		var queryTypes = localScope.currentQueryType!==undefined ? [localScope.currentQueryType] : DEFAULT_QUERY_TYPES;
 		es.search({
 			index: 'external',
 			type: 'external.features',
@@ -1371,12 +1377,12 @@ angular.module('blueprintApp')
 					filtered:{
 						query:{
 							match: {
-								symbol:localScope.currentQuery 
+								symbol: localScope.currentQuery 
 							}
 						},
 						filter: {
 							terms: {
-								feature: ["gene","pathway","reaction"]
+								feature: queryTypes
 							}
 						}
 					}
@@ -1672,6 +1678,19 @@ angular.module('blueprintApp')
 		'pathway': null
 	};
 
+	var my_feature_ranking = {
+		gene: 1,
+		pathway: 2,
+		transcript: 3,
+		exon: 4,
+		reaction: 5,
+		CDS: 6,
+		UTR: 7,
+		start_codon: 8,
+		stop_codon: 9,
+		Selenocysteine: 10
+	};
+	
 	var preprocessQuery = function(localScope){
 		console.log('Running preprocessQuery');
 		var deferred = $q.defer();
@@ -1689,24 +1708,36 @@ angular.module('blueprintApp')
 			});
 			updateChromosomes(localScope);
 		} else {
-			
 			var q = localScope.query.trim();
-			var m = q.match('^(?:chr)?([^:-]+):([1-9][0-9]*)-([1-9][0-9]*)$');
+			var queryType;
+			var colonPos = q.indexOf(':');
+			var m;
+			if(colonPos!==-1) {
+				var possibleQueryType = q.substring(0,colonPos);
+				if(possibleQueryType in my_feature_ranking) {
+					queryType = possibleQueryType;
+					q = q.substring(colonPos+1);
+				} else {
+					m = q.match('^(?:chr)?([^:-]+):([1-9][0-9]*)-([1-9][0-9]*)$');
+				}
+			}
 			
 			//range query
+			localScope.currentQuery = q;
 			if(m) {
 				if(m[1] === 'M') {
 					// Normalizing mitochondrial chromosome name
 					m[1] = 'MT';
 				}
 				localScope.rangeQuery.push({chr: m[1], start: m[2], end: m[3]});
+				localScope.currentQueryType = 'range';
 				// localScope.rangeQuery.chr   = m[1];
 				// localScope.rangeQuery.start = m[2];
 				// localScope.rangeQuery.end   = m[3];
 				// localScope.found = "Displaying information from region: chr"+localScope.rangeQuery[0].chr+":"+localScope.rangeQuery[0].start+"-"+localScope.rangeQuery[0].end;
-				updateChromosomes(localScope,true);
+				updateChromosomes(localScope);
 			} else {
-				localScope.currentQuery = q;
+				localScope.currentQueryType = queryType;
 				promise = promise.then(getRanges);
 			}
 		}
@@ -1760,28 +1791,47 @@ angular.module('blueprintApp')
     };
     
     
-	var my_feature_ranking = {
-		gene: 1,
-		pathway: 2,
-		transcript: 3,
-		exon: 4,
-		reaction: 5,
-		CDS: 6,
-		UTR: 7,
-		start_codon: 8,
-		stop_codon: 9,
-		Selenocysteine: 10
-	};
 	
     $scope.suggest = function() {
-	var deferred = $q.defer();
-	var promise = deferred.promise;
-	
 	$scope.resultsSearch = [];
 	$scope.suggestedQuery = null;
 	
-	if($scope.query.length >= 3) {
-		var query = $scope.query.toLowerCase();
+	var query = $scope.query.trim().toLowerCase();
+	var queryType;
+	var colonPos = query.indexOf(':');
+	if(colonPos!==-1) {
+		queryType = query.substring(0,colonPos);
+		query = query.substring(colonPos+1);
+	}
+	
+	if(query.length >= 3 && (!queryType || (queryType in my_feature_ranking))) {
+		var deferred = $q.defer();
+		var promise = deferred.promise;
+		
+		//query = query.toLowerCase();
+		var theFilter = {
+			prefix: {
+				symbol: query
+			}
+		};
+		var sugLimit;
+		if(queryType) {
+			theFilter = {
+				bool: {
+					must: [
+						{
+							term: {
+								feature: queryType
+							}
+						},
+						theFilter
+					]
+				}
+			};
+			sugLimit = 20;
+		} else {
+			sugLimit = 4;
+		}
 		es.search({
 			index: 'external',
 			type: 'external.features',
@@ -1792,11 +1842,7 @@ angular.module('blueprintApp')
 						query: {
 							match_all: {}
 						},
-						filter: {
-							prefix: {
-								symbol: query
-							}
-						}
+						filter: theFilter
 					}
 				},
 			}
@@ -1804,9 +1850,10 @@ angular.module('blueprintApp')
 			var resultsSearch = [];
 			
 			resp.hits.hits.forEach(function(sug,i) {
-				var theTerm = undefined;
-				var theSecondTerm = undefined;
+				var theTerm;
+				var theSecondTerm;
 				var isFirst = 0;
+				
 				sug._source.symbol.forEach(function(term) {
 					var termpos = term.toLowerCase().indexOf(query);
 					if(termpos===0) {
@@ -1854,7 +1901,7 @@ angular.module('blueprintApp')
 					curFeat = r.feature;
 					numFeat = 0;
 				}
-				if(numFeat<4) {
+				if(numFeat<sugLimit) {
 					$scope.resultsSearch.push(r);
 					numFeat++;
 				}
@@ -1882,6 +1929,15 @@ angular.module('blueprintApp')
 				.then(getLabs)
 				.then(getSamples)
 				.then(fetchCellTerms);
+		
+		if('q' in $location.search()) {
+			var query = $location.search().q;
+			promise = promise.then(function(localScope) {
+				localScope.query = query;
+				localScope.search();
+			});
+		}
+		
 		deferred.resolve($scope);
 	};
 	

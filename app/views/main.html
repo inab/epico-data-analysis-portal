@@ -23,20 +23,20 @@
 		<label>Tree options</label>
 		<div class="form-group">
 			<label class="checkbox-inline">
-				<input type="radio" name="display" ng-model="display" value="compact"> Compact
+				<input type="radio" name="display" ng-model="display" ng-disabled="queryInProgress" value="compact"> Compact
 			</label>
 			<label class="checkbox-inline">
-				<input type="radio" name="display" ng-model="display" value="detailed"> Detailed
+				<input type="radio" name="display" ng-model="display" ng-disabled="queryInProgress" value="detailed"> Detailed
 			</label>
 			<label class="checkbox-inline">
-				<input type="radio" name="display" ng-model="display" value="none"> Hide
+				<input type="radio" name="display" ng-model="display" ng-disabled="queryInProgress" value="none"> Hide
 			</label>
 		</div>
 	</div>
           <div class="col-sm-6">
-            <input ng-model="query" ng-change="suggest()" ng-keypress="enterSearch($event)" class="form-control" type="text" id="search" placeholder="Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" style="background:#f5f5f5">
+            <input ng-model="query" ng-change="suggest()" ng-keypress="enterSearch($event)" ng-disabled="queryInProgress" ng-readonly="queryInProgress || suggestInProgress" class="form-control" type="text" id="search" placeholder="Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" style="background:#f5f5f5">
             <!-- <p class="small">Chromosome regions should be shorter than 10Kb</p> -->
-	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'; search()" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a></p>
+	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'; search()" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a>, <a ng-click="query='pathway:Cell Cycle, Mitotic'; search()">pathway:Cell Cycle, Mitotic</a></p>
 		<div class="suggest-container">
 		  <div ng-repeat="suggest in resultsSearch" class="suggest-item">
 			  <i>({{suggest.feature}})</i> <a ng-click="query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.fullTerm}}</a>
@@ -44,17 +44,17 @@
 		  </div>
 		</div>
           </div>
-          <div class="col-sm-3 text-center"><button ng-click="search()" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
+          <div class="col-sm-3 text-center"><button ng-click="search()" ng-disabled="queryInProgress" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
         </div>
       </form>
     </div>
   </div> 
 
 <div class="row-fluid" style="margin-top:40px;">
-	<div ng-repeat="rangeData in graphData" class="col-sm-12">
+	<div ng-repeat="rangeData in graphData" class="col-sm-12" ng-cloak>
 		<p class="text-center" ng-bind-html="found"></p>
-		<div class="col-sm-2 text-center">
-			<img src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}">
+		<div class="col-sm-2 text-center" ng-cloak>
+			<img src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}" ng-cloak>
 		</div>
 		<div class="col-sm-10 text-center vertical-center">
 			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.methyl.options" data="rangeData.methyl.data"></nvd3>

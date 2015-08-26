@@ -14,6 +14,8 @@ angular.module('blueprintApp')
 	
 	var DATA_CHART_TYPE = 'lineChart';
 	var DATA_CHART_HEIGHT = 400;
+	var SEARCHING_LABEL = "Searching...";
+	var SEARCH_LABEL = "Search";
 	
     var pageNum = 1;
     var perPage = 50;
@@ -32,7 +34,10 @@ angular.module('blueprintApp')
     if(portalConfig.dataDesc) {
         $scope.dataDesc = portalConfig.dataDesc;
     }
-    $scope.searchButtonText = "Search";
+
+    $scope.queryInProgress = false;
+    $scope.suggestInProgress = false;
+    $scope.searchButtonText = SEARCH_LABEL;
     $scope.found = "";
     $scope.samplesOnt = [];
     $scope.samples = [];
@@ -594,7 +599,7 @@ angular.module('blueprintApp')
 		};
 	};
 	
-	var getWgbsData = function(localScope,rangeData) {
+	var getWgbsStatsData = function(localScope,rangeData) {
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData.range);
 		es.search({
@@ -641,7 +646,7 @@ angular.module('blueprintApp')
 		return deferred.promise;
 	};
 	
-	var getRnaSeqGData = function(localScope,rangeData) {
+	var getRnaSeqGStatsData = function(localScope,rangeData) {
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData.range);
 		es.search({
@@ -688,7 +693,7 @@ angular.module('blueprintApp')
 		return deferred.promise;
 	};
 
-	var getRnaSeqTData = function(localScope,rangeData) {
+	var getRnaSeqTStatsData = function(localScope,rangeData) {
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData.range);
 		es.search({
@@ -735,7 +740,7 @@ angular.module('blueprintApp')
 		return deferred.promise;
 	};
 
-	var getDnaseData = function(localScope,rangeData) {
+	var getDnaseStatsData = function(localScope,rangeData) {
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData.range);
 		es.search({
@@ -787,7 +792,7 @@ angular.module('blueprintApp')
 	
 	var chipSeqWindow = 500;
 	
-	var getChipSeqData = function(localScope,rangeData) {			
+	var getChipSeqStatsData = function(localScope,rangeData) {			
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData.range);
 		es.search({
@@ -841,7 +846,67 @@ angular.module('blueprintApp')
 		
 		return deferred.promise;
 	};
-
+	
+	var getChartData = function(localScope,rangeData) {
+		var deferred = $q.defer();
+		var shouldQuery = genShouldQuery(rangeData.range);
+		var total = 0;
+		es.search({
+			size: 5000,
+			index: 'primary',
+			scroll: '30s',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								should: shouldQuery
+							}
+						}
+					}
+				},
+			}
+		}, function getMoreChartDataUntilDone(err, resp) {
+			if(resp.hits!==undefined) {
+				resp.hits.hits.forEach(function(segment) {
+					switch(segment._type) {
+						case 'pdna.p':
+							break;
+						case 'exp.t':
+						case 'exp.g':
+							break;
+						case 'dlat.mr':
+							break;
+						case 'rreg.p':
+							break;
+					}
+				});
+				total += resp.hits.hits.length;
+				
+				if(resp.hits.total > total) {
+					var percent = 100.0 * total / resp.hits.total;
+					
+					localScope.searchButtonText = "Loaded "+percent.toPrecision(2)+'%';
+					
+					//console.log("Hay "+total+' de '+resp.hits.total);
+					es.scroll({
+						scrollId: resp._scroll_id,
+						scroll: '30s'
+					}, getMoreChartDataUntilDone);
+				} else {
+					localScope.searchButtonText = SEARCHING_LABEL;
+					es.clearScroll({scrollId: resp._scroll_id});
+					//console.log('All data ('+total+') was fetched');
+					deferred.resolve(localScope);
+				}
+			} else {
+				deferred.reject(err);
+			}
+		});
+		
+		return deferred.promise;
+	};
+	
 	var getSamples = function(localScope) {
 		if(localScope.samples.length!==0) {
 			return localScope;
@@ -974,57 +1039,56 @@ angular.module('blueprintApp')
 		});
 	};
 
-    var getHistoneData = function(d,histone,stats,range){
-        
-        var exp = 0;
-        var value = 0.0;
-        var expB = 0;
-        var valueB = 0.0;
-        d.analyses.forEach(function(analysis_id){
-            var theValue = 0.0;
-            var theExp = 0;
-            stats.chipSeq.forEach(function(a){
-              if(a.key == histone){
-                //console.log(a);
-                a.analyses.buckets.forEach(function(c){
-                  if(c.key == analysis_id){
-                      theValue += parseFloat(c.peak_size.value);
-                      theExp++;
-                  }
-                });
-              }
-            });
-            if(analysis_id.indexOf('_broad_')!==-1) {
-              expB += theExp;
-              valueB += theValue;
-            } else {
-              exp += theExp;
-              value += theValue;
-            }
-        });
-        
-        // This can be a bit incorrect for pathways...
-        if(exp > 0 || expB > 0) {
-		var end = range.end+chipSeqWindow;
-		var start = range.start-chipSeqWindow;
-		// Corner case
-		if(start < 1) {
-			start=1;
+	var getHistoneStatsData = function(d,histone,stats,range){
+		var exp = 0;
+		var value = 0.0;
+		var expB = 0;
+		var valueB = 0.0;
+		d.analyses.forEach(function(analysis_id){
+		    var theValue = 0.0;
+		    var theExp = 0;
+		    stats.chipSeq.forEach(function(a){
+		      if(a.key == histone){
+			//console.log(a);
+			a.analyses.buckets.forEach(function(c){
+			  if(c.key == analysis_id){
+			      theValue += parseFloat(c.peak_size.value);
+			      theExp++;
+			  }
+			});
+		      }
+		    });
+		    if(analysis_id.indexOf('_broad_')!==-1) {
+		      expB += theExp;
+		      valueB += theValue;
+		    } else {
+		      exp += theExp;
+		      value += theValue;
+		    }
+		});
+		
+		// This can be a bit incorrect for pathways...
+		if(exp > 0 || expB > 0) {
+			var end = range.end+chipSeqWindow;
+			var start = range.start-chipSeqWindow;
+			// Corner case
+			if(start < 1) {
+				start=1;
+			}
+			var region = end - start + 1;
+		  
+			// console.log(region);
+			if(exp > 0){
+				//console.log(region);
+				value = (value/region)*100.0;
+			}
+			if(expB > 0){
+				valueB = (valueB/region)*100.0;
+			}
 		}
-		var region = end - start + 1;
-	  
-		// console.log(region);
-		if(exp > 0){
-			//console.log(region);
-			value = (value/region)*100.0;
-		}
-		if(expB > 0){
-			valueB = (valueB/region)*100.0;
-		}
-        }
-        return {notBroad:value, broad:valueB}; 
-    };
-
+		return {notBroad:value, broad:valueB}; 
+	};
+	
 	var populateBasicTree = function(o,localScope,range,stats,isDetailed) {
 		var numNodes = 1;
 		// First, the children
@@ -1130,7 +1194,7 @@ angular.module('blueprintApp')
 							if(normalizedHistone in localScope.histoneMap) {
 								var expIdx = localScope.histoneMap[normalizedHistone];
 								
-								var histoneStats = getHistoneData(d,normalizedHistone,stats,range);
+								var histoneStats = getHistoneStatsData(d,normalizedHistone,stats,range);
 								
 								statistics[expIdx] = CSpeakSplit ? histoneStats.notBroad : (histoneStats.notBroad+histoneStats.broad);
 								if(statistics[expIdx]>0) {
@@ -1212,7 +1276,6 @@ angular.module('blueprintApp')
 				});
 			});
 		}
-		localScope.searchButtonText = "Search";
 	};
 
 	var defaultSearchUri = 'http://www.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
@@ -1225,7 +1288,17 @@ angular.module('blueprintApp')
 		region: regionSearchUri,
 	};
 	
+	var CHR_SEGMENT_LIMIT = 2500000;
 	var updateChromosomes = function(localScope) {
+		var tooMuch = localScope.rangeQuery.some(function(range) {
+			return ((range.start>=range.end) || (range.end - range.start) > CHR_SEGMENT_LIMIT);
+		});
+		
+		if(tooMuch) {
+			alert("Some of the ranges is larger than "+CHR_SEGMENT_LIMIT+"bp");
+			return false;
+		}
+
 		// First, let's update the query string
 		var qString = ( localScope.currentQueryType !== 'range' ) ? localScope.currentQueryType + ':' + localScope.currentQuery : localScope.currentQuery;
 		$location.search({q: qString});
@@ -1361,6 +1434,8 @@ angular.module('blueprintApp')
 			localScope.found += localScope.currentQueryType+" <a href='"+uri+localScope.ensemblGeneId+"' target='_blank'>"+localScope.currentQuery+" ["+localScope.ensemblGeneId+"]</a>, ";
 		}
 		localScope.found += "region"+((localScope.rangeQuery.length > 1)?'s':'')+": "+regions;
+		
+		return true;
 	};
 	
 	var DEFAULT_QUERY_TYPES = ["gene","pathway","reaction"];
@@ -1395,10 +1470,13 @@ angular.module('blueprintApp')
 				resp.hits.hits[0]._source.coordinates.forEach(function(range) {
 					localScope.rangeQuery.push({ chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end });
 				});
-				updateChromosomes(localScope);
-				deferred.resolve(localScope);
+				if(updateChromosomes(localScope)) {
+					deferred.resolve(localScope);
+				} else {
+					deferred.reject('Coordinates range has been rejected, as it is too big');
+				}
 			} else {
-				return deferred.reject(err);
+				deferred.reject(err);
 			}
 		});
 		return deferred.promise;
@@ -1691,10 +1769,11 @@ angular.module('blueprintApp')
 		Selenocysteine: 10
 	};
 	
-	var preprocessQuery = function(localScope){
+	var preprocessQuery = function(localScope) {
 		console.log('Running preprocessQuery');
 		var deferred = $q.defer();
 		var promise = deferred.promise;
+		var acceptedUpdate=true;
 		
 		if(localScope.suggestedQuery) {
 			localScope.ensemblGeneId = localScope.suggestedQuery.feature_cluster_id;
@@ -1706,7 +1785,7 @@ angular.module('blueprintApp')
 			localScope.suggestedQuery.coordinates.forEach(function(range) {
 				localScope.rangeQuery.push({ chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end });
 			});
-			updateChromosomes(localScope);
+			acceptedUpdate = updateChromosomes(localScope);
 		} else {
 			var q = localScope.query.trim();
 			var queryType;
@@ -1735,185 +1814,187 @@ angular.module('blueprintApp')
 				// localScope.rangeQuery.start = m[2];
 				// localScope.rangeQuery.end   = m[3];
 				// localScope.found = "Displaying information from region: chr"+localScope.rangeQuery[0].chr+":"+localScope.rangeQuery[0].start+"-"+localScope.rangeQuery[0].end;
-				updateChromosomes(localScope);
+				acceptedUpdate = updateChromosomes(localScope);
 			} else {
 				localScope.currentQueryType = queryType;
 				promise = promise.then(getRanges);
 			}
 		}
-		deferred.resolve(localScope);
+		
+		if(acceptedUpdate) {
+			deferred.resolve(localScope);
+		} else {
+			deferred.reject('Coordinates range has been rejected, as it is too big');
+		}
+		
 		return promise;
 	};
 
     $scope.resultsSearch = [];
     
-    $scope.search = function(theSuggest){
-	$scope.found = "";
-	$scope.suggestedQuery = theSuggest;
-	$scope.resultsSearch = [];
-	//$scope.samplesOnt = [];
-	//$scope.samples = [];
-	//$scope.labs = [];
-	//$scope.analyses = [];
-	//$scope.bisulfiteSeq = [];
-	//$scope.rnaSeqG = [];
-	//$scope.rnaSeqT = [];
-	//$scope.chipSeq = [];
-	//$scope.dnaseSeq = [];
-	//$scope.treedata = null;
-	
-	$scope.rangeQuery = [];
-	$scope.ensemblGeneId = null;
-	$scope.currentQuery = null;
-	$scope.currentQueryType = null;
-	
-        $scope.searchButtonText = "Searching...";
-
-        var deferred = $q.defer();
-        var promise = deferred.promise;
-        promise = promise.then(preprocessQuery)
-		// Done at the beginning
-                 //.then(getAnalyses)
-                 //.then(getLabs)
-                 //.then(getSamples)
-                 //.then(fetchCellTerms)
-                 // Either the browser or the server gets too stressed with this concurrent query
-                 //.then($q.all([launch(getWgbsData),launch(getRnaSeqGData),launch(getRnaSeqTData),launch(getChipSeqData),launch(getDnaseData)]))
-                 .then(launch(getWgbsData))
-                 .then(launch(getRnaSeqGData))
-                 .then(launch(getRnaSeqTData))
-                 .then(launch(getChipSeqData))
-                 .then(launch(getDnaseData))
-                 //.then(preprocessQuery)
-                 .then(initTree);
-                 
-        deferred.resolve($scope);
-    };
-    
-    
-	
-    $scope.suggest = function() {
-	$scope.resultsSearch = [];
-	$scope.suggestedQuery = null;
-	
-	var query = $scope.query.trim().toLowerCase();
-	var queryType;
-	var colonPos = query.indexOf(':');
-	if(colonPos!==-1) {
-		queryType = query.substring(0,colonPos);
-		query = query.substring(colonPos+1);
-	}
-	
-	if(query.length >= 3 && (!queryType || (queryType in my_feature_ranking))) {
-		var deferred = $q.defer();
-		var promise = deferred.promise;
-		
-		//query = query.toLowerCase();
-		var theFilter = {
-			prefix: {
-				symbol: query
-			}
-		};
-		var sugLimit;
-		if(queryType) {
-			theFilter = {
-				bool: {
-					must: [
-						{
-							term: {
-								feature: queryType
-							}
-						},
-						theFilter
-					]
-				}
-			};
-			sugLimit = 20;
-		} else {
-			sugLimit = 4;
-		}
-		es.search({
-			index: 'external',
-			type: 'external.features',
-			size: 5000,
-			body: {
-				query:{
-					filtered: {
-						query: {
-							match_all: {}
-						},
-						filter: theFilter
-					}
-				},
-			}
-		},function(err,resp){
-			var resultsSearch = [];
+	$scope.search = function(theSuggest){
+		if(!$scope.queryInProgress) {
+			$scope.queryInProgress = true;
+			$scope.found = "";
+			$scope.suggestedQuery = theSuggest;
+			$scope.resultsSearch = [];
 			
-			resp.hits.hits.forEach(function(sug,i) {
-				var theTerm;
-				var theSecondTerm;
-				var isFirst = 0;
-				
-				sug._source.symbol.forEach(function(term) {
-					var termpos = term.toLowerCase().indexOf(query);
-					if(termpos===0) {
-						if(theTerm===undefined || term.length < theTerm.length) {
-							theTerm = term;
-						}
-					} else if(termpos!==-1) {
-						if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
-							theSecondTerm = term;
-						}
-					}
+			$scope.rangeQuery = [];
+			$scope.ensemblGeneId = null;
+			$scope.currentQuery = null;
+			$scope.currentQueryType = null;
+			
+			$scope.searchButtonText = SEARCHING_LABEL;
+
+			var deferred = $q.defer();
+			var promise = deferred.promise;
+			promise = promise.then(preprocessQuery)
+				.then(launch(getChartData))
+				// Either the browser or the server gets too stressed with this concurrent query
+				//.then($q.all([launch(getWgbsData),launch(getRnaSeqGData),launch(getRnaSeqTData),launch(getChipSeqData),launch(getDnaseData)]))
+				.then(launch(getWgbsStatsData))
+				.then(launch(getRnaSeqGStatsData))
+				.then(launch(getRnaSeqTStatsData))
+				.then(launch(getChipSeqStatsData))
+				.then(launch(getDnaseStatsData))
+				.then(initTree)
+				.finally(function() {
+					$scope.queryInProgress = false;
+					$scope.searchButtonText = SEARCH_LABEL;
+				});
+				 
+			deferred.resolve($scope);
+		}
+	};
+	
+	$scope.suggest = function() {
+		if(!$scope.suggestInProgress) {
+			$scope.resultsSearch = [];
+			$scope.suggestedQuery = null;
+			
+			var query = $scope.query.trim().toLowerCase();
+			var queryType;
+			var colonPos = query.indexOf(':');
+			if(colonPos!==-1) {
+				queryType = query.substring(0,colonPos);
+				query = query.substring(colonPos+1);
+			}
+			
+			if(query.length >= 3 && (!queryType || (queryType in my_feature_ranking))) {
+				$scope.suggestInProgress = true;
+				var deferred = $q.defer();
+				var promise = deferred.promise;
+				promise.finally(function() {
+					$scope.suggestInProgress = false;
 				});
 				
-				// A backup default
-				if(theTerm===undefined) {
-					if(theSecondTerm !== undefined) {
-						isFirst = 1;
-						theTerm = theSecondTerm;
-					} else {
-						isFirst = 2;
-						theTerm = sug._source.symbol[0];
+				//query = query.toLowerCase();
+				var theFilter = {
+					prefix: {
+						symbol: query
 					}
-				}
-				var feature = sug._source.feature;
-				var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
-				resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug._source.symbol.join(", ")+')', id:sug._id, coordinates:sug._source.coordinates, feature:feature,featureScore:featureScore, feature_cluster_id:sug._source.feature_cluster_id});
-			});
-			
-			resultsSearch.sort(function(a,b) {
-				if(a.featureScore != b.featureScore) {
-					return a.featureScore - b.featureScore;
-				} else if(a.isFirst != b.isFirst) {
-					return a.isFirst - b.isFirst;
-				} else if(a.term.length != b.term.length) {
-					return a.term.length - b.term.length;
+				};
+				var sugLimit;
+				if(queryType) {
+					theFilter = {
+						bool: {
+							must: [
+								{
+									term: {
+										feature: queryType
+									}
+								},
+								theFilter
+							]
+						}
+					};
+					sugLimit = 20;
 				} else {
-					return a.term.localeCompare(b.term);
+					sugLimit = 4;
 				}
-			});
-			
-			var curFeat = '';
-			var numFeat = 0;
-			resultsSearch.forEach(function(r) {
-				if(r.feature != curFeat) {
-					curFeat = r.feature;
-					numFeat = 0;
-				}
-				if(numFeat<sugLimit) {
-					$scope.resultsSearch.push(r);
-					numFeat++;
-				}
-			});
-			
-			deferred.resolve();
-		});
-	}
-    };
-    
+				es.search({
+					index: 'external',
+					type: 'external.features',
+					size: 5000,
+					body: {
+						query:{
+							filtered: {
+								query: {
+									match_all: {}
+								},
+								filter: theFilter
+							}
+						},
+					}
+				},function(err,resp){
+					var resultsSearch = [];
+					
+					resp.hits.hits.forEach(function(sug,i) {
+						var theTerm;
+						var theSecondTerm;
+						var isFirst = 0;
+						
+						sug._source.symbol.forEach(function(term) {
+							var termpos = term.toLowerCase().indexOf(query);
+							if(termpos===0) {
+								if(theTerm===undefined || term.length < theTerm.length) {
+									theTerm = term;
+								}
+							} else if(termpos!==-1) {
+								if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
+									theSecondTerm = term;
+								}
+							}
+						});
+						
+						// A backup default
+						if(theTerm===undefined) {
+							if(theSecondTerm !== undefined) {
+								isFirst = 1;
+								theTerm = theSecondTerm;
+							} else {
+								isFirst = 2;
+								theTerm = sug._source.symbol[0];
+							}
+						}
+						var feature = sug._source.feature;
+						var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
+						resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug._source.symbol.join(", ")+')', id:sug._id, coordinates:sug._source.coordinates, feature:feature,featureScore:featureScore, feature_cluster_id:sug._source.feature_cluster_id});
+					});
+					
+					resultsSearch.sort(function(a,b) {
+						if(a.featureScore != b.featureScore) {
+							return a.featureScore - b.featureScore;
+						} else if(a.isFirst != b.isFirst) {
+							return a.isFirst - b.isFirst;
+						} else if(a.term.length != b.term.length) {
+							return a.term.length - b.term.length;
+						} else {
+							return a.term.localeCompare(b.term);
+						}
+					});
+					
+					var curFeat = '';
+					var numFeat = 0;
+					resultsSearch.forEach(function(r) {
+						if(r.feature != curFeat) {
+							curFeat = r.feature;
+							numFeat = 0;
+						}
+						if(numFeat<sugLimit) {
+							$scope.resultsSearch.push(r);
+							numFeat++;
+						}
+					});
+					
+					deferred.resolve();
+				});
+			}
+		}
+	};
+	
 	$scope.enterSearch = function(keyEvent) {
-		if(keyEvent.which === 13 && $scope.query.length > 0) {
+		if(!$scope.suggestInProgress && keyEvent.which === 13 && $scope.query.length > 0) {
 			//if($scope.resultsSearch.length > 0) {
 			//	$scope.search($scope.resultsSearch[0]);
 			//} else {

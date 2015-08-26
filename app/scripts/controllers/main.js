@@ -11,9 +11,9 @@
  */
 angular.module('blueprintApp')
   .controller('MainCtrl', ['$scope','$q','es','portalConfig','d3',function($scope,$q, es, portalConfig, d3) {
-
-	var REACT_PREFIX = 'REACT_';
-	var REACT_FEATURE = 'pathway';
+	
+	var DATA_CHART_TYPE = 'lineChart';
+	var DATA_CHART_HEIGHT = 400;
 	
     var pageNum = 1;
     var perPage = 50;
@@ -36,22 +36,30 @@ angular.module('blueprintApp')
     $scope.found = "";
     $scope.samplesOnt = [];
     $scope.samples = [];
+    $scope.specimens = [];
     $scope.donors = [];
     $scope.labs = [];
     $scope.analyses = [];
     $scope.experimentLabels = [];
     $scope.depth=null;
     $scope.histoneMap = {};
-    $scope.bisulfiteSeq = [];
-    $scope.rnaSeqG = [];
-    $scope.rnaSeqT = [];
-    $scope.chipSeq = [];
-    $scope.dnaseSeq = [];
-    $scope.treedata = null;
+    //$scope.bisulfiteSeq = [];
+    //$scope.rnaSeqG = [];
+    //$scope.rnaSeqT = [];
+    //$scope.chipSeq = [];
+    //$scope.dnaseSeq = [];
+    //$scope.treedata = null;
     $scope.rangeQuery = [];
     $scope.ensemblGeneId = null;
-    $scope.geneQuery = null;
-    $scope.pathwayQuery = null;
+    $scope.currentQuery = null;
+    $scope.currentQueryType = null;
+    
+	$scope.graphData = [];
+    
+    
+    
+    
+    
     $scope.display = 'compact';
     $scope.chromosomes = [{n:1,c:"chr",f:"images/GRCh38_chromosome_1.svg"},
                     {n:2,c:"chr",f:"images/GRCh38_chromosome_2.svg"},
@@ -80,8 +88,22 @@ angular.module('blueprintApp')
                     {n:"MT",c:"chr",f:"images/GRCh38_chromosome_MT.svg"}
                   ];
 
+	$scope.unknownChromosome = { n: "(unknown)", f: "images/chr.svg" };
+
     $scope.results = null;
     
+	var getX = function(d) {
+		return d.x;
+	};
+	
+	var getKey = function(d) {
+		return d.key;
+	};
+	
+	var getY = function(d) {
+		return d.y;
+	};
+	
 	$scope.subtotals = {
 		options: {
 			chart: {
@@ -94,8 +116,8 @@ angular.module('blueprintApp')
 					bottom: 0,
 					left: 0
 				},
-				x: function(d) {return d.key;},
-				y: function(d) {return d.y;},
+				x: getKey,
+				y: getY,
 				//showLegend: false,
 				showLabels: true,
 				donut:true,
@@ -115,7 +137,7 @@ angular.module('blueprintApp')
 			},
 		],
 	};
-    
+	
 	//Format function for the tooltip values column
 	var valueFormatter = function(d,i) {
 		return d;
@@ -204,8 +226,8 @@ angular.module('blueprintApp')
 					bottom: 0,
 					left: 0
 				},
-				x: function(d) {return d.key;},
-				y: function(d) {return d.y;},
+				x: getKey,
+				y: getY,
 				showLabels: true,
 				donut:true,
 				title: "Analysis",
@@ -244,652 +266,715 @@ angular.module('blueprintApp')
     // If we set this to 1, we separate broad from narrow peaks
     var CSpeakSplit;
 
-	var getAnalyses = function() {
-		if($scope.analyses.length === 0) {
-			var deferred = $q.defer();
-			es.search({
-				size: 10000000,
-				index: 'metadata',
-				body: {
-					query: {
-						filtered: {
-							filter: {
-								bool: {
-									must: [
-										{exists : { field : 'experiment_id' }},
-										{exists : { field : 'analysis_id' }}
-									]  
-								}
+	var getAnalyses = function(localScope) {
+		if(localScope.analyses!==undefined && localScope.analyses.length !== 0) {
+			return localScope;
+		}
+		
+		localScope.analyses = [];
+		return es.search({
+			size: 10000000,
+			index: 'metadata',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								must: [
+									{exists : { field : 'experiment_id' }},
+									{exists : { field : 'analysis_id' }}
+								]  
 							}
 						}
 					}
-			
 				}
-			},function(err,resp){
-				if(typeof(resp.hits.hits) !== undefined) {
-					// Now, the analysis subtotals
-					var numDlatHyper = 0;
-					var numDlatHypo = 0;
-					var numDlatOther = 0;
-					
-					var numCSbroad = 0;
-					var numCSnarrow = 0;
-					
-					var numExpG = 0;
-					var numExpT = 0;
-					
-					var numRReg = 0;
-					var numAnOther = 0;
-					
-					resp.hits.hits.forEach(function(d) {
-						d._source._type = d._type;
-						switch(d._type) {
-							case 'dlat.m':
-								switch(d._source.mr_type) {
-									case 'hyper':
-										numDlatHyper++;
-										break;
-									case 'hypo':
-										numDlatHypo++;
-										break;
-									default:
-										numDlatOther++;
-										break;
-								}
-								
-								break;
-							case 'pdna.m':
-								if(d._source.analysis_id.indexOf('_broad_')!=-1) {
-									numCSbroad++;
-								} else {
-									numCSnarrow++;
-								}
-								break;
-							case 'exp.m':
-								numExpG++;
-								numExpT++;
-								break;
-							case 'rreg.m':
-								numRReg++;
-								break;
-							default:
-								numAnOther++;
-						}
-						$scope.analyses.push(d._source);
-					});
-					
-					var analysisSubtotals = [
-						{
-							key: 'Hyper-m regions',
-							desc: 'Hyper-methylated regions',
-							y: numDlatHyper
-						},
-						{
-							key: 'Hypo-m regions',
-							desc: 'Hypo-methylated regions',
-							y: numDlatHypo
-						},
-					];
-					
-					if(numDlatOther > 0) {
-						analysisSubtotals.push({
-							key: 'Other m regions',
-							desc: 'Other methylated regions',
-							y: numDlatOther
-						});
+		
+			}
+		}).then(function(resp){
+			if(typeof(resp.hits.hits) !== undefined) {
+				// Now, the analysis subtotals
+				var numDlatHyper = 0;
+				var numDlatHypo = 0;
+				var numDlatOther = 0;
+				
+				var numCSbroad = 0;
+				var numCSnarrow = 0;
+				
+				var numExpG = 0;
+				var numExpT = 0;
+				
+				var numRReg = 0;
+				var numAnOther = 0;
+				
+				resp.hits.hits.forEach(function(d) {
+					d._source._type = d._type;
+					switch(d._type) {
+						case 'dlat.m':
+							switch(d._source.mr_type) {
+								case 'hyper':
+									numDlatHyper++;
+									break;
+								case 'hypo':
+									numDlatHypo++;
+									break;
+								default:
+									numDlatOther++;
+									break;
+							}
+							
+							break;
+						case 'pdna.m':
+							if(d._source.analysis_id.indexOf('_broad_')!=-1) {
+								numCSbroad++;
+							} else {
+								numCSnarrow++;
+							}
+							break;
+						case 'exp.m':
+							numExpG++;
+							numExpT++;
+							break;
+						case 'rreg.m':
+							numRReg++;
+							break;
+						default:
+							numAnOther++;
 					}
-					
-					analysisSubtotals.push(
-						{
-							key: 'CS broad',
-							desc: 'ChIP-Seq (broad peaks)',
-							y: numCSbroad
-						},
-						{
-							key: 'CS narrow',
-							desc: 'ChIP-Seq (narrow peaks)',
-							y: numCSnarrow
-						},
-						{
-							key: 'Gene exp',
-							desc: 'Gene expression',
-							y: numExpG
-						},
-						{
-							key: 'Transcript exp',
-							desc: 'Transcript expression',
-							y: numExpT
-						},
-						{
-							key: 'Chrom Acc',
-							desc: 'Chromatin accessibility',
-							y: numRReg
-						}
-					);
-					
-					if(numAnOther > 0) {
-						analysisSubtotals.push({
-							key: 'Other',
-							desc: 'Other',
-							y: numAnOther
-						});
-					}
-					
-					$scope.analysisSubtotals.data = analysisSubtotals;
-					
-					deferred.resolve();
-				} else {
-					return deferred.reject(err);
-				}
-			});
-			return deferred.promise;
-		}
-	};
-
-    var getLabs = function() {
-      if($scope.labs.length===0) {
-        var deferred = $q.defer();
-        es.search({
-          size:100000,
-          index: 'sample-tracking-data',
-          body:{
-              query : {
-                filtered : {
-                    filter : {
-                        bool:{
-                          must:[
-                              {exists : { field : 'experiment_id' }},
-                              // {exists : { field : 'analized_sample_id' }}
-                              {exists : { field : 'experiment_type' }}
-                          ]  
-                        }
-                        
-                    }
-                }
-            }
-        
-          }
-        },function(err,resp){
-        
-          if(typeof(resp.hits.hits) !== 'undefined'){
-            var histones = [];
-            var histoneMap = {};
-            resp.hits.hits.forEach(function(d) {
-              var  l = {};
-              l.type  = d._type;
-              l.sample_id = d._source.analyzed_sample_id;
-              l.experiment_id = d._source.experiment_id;
-              l.experiment_type = d._source.experiment_type;
-              l.features = d._source.features;
-              if(l.experiment_type.indexOf('Histone ')===0) {
-                var histone = l.features.CHIP_ANTIBODY.value;
-                var normalizedHistone = histone.replace(/[.]/g,'_');
-                
-                // Registering new histones
-                if(!(normalizedHistone in histoneMap)) {
-		  histoneMap[normalizedHistone] = null;
-		  histones.push(histone);
-		}
-              }
-        
-              if(typeof(l.analyses) === 'undefined'){
-                l.analyses = [];
-                $scope.analyses.forEach(function(d){
-                  if (d.experiment_id == l.experiment_id){
-                      l.analyses.push(d.analysis_id);
-                  }
-                });
-              }
-              $scope.labs.push(l);
-            });
-            
-            // Now, map the histones and generated the labels
-            $scope.experimentLabels = angular.copy(experimentLabels);
-            var iHis = $scope.experimentLabels.length;
-            histones.sort().forEach(function(histone) {
-              var normalizedHistone = histone.replace(/[.]/g,'_');
-              histoneMap[normalizedHistone] = iHis;
-              
-              if(CSpeakSplit) {
-                // It uses two slots
-                $scope.experimentLabels.push(histone+' (peaks)');
-                $scope.experimentLabels.push(histone+' (broad peaks)');
-                iHis+=2;
-              } else {
-                $scope.experimentLabels.push(histone);
-                iHis++;
-              }
-	    });
-	    $scope.histoneMap = histoneMap;
-            deferred.resolve();
-          }else{
-            return deferred.reject(err);
-          }
-        
-        });
-        return deferred.promise;
-      }
-    };
-    
-    var genShouldQuery = function(rangeQueryArr) {
-	var shouldQuery = [];
-	rangeQueryArr.forEach(function(q) {
-		shouldQuery.push({
-			bool: {
-				must: [
+					localScope.analyses.push(d._source);
+				});
+				
+				var analysisSubtotals = [
 					{
-						term: {
-							chromosome: q.chr
-						}
+						key: 'Hyper-m regions',
+						desc: 'Hyper-methylated regions',
+						y: numDlatHyper
 					},
 					{
-						bool: {
-							should: [
-								{
-									range: {
-										chromosome_start: {
-											gte: q.start,
-											lte: q.end
-										}
-									}
-								},
-								{
-									range: {
-										chromosome_end: {
-											gte: q.start,
-											lte: q.end
-										}
-									}
-								},
-								{
-									bool: {
-										must: [
-											{
-												range: {
-													chromosome_start: {
-														lte: q.end
-													}
-												}
-											},
-											{
-												range: {
-													chromosome_end: {
-														gte: q.start
-													}
-												}
-											}
-										]
-									}
-								}
-							]
+						key: 'Hypo-m regions',
+						desc: 'Hypo-methylated regions',
+						y: numDlatHypo
+					},
+				];
+				
+				if(numDlatOther > 0) {
+					analysisSubtotals.push({
+						key: 'Other m regions',
+						desc: 'Other methylated regions',
+						y: numDlatOther
+					});
+				}
+				
+				analysisSubtotals.push(
+					{
+						key: 'CS broad',
+						desc: 'ChIP-Seq (broad peaks)',
+						y: numCSbroad
+					},
+					{
+						key: 'CS narrow',
+						desc: 'ChIP-Seq (narrow peaks)',
+						y: numCSnarrow
+					},
+					{
+						key: 'Gene exp',
+						desc: 'Gene expression',
+						y: numExpG
+					},
+					{
+						key: 'Transcript exp',
+						desc: 'Transcript expression',
+						y: numExpT
+					},
+					{
+						key: 'Chrom Acc',
+						desc: 'Chromatin accessibility',
+						y: numRReg
+					}
+				);
+				
+				if(numAnOther > 0) {
+					analysisSubtotals.push({
+						key: 'Other',
+						desc: 'Other',
+						y: numAnOther
+					});
+				}
+				
+				localScope.analysisSubtotals.data = analysisSubtotals;
+			//} else {
+			//	return deferred.reject(err);
+			}
+			
+			return localScope;
+		});
+	};
+
+	var getLabs = function(localScope) {
+		// As it should get an array of local scopes, which should be the same, let's use the first one
+		if(Array.isArray(localScope)) {
+			localScope = localScope[0];
+		}
+		
+		if(localScope.labs!==undefined && localScope.labs.length!==0) {
+			return localScope;
+		}
+		
+		localScope.labs = [];
+		
+		var deferred = $q.defer();
+		es.search({
+			size:100000,
+			index: 'sample-tracking-data',
+			body:{
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								must: [
+									{exists : { field : 'experiment_id' }},
+									// {exists : { field : 'analized_sample_id' }}
+									{exists : { field : 'experiment_type' }}
+								]	
+							}
 						}
 					}
-				]
+				}
+		
 			}
-		});
-	});
-	
-	return shouldQuery;
-    };
-
-
-    var getWgbsData = function() {
-      var deferred = $q.defer();
-      var shouldQuery = genShouldQuery($scope.rangeQuery);
-      es.search({
-        size:10000000,
-        index: 'primary',
-        type: 'dlat.mr',
-        search_type: 'count',
-        body: {
-          query: {
-            filtered: {
-              filter: {
-                bool: {
-                  should: shouldQuery
-                }
-              }
-            }
-          },
-          aggs: {
-            analyses: {
-              terms: {
-                field: 'analysis_id'
-              },
-              aggs: {
-                stats_meth_level: {
-                  extended_stats: {
-                    field: 'meth_level'
-                  }
-                }
-              }
-            }
-          }
-        }
-      },function(err,resp) {
-        if(typeof(resp.aggregations) !== undefined){  
-          resp.aggregations.analyses.buckets.forEach(function(d) {
-            $scope.bisulfiteSeq.push(d);
-          });
-          deferred.resolve();
-        }else{
-          return deferred.reject(err); 
-        }
-      });
-      
-      return deferred.promise;
-    };
-
-    var getRnaSeqGData = function() {      
-      var deferred = $q.defer();
-      var shouldQuery = genShouldQuery($scope.rangeQuery);
-      es.search({
-        size:10000000,  
-        index: 'primary',
-        type: 'exp.g',
-        search_type: 'count',
-        body: {
-          query: {
-            filtered: {
-              filter: {
-                bool: {
-                  should: shouldQuery
-                }
-              }
-            }
-          },
-          aggs: {
-            analyses: {
-              terms: {
-                field: 'analysis_id'
-              },
-              aggs: {
-                stats_normalized_read_count: {
-                  extended_stats: {
-                    field: 'normalized_read_count'
-                  }
-                }
-              }
-            }
-          }
-        }
-      },function(err,resp) {
-        if(typeof(resp.aggregations) !== undefined){  
-          resp.aggregations.analyses.buckets.forEach(function(d) {
-            $scope.rnaSeqG.push(d);
-          });
-          deferred.resolve();
-        }else{
-          return deferred.reject(err); 
-        }
-      });
-      
-      return deferred.promise;
-    };
-
-    var getRnaSeqTData = function() {      
-      var deferred = $q.defer();
-      var shouldQuery = genShouldQuery($scope.rangeQuery);
-      es.search({
-        size:10000000,  
-        index: 'primary',
-        type: 'exp.t',
-        search_type: 'count',
-        body: {
-          query: {
-            filtered: {
-              filter: {
-                bool: {
-                  should: shouldQuery
-                }
-              }
-            }
-          },
-          aggs: {
-            analyses: {
-              terms: {
-                field: 'analysis_id'
-              },
-              aggs: {
-                stats_normalized_read_count: {
-                  extended_stats: {
-                    field: 'normalized_read_count'
-                  }
-                }
-              }
-            }
-          }
-        }
-      },function(err,resp) {
-        if(typeof(resp.aggregations) !== undefined){  
-          resp.aggregations.analyses.buckets.forEach(function(d) {
-            $scope.rnaSeqT.push(d);
-          });
-          deferred.resolve();
-        }else{
-          return deferred.reject(err); 
-        }
-      });
-      
-      return deferred.promise;
-    };
-
-    var getDnaseData = function() {      
-      var deferred = $q.defer();
-      var shouldQuery = genShouldQuery($scope.rangeQuery);
-      es.search({
-        size:10000000,  
-        index: 'primary',
-        type: 'rreg.p',
-        search_type: 'count',
-        body: {
-          query: {
-            filtered: {
-              filter: {
-                bool: {
-                  should: shouldQuery
-                }
-              }
-            }
-          },
-          aggs: {
-            analyses:{
-              terms:{
-                field: 'analysis_id'
-              },
-              aggs:{
-                peak_size: {
-                  sum: {
-                    lang: "expression",
-                    script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
-                  }
-                }
-              }
-            }
-          }
-
-
-        }
-      },function(err,resp) {
-        if(typeof(resp.aggregations) !== undefined){  
-          resp.aggregations.analyses.buckets.forEach(function(d) {
-            $scope.dnaseSeq.push(d);
-          });
-          deferred.resolve();
-        }else{
-          return deferred.reject(err); 
-        }
-      });
-      
-      return deferred.promise;
-    };
-
-    var chipSeqWindow = 500;
-    
-    var getChipSeqData = function() {      
-      var deferred = $q.defer();
-      var shouldQuery = genShouldQuery($scope.rangeQuery);
-      es.search({
-        size:10000000,  
-        index: 'primary',
-        type: 'pdna.p',
-        search_type: 'count',
-        body: {
-          query: {
-            filtered: {
-              filter: {
-                bool: {
-                  should: shouldQuery
-                }
-              }
-            }
-          },
-          aggs: {
-            histones: {
-              terms: {
-                field: 'protein_stable_id'
-              },
-              aggs: {
-                analyses:{
-                  terms:{
-                    field: 'analysis_id'
-                  },
-                  aggs:{
-                    peak_size: {
-                      sum: {
-                        lang: "expression",
-                        script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },function(err,resp) {
-        if(typeof(resp.aggregations) !== undefined){  
-          resp.aggregations.histones.buckets.forEach(function(d) {
-            $scope.chipSeq.push(d);
-          });
-          deferred.resolve();
-        }else{
-          return deferred.reject(err); 
-        }
-      });
-      
-      return deferred.promise;
-    };
-
-	var getSamples = function() {
-		if($scope.samples.length===0) {
-			var deferred = $q.defer();
-			es.search({
-				index: 'sample-tracking-data',
-				type: 'sdata.sample',
-				size: 100000,
-			},function(err,resp){
-				if(typeof(resp.hits.hits) !== undefined) {
-					resp.hits.hits.forEach(function(d) {
-						var s = {};
-						s.analyzed_sample_type_other = d._source.analyzed_sample_type_other;
-						s.sample_id = d._source.sample_id;
-						s.ontology = d._source.purified_cell_type;
-						s.markers = d._source.markers;
-						s.experiments = [];
-						$scope.labs.forEach(function(d){
-							if(d.sample_id == s.sample_id){
-								s.experiments.push(d);
+		},function(err,resp){
+			if(typeof(resp.hits.hits) !== 'undefined'){
+				var histones = [];
+				var histoneMap = {};
+				resp.hits.hits.forEach(function(d) {
+					var	l = {};
+					l.type	= d._type;
+					l.sample_id = d._source.analyzed_sample_id;
+					l.experiment_id = d._source.experiment_id;
+					l.experiment_type = d._source.experiment_type;
+					l.features = d._source.features;
+					if(l.experiment_type.indexOf('Histone ')===0) {
+						var histone = l.features.CHIP_ANTIBODY.value;
+						var normalizedHistone = histone.replace(/[.]/g,'_');
+						
+						// Registering new histones
+						if(!(normalizedHistone in histoneMap)) {
+							histoneMap[normalizedHistone] = null;
+							histones.push(histone);
+						}
+					}
+		
+					if(typeof(l.analyses) === 'undefined'){
+						l.analyses = [];
+						localScope.analyses.forEach(function(d){
+							if (d.experiment_id == l.experiment_id){
+									l.analyses.push(d.analysis_id);
 							}
 						});
-						$scope.samplesOnt.push(s.ontology);
-						$scope.samples.push(s);
-					});
-					
-					var numSamples = $scope.samples.length;
-					
-					$scope.subtotals.data.push({
-							key: 'Samples',
-							y: numSamples
-						}
-					);
-					
-					deferred.resolve();
-					//console.log($scope.samples);
-				} else {
-					return deferred.reject(err);
-				}
-			});
-			return deferred.promise;
-		}
-	};
-
-	var getDonors = function() {
-		if($scope.donors.length===0) {
-			var deferred = $q.defer();
-			es.search({
-				index: 'sample-tracking-data',
-				type: 'sdata.donor',
-				size: 100000,
-			},function(err,resp){
-				if(typeof(resp.hits.hits) !== undefined) {
-					var subtotalsData = [];
-					
-					var numDonors = 0;
-					var numPooledDonors = 0;
-					var numCellularLines = 0;
-					var numOther = 0;
-					resp.hits.hits.forEach(function(d) {
-						switch(d._source.donor_kind) {
-							case 'd':
-								numDonors++;
-								break;
-							case 'p':
-								numPooledDonors++;
-								break;
-							case 'c':
-								numCellularLines++;
-								break;
-							default:
-								numOther++;
-						}
-						$scope.donors.push(d._source);
-					});
-					subtotalsData.push({
-							key: 'Donors',
-							y: numDonors
-						},
-						{
-							key: 'Cellular Lines',
-							y: numCellularLines
-						},
-						{
-							key: 'Pooled Donors',
-							y: numPooledDonors
-						}
-					);
-					
-					if(numOther>0) {
-						subtotalsData.push({
-								key: 'Other kind of donors',
-								y: numOther
-							}
-						);
 					}
+					localScope.labs.push(l);
+				});
+				
+				// Now, map the histones and generated the labels
+				localScope.experimentLabels = angular.copy(experimentLabels);
+				var iHis = localScope.experimentLabels.length;
+				histones.sort().forEach(function(histone) {
+					var normalizedHistone = histone.replace(/[.]/g,'_');
+					histoneMap[normalizedHistone] = iHis;
 					
-					$scope.subtotals.data = subtotalsData;
-					
-					deferred.resolve();
-					//console.log($scope.donors);
-				} else {
-					return deferred.reject(err);
-				}
-			});
-			return deferred.promise;
+					if(CSpeakSplit) {
+						// It uses two slots
+						localScope.experimentLabels.push(histone+' (peaks)');
+						localScope.experimentLabels.push(histone+' (broad peaks)');
+						iHis+=2;
+					} else {
+						localScope.experimentLabels.push(histone);
+						iHis++;
+					}
+				});
+				localScope.histoneMap = histoneMap;
+				
+				deferred.resolve(localScope);
+			} else {
+				return deferred.reject(err);
+			}
+		
+		});
+		
+		return deferred.promise;
+	};
+    
+	var genShouldQuery = function(rangeQueryArr) {
+		// We transform it into an array, in case it is not yet
+		if(!Array.isArray(rangeQueryArr)) {
+			rangeQueryArr = [ rangeQueryArr ];
 		}
+		var shouldQuery = rangeQueryArr.map(function(q) {
+			return {
+				bool: {
+					must: [
+						{
+							term: {
+								chromosome: q.chr
+							}
+						},
+						{
+							bool: {
+								should: [
+									{
+										range: {
+											chromosome_start: {
+												gte: q.start,
+												lte: q.end
+											}
+										}
+									},
+									{
+										range: {
+											chromosome_end: {
+												gte: q.start,
+												lte: q.end
+											}
+										}
+									},
+									{
+										bool: {
+											must: [
+												{
+													range: {
+														chromosome_start: {
+															lte: q.end
+														}
+													}
+												},
+												{
+													range: {
+														chromosome_end: {
+															gte: q.start
+														}
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			};
+		});
+		
+		return shouldQuery;
+	};
+	
+	var launch = function() {
+		var theArgs = arguments;
+		return function(localScope) {
+			if(Array.isArray(localScope)) {
+				localScope = localScope[0];
+			}
+			
+			var queries = [];
+			
+			for(var t=0;t<theArgs.length;t++) {
+				var theFunc = theArgs[t];
+				localScope.graphData.forEach(function(rangeData) {
+					//try {
+						queries.push(theFunc(localScope,rangeData));
+					//} catch(e) {
+					//	console.log("Mira");
+					//	console.log(e);
+					//}
+				});
+			}
+			
+			if(queries.length > 0) {
+				return queries.length===1 ? queries[0] : $q.all(queries);
+			}
+		};
+	};
+	
+	var getWgbsData = function(localScope,rangeData) {
+		var deferred = $q.defer();
+		var shouldQuery = genShouldQuery(rangeData.range);
+		es.search({
+			size:10000000,
+			index: 'primary',
+			type: 'dlat.mr',
+			search_type: 'count',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								should: shouldQuery
+							}
+						}
+					}
+				},
+				aggs: {
+					analyses: {
+						terms: {
+							field: 'analysis_id'
+						},
+						aggs: {
+							stats_meth_level: {
+								extended_stats: {
+									field: 'meth_level'
+								}
+							}
+						}
+					}
+				}
+			}
+		},function(err,resp) {
+			if(typeof(resp.aggregations) !== undefined){  
+				resp.aggregations.analyses.buckets.forEach(function(d) {
+					rangeData.stats.bisulfiteSeq.push(d);
+				});
+				deferred.resolve(localScope);
+			} else {
+				return deferred.reject(err); 
+			}
+		});
+		
+		return deferred.promise;
+	};
+	
+	var getRnaSeqGData = function(localScope,rangeData) {
+		var deferred = $q.defer();
+		var shouldQuery = genShouldQuery(rangeData.range);
+		es.search({
+			size:10000000,	
+			index: 'primary',
+			type: 'exp.g',
+			search_type: 'count',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								should: shouldQuery
+							}
+						}
+					}
+				},
+				aggs: {
+					analyses: {
+						terms: {
+							field: 'analysis_id'
+						},
+						aggs: {
+							stats_normalized_read_count: {
+								extended_stats: {
+									field: 'normalized_read_count'
+								}
+							}
+						}
+					}
+				}
+			}
+		},function(err,resp) {
+			if(typeof(resp.aggregations) !== undefined){	
+				resp.aggregations.analyses.buckets.forEach(function(d) {
+					rangeData.stats.rnaSeqG.push(d);
+				});
+				deferred.resolve(localScope);
+			} else {
+				return deferred.reject(err); 
+			}
+		});
+		
+		return deferred.promise;
 	};
 
-    var getHistoneData = function(d,histone){
+	var getRnaSeqTData = function(localScope,rangeData) {
+		var deferred = $q.defer();
+		var shouldQuery = genShouldQuery(rangeData.range);
+		es.search({
+			size:10000000,	
+			index: 'primary',
+			type: 'exp.t',
+			search_type: 'count',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								should: shouldQuery
+							}
+						}
+					}
+				},
+				aggs: {
+					analyses: {
+						terms: {
+							field: 'analysis_id'
+						},
+						aggs: {
+							stats_normalized_read_count: {
+								extended_stats: {
+									field: 'normalized_read_count'
+								}
+							}
+						}
+					}
+				}
+			}
+		},function(err,resp) {
+			if(typeof(resp.aggregations) !== undefined){	
+				resp.aggregations.analyses.buckets.forEach(function(d) {
+					rangeData.stats.rnaSeqT.push(d);
+				});
+				deferred.resolve(localScope);
+			} else {
+				return deferred.reject(err); 
+			}
+		});
+		
+		return deferred.promise;
+	};
+
+	var getDnaseData = function(localScope,rangeData) {
+		var deferred = $q.defer();
+		var shouldQuery = genShouldQuery(rangeData.range);
+		es.search({
+			size:10000000,	
+			index: 'primary',
+			type: 'rreg.p',
+			search_type: 'count',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								should: shouldQuery
+							}
+						}
+					}
+				},
+				aggs: {
+					analyses:{
+						terms:{
+							field: 'analysis_id'
+						},
+						aggs:{
+							peak_size: {
+								sum: {
+									lang: "expression",
+									script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
+								}
+							}
+						}
+					}
+				}
+
+
+			}
+		},function(err,resp) {
+			if(typeof(resp.aggregations) !== undefined){	
+				resp.aggregations.analyses.buckets.forEach(function(d) {
+					rangeData.stats.dnaseSeq.push(d);
+				});
+				deferred.resolve(localScope);
+			}else{
+				return deferred.reject(err); 
+			}
+		});
+		
+		return deferred.promise;
+	};
+	
+	var chipSeqWindow = 500;
+	
+	var getChipSeqData = function(localScope,rangeData) {			
+		var deferred = $q.defer();
+		var shouldQuery = genShouldQuery(rangeData.range);
+		es.search({
+			size:10000000,	
+			index: 'primary',
+			type: 'pdna.p',
+			search_type: 'count',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								should: shouldQuery
+							}
+						}
+					}
+				},
+				aggs: {
+					histones: {
+						terms: {
+							field: 'protein_stable_id'
+						},
+						aggs: {
+							analyses:{
+								terms:{
+									field: 'analysis_id'
+								},
+								aggs:{
+									peak_size: {
+										sum: {
+											lang: "expression",
+											script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},function(err,resp) {
+			if(typeof(resp.aggregations) !== undefined){	
+				resp.aggregations.histones.buckets.forEach(function(d) {
+					rangeData.stats.chipSeq.push(d);
+				});
+				deferred.resolve(localScope);
+			} else {
+				return deferred.reject(err); 
+			}
+		});
+		
+		return deferred.promise;
+	};
+
+	var getSamples = function(localScope) {
+		if(localScope.samples.length!==0) {
+			return localScope;
+		}
+		
+		localScope.samples = [];
+		localScope.samplesOnt = [];
+		var deferred = $q.defer();
+		es.search({
+			index: 'sample-tracking-data',
+			type: 'sdata.sample',
+			size: 100000,
+		},function(err,resp){
+			if(typeof(resp.hits.hits) !== undefined) {
+				resp.hits.hits.forEach(function(d) {
+					var s = {};
+					s.analyzed_sample_type_other = d._source.analyzed_sample_type_other;
+					s.sample_id = d._source.sample_id;
+					s.ontology = d._source.purified_cell_type;
+					s.markers = d._source.markers;
+					s.experiments = [];
+					localScope.labs.forEach(function(d){
+						if(d.sample_id == s.sample_id){
+							s.experiments.push(d);
+						}
+					});
+					localScope.samplesOnt.push(s.ontology);
+					localScope.samples.push(s);
+				});
+				
+				var numSamples = localScope.samples.length;
+				
+				localScope.subtotals.data.push({
+						key: 'Samples',
+						y: numSamples
+					}
+				);
+				
+				//console.log(localScope.samples);
+				deferred.resolve(localScope);
+			} else {
+				return deferred.reject(err);
+			}
+		});
+		return deferred.promise;
+	};
+
+	var getDonors = function(localScope) {
+		if(localScope.donors.length!==0) {
+			return localScope;
+		}
+		
+		localScope.donors = [];
+		return es.search({
+			index: 'sample-tracking-data',
+			type: 'sdata.donor',
+			size: 100000,
+		}).then(function(resp){
+			if(typeof(resp.hits.hits) !== undefined) {
+				var subtotalsData = [];
+				
+				var numDonors = 0;
+				var numPooledDonors = 0;
+				var numCellularLines = 0;
+				var numOther = 0;
+				resp.hits.hits.forEach(function(d) {
+					switch(d._source.donor_kind) {
+						case 'd':
+							numDonors++;
+							break;
+						case 'p':
+							numPooledDonors++;
+							break;
+						case 'c':
+							numCellularLines++;
+							break;
+						default:
+							numOther++;
+					}
+					localScope.donors.push(d._source);
+				});
+				subtotalsData.push({
+						key: 'Donors',
+						y: numDonors
+					},
+					{
+						key: 'Cellular Lines',
+						y: numCellularLines
+					},
+					{
+						key: 'Pooled Donors',
+						y: numPooledDonors
+					}
+				);
+				
+				if(numOther>0) {
+					subtotalsData.push({
+							key: 'Other kind of donors',
+							y: numOther
+						}
+					);
+				}
+				
+				localScope.subtotals.data = subtotalsData;
+				//console.log(localScope.donors);
+			}
+			
+			return localScope;
+		});
+	};
+	
+	var getSpecimens = function(localScope) {
+		if(localScope.specimens.length!==0) {
+			return localScope;
+		}
+		
+		return es.search({
+			index: 'sample-tracking-data',
+			type: 'sdata.specimen',
+			size: 100000,
+		}).then(function(resp){
+			if(typeof(resp.hits.hits) !== undefined) {
+				resp.hits.hits.forEach(function(d) {
+					localScope.specimens.push(d._source);
+				});
+				//console.log(localScope.specimens);
+			}
+			
+			return localScope;
+		});
+	};
+
+    var getHistoneData = function(d,histone,stats,range){
         
         var exp = 0;
         var value = 0.0;
@@ -898,7 +983,7 @@ angular.module('blueprintApp')
         d.analyses.forEach(function(analysis_id){
             var theValue = 0.0;
             var theExp = 0;
-            $scope.chipSeq.forEach(function(a){
+            stats.chipSeq.forEach(function(a){
               if(a.key == histone){
                 //console.log(a);
                 a.analyses.buckets.forEach(function(c){
@@ -920,323 +1005,411 @@ angular.module('blueprintApp')
         
         // This can be a bit incorrect for pathways...
         if(exp > 0 || expB > 0) {
-          var region = 0;
-          $scope.rangeQuery.forEach(function(r) {
-	  	var end = r.end+chipSeqWindow;
-	  	var start = r.start-chipSeqWindow;
-	  	// Corner case
-	  	if(start < 1) {
-	  		start=1;
-	  	}
-	  	region += end - start + 1;
-	  });
+		var end = range.end+chipSeqWindow;
+		var start = range.start-chipSeqWindow;
+		// Corner case
+		if(start < 1) {
+			start=1;
+		}
+		var region = end - start + 1;
 	  
-          // console.log(region);
-          if(exp > 0){
-             //console.log(region);
-            value = (value/region)*100.0;
-          }
-          if(expB > 0){
-            valueB = (valueB/region)*100.0;
-          }
+		// console.log(region);
+		if(exp > 0){
+			//console.log(region);
+			value = (value/region)*100.0;
+		}
+		if(expB > 0){
+			valueB = (valueB/region)*100.0;
+		}
         }
         return {notBroad:value, broad:valueB}; 
     };
 
-    var populateBasicTree = function(o) {
-	var numNodes = 1;
-	// First, the children
-	if(o.children) {
-		o.children.forEach(function(child) {
-			numNodes += populateBasicTree(child);
-		});
-	} else {
-		o.children = [];
-	}
-	
-	// And now, me!
-	if(o.o_uri) {
-		var aggregated_statistics = [];
-		var childrens = [];
-		$scope.experimentLabels.forEach(function() {
-			aggregated_statistics.push(0);
-			childrens.push(0);
-		});
-		$scope.samples.forEach(function(s) {
-			if(s.ontology == o.o_uri) {
-				o.analized = true;
-				var statistics = [];
-				$scope.experimentLabels.forEach(function() {
-					statistics.push(0);
-				});
-				s.experiments.forEach(function(d){
-					//console.log(d);
-					var theStat = 0.0;
-					if(d.experiment_type === 'DNA Methylation') {
-						var methExp = 0;
-						d.analyses.forEach(function(v) {
-							$scope.bisulfiteSeq.forEach(function(a) {
-								if(a.key == v){
-									theStat += a.stats_meth_level.avg;
-									methExp++;
-								}
-							});
-						});
-						if(methExp > 0.0){
-							theStat = theStat/methExp;
-							childrens[0]++;
-						} else {
-							theStat = NaN;
-						}
-						statistics[0] = theStat;
-					} else if(d.experiment_type === 'Chromatin Accessibility') {
-						var dnaseSeqExp = 0;
-						d.analyses.forEach(function(v) {
-							$scope.dnaseSeq.forEach(function(a) {
-								if(a.key == v) {
-									theStat += a.peak_size.value;
-									dnaseSeqExp++;
-								}
-							});
-						});
-						if(dnaseSeqExp > 0) {
-							// This can be a bit incorrect for pathways...
-							var region = 0;
-							$scope.rangeQuery.forEach(function(r) {
-								region += r.end - r.start + 1;
-							});
-							theStat = theStat/region;
-							childrens[1]++;
-						} else {
-							theStat = NaN;
-						}
-						statistics[1] = theStat;
-					} else if(d.experiment_type === 'mRNA-seq') {
-						// Expression at Gene and Transcript levels
-						var rnaSeqExpG = 0;
-						var rnaSeqExpT = 0;
-						var theStatT = 0.0;
-						
-						d.analyses.forEach(function(v) {
-							$scope.rnaSeqG.forEach(function(a) {
-								if(a.key == v) {
-									theStat += a.stats_normalized_read_count.avg;
-									rnaSeqExpG++;
-								}
-							});
-							$scope.rnaSeqT.forEach(function(a) {
-								if(a.key == v) {
-									theStatT += a.stats_normalized_read_count.avg;
-									rnaSeqExpT++;
-								}
-							});
-						});
-						if(rnaSeqExpG > 0) {
-							theStat = theStat/rnaSeqExpG;
-							childrens[2]++;
-						} else {
-							theStat = NaN;
-						}
-						statistics[2] = theStat;
-						
-						if(rnaSeqExpT > 0) {
-							theStatT = theStatT/rnaSeqExpT;
-							childrens[3]++;
-						} else {
-							theStatT = NaN;
-						}
-						statistics[3] = theStatT;
-					} else if(d.experiment_type.indexOf('Histone ')===0) {
-						var normalizedHistone = d.features.CHIP_ANTIBODY.value.replace(/[.]/g,'_');
-						
-						if(normalizedHistone in $scope.histoneMap) {
-							var expIdx = $scope.histoneMap[normalizedHistone];
-							
-							var histoneStats = getHistoneData(d,normalizedHistone);
-
-							statistics[expIdx] = CSpeakSplit ? histoneStats.notBroad : (histoneStats.notBroad+histoneStats.broad);
-							if(statistics[expIdx]>0) {
-								childrens[expIdx]++;
-							} else {
-								statistics[expIdx] = NaN;
-							}
-								
-							if(CSpeakSplit) {
-								statistics[expIdx+1] = histoneStats.broad;
-								if(statistics[expIdx+1]>0) {
-									childrens[expIdx+1]++;
-								} else {
-									statistics[expIdx+1] = NaN;
-								}
-							}
-						} else {
-							console.log("Unmapped histone "+normalizedHistone);
-						}
-					}
-				});
-				
-				// Translating to the right units
-				if(!isNaN(statistics[0]) && statistics[0]!==-1) {
-					statistics[0] *= 100.0;
-				}
-				
-				if(!isNaN(statistics[1]) && statistics[1]!==-1) {
-					statistics[1] *= 100.0;
-				}
-				
-				statistics.forEach(function(stat,i) {
-					if(!isNaN(stat) && stat!==-1) {
-						aggregated_statistics[i] += stat;
-					}
-				});
-				
-				if($scope.display === 'detailed'){
-					var newNode = {
-						expData: statistics,
-						name: s.sample_id,
-						experimentsCount: s.experiments.length
-					};
-					
-					o.children.push(newNode);
-					numNodes++;
-				}
-			}
-		});
-                if(! o.expData) {
-			//console.log(o[i]);
-			var expData = [];
-			aggregated_statistics.forEach(function(stat,i) {
-				// Storing -1 for uninitialized cases
-				expData.push((childrens[i] > 0)?(stat/childrens[i]):NaN);
+	var populateBasicTree = function(o,localScope,range,stats,isDetailed) {
+		var numNodes = 1;
+		// First, the children
+		if(o.children) {
+			o.children.forEach(function(child) {
+				numNodes += populateBasicTree(child,localScope,range,stats,isDetailed);
 			});
-			o.expData = expData;
-                }
-	}
-	return numNodes;
-    };
-
-    var initTree = function(){
-	console.log("initializing tree");
-	
-	lastSearchMode = $scope.display;
-	var clonedTreeData = angular.copy(fetchedTreeData);
-	$scope.treedata = [];
-	clonedTreeData.forEach(function(cloned) {
-		var numNodes = populateBasicTree(cloned);
-		$scope.treedata.push({root: cloned, numNodes: numNodes, depth:((lastSearchMode==='detailed')?$scope.depth+1:$scope.depth), experiments: $scope.experimentLabels});
-	});
-	$scope.searchButtonText = "Search";
-    };
-
-    var updateChromosomes = function(){
-	var regions = '';
-	$scope.chromosomes.forEach(function(d){
-		d.c = "chr";
-	});
-	$scope.rangeQuery.forEach(function(part,i) {
-		console.log('Updating chromosome data '+part.chr);
-		$scope.chromosomes.forEach(function(d){
-			if(d.n == part.chr) {
-				d.c = "chr_active";
-			}
-		});
-		
-		if(i>0) {
-			regions += ' ; ';
-		}
-		
-		regions += "<a href='http://www.ensembl.org/Homo_sapiens/Location/View?r="+part.chr+":"+part.start+"-"+part.end+"' target='_blank'>chr"+part.chr+":"+part.start+"-"+part.end+"</a>";
-	});
-	$scope.found = "Displaying information from region"+(($scope.rangeQuery.length > 1)?'s':'')+": "+regions;
-	if($scope.geneQuery !== null) {
-		$scope.found += " ("+$scope.geneQueryType+" <a href='http://www.ensembl.org/Homo_sapiens/Gene/Summary?g="+$scope.ensemblGeneId+"&db=core' target='_blank'>"+$scope.geneQuery+" ["+$scope.ensemblGeneId+"]</a>)";
-	} else if($scope.pathwayQuery !== null) {
-		$scope.found += " (Pathway <a href='http://www.reactome.org/content/detail/"+$scope.pathwayQuery+"' target='_blank'>"+$scope.pathwayQuery+"</a>)";
-	}
-    };
-
-    var getGeneRange = function(){
-      var deferred = $q.defer();
-      es.search({
-        index: 'external',
-        type: 'external.gencode',
-        size: 1000,
-        body: {
-          query:{
-            filtered:{
-              query:{
-                match: {
-                  symbol:$scope.geneQuery 
-                }
-              },
-              filter:{
-                term:{
-                  feature:"gene"
-                }
-              }
-            }
-          }
-        }
-      },function(err,resp){
-
-        if(typeof(resp.hits.hits) !== undefined){
-          $scope.rangeQuery.push({ chr: resp.hits.hits[0]._source.chromosome , start: resp.hits.hits[0]._source.chromosome_start, end: resp.hits.hits[0]._source.chromosome_end });
-          $scope.ensemblGeneId = resp.hits.hits[0]._source.feature_cluster_id;
-          $scope.geneQueryType = 'gene';
-          //$scope.rangeQuery.chr = resp.hits.hits[0]._source.chromosome;
-          //$scope.rangeQuery.start = resp.hits.hits[0]._source.chromosome_start;
-          //$scope.rangeQuery.end = resp.hits.hits[0]._source.chromosome_end;
-          //$scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end+ " (Gene: "+$scope.geneQuery+")";
-          updateChromosomes();
-          deferred.resolve();
-
-        }else{
-          return deferred.reject(err);
-        }
-
-      });
-      return deferred.promise;
-    };
-    
-    var getPathwayRanges = function(){
-	var deferred = $q.defer();
-	es.search({
-		index: 'external',
-		type: 'external.reactome',
-		size: 1000,
-		body: {
-			query:{
-				filtered:{
-					query:{
-						match: {
-							pathway_id:$scope.pathwayQuery 
-						}
-					}
-				}
-			}
-		}
-	},function(err,resp){
-		if(typeof(resp.hits.hits) !== undefined){
-			resp.hits.hits[0]._source.participants.forEach(function(part) {
-				$scope.rangeQuery.push({ chr: part.chromosome , start: part.chromosome_start, end: part.chromosome_end });
-			});
-			updateChromosomes();
-			deferred.resolve();
 		} else {
-			return deferred.reject(err);
+			o.children = [];
 		}
-	});
-	return deferred.promise;
-    };
+		
+		// And now, me!
+		if(o.o_uri) {
+			var aggregated_statistics = [];
+			var childrens = [];
+			localScope.experimentLabels.forEach(function() {
+				aggregated_statistics.push(0);
+				childrens.push(0);
+			});
+			localScope.samples.forEach(function(s) {
+				if(s.ontology == o.o_uri) {
+					o.analized = true;
+					var statistics = [];
+					localScope.experimentLabels.forEach(function() {
+						statistics.push(0);
+					});
+					s.experiments.forEach(function(d){
+						//console.log(d);
+						var theStat = 0.0;
+						if(d.experiment_type === 'DNA Methylation') {
+							var methExp = 0;
+							d.analyses.forEach(function(v) {
+								stats.bisulfiteSeq.forEach(function(a) {
+									if(a.key == v){
+										theStat += a.stats_meth_level.avg;
+										methExp++;
+									}
+								});
+							});
+							if(methExp > 0.0){
+								theStat = theStat/methExp;
+								childrens[0]++;
+							} else {
+								theStat = NaN;
+							}
+							statistics[0] = theStat;
+						} else if(d.experiment_type === 'Chromatin Accessibility') {
+							var dnaseSeqExp = 0;
+							d.analyses.forEach(function(v) {
+								stats.dnaseSeq.forEach(function(a) {
+									if(a.key == v) {
+										theStat += a.peak_size.value;
+										dnaseSeqExp++;
+									}
+								});
+							});
+							if(dnaseSeqExp > 0) {
+								var region = range.end - range.start + 1;
+								theStat = theStat/region;
+								childrens[1]++;
+							} else {
+								theStat = NaN;
+							}
+							statistics[1] = theStat;
+						} else if(d.experiment_type === 'mRNA-seq') {
+							// Expression at Gene and Transcript levels
+							var rnaSeqExpG = 0;
+							var rnaSeqExpT = 0;
+							var theStatT = 0.0;
+							
+							d.analyses.forEach(function(v) {
+								stats.rnaSeqG.forEach(function(a) {
+									if(a.key == v) {
+										theStat += a.stats_normalized_read_count.avg;
+										rnaSeqExpG++;
+									}
+								});
+								stats.rnaSeqT.forEach(function(a) {
+									if(a.key == v) {
+										theStatT += a.stats_normalized_read_count.avg;
+										rnaSeqExpT++;
+									}
+								});
+							});
+							if(rnaSeqExpG > 0) {
+								theStat = theStat/rnaSeqExpG;
+								childrens[2]++;
+							} else {
+								theStat = NaN;
+							}
+							statistics[2] = theStat;
+							
+							if(rnaSeqExpT > 0) {
+								theStatT = theStatT/rnaSeqExpT;
+								childrens[3]++;
+							} else {
+								theStatT = NaN;
+							}
+							statistics[3] = theStatT;
+						} else if(d.experiment_type.indexOf('Histone ')===0) {
+							var normalizedHistone = d.features.CHIP_ANTIBODY.value.replace(/[.]/g,'_');
+							
+							if(normalizedHistone in localScope.histoneMap) {
+								var expIdx = localScope.histoneMap[normalizedHistone];
+								
+								var histoneStats = getHistoneData(d,normalizedHistone,stats,range);
+								
+								statistics[expIdx] = CSpeakSplit ? histoneStats.notBroad : (histoneStats.notBroad+histoneStats.broad);
+								if(statistics[expIdx]>0) {
+									childrens[expIdx]++;
+								} else {
+									statistics[expIdx] = NaN;
+								}
+									
+								if(CSpeakSplit) {
+									statistics[expIdx+1] = histoneStats.broad;
+									if(statistics[expIdx+1]>0) {
+										childrens[expIdx+1]++;
+									} else {
+										statistics[expIdx+1] = NaN;
+									}
+								}
+							} else {
+								console.log("Unmapped histone "+normalizedHistone);
+							}
+						}
+					});
+					
+					// Translating to the right units
+					if(!isNaN(statistics[0]) && statistics[0]!==-1) {
+						statistics[0] *= 100.0;
+					}
+					
+					if(!isNaN(statistics[1]) && statistics[1]!==-1) {
+						statistics[1] *= 100.0;
+					}
+					
+					statistics.forEach(function(stat,i) {
+						if(!isNaN(stat) && stat!==-1) {
+							aggregated_statistics[i] += stat;
+						}
+					});
+					
+					if(isDetailed){
+						var newNode = {
+							expData: statistics,
+							name: s.sample_id,
+							experimentsCount: s.experiments.length
+						};
+						
+						o.children.push(newNode);
+						numNodes++;
+					}
+				}
+			});
+			if(! o.expData) {
+				//console.log(o[i]);
+				var expData = [];
+				aggregated_statistics.forEach(function(stat,i) {
+					// Storing -1 for uninitialized cases
+					expData.push((childrens[i] > 0)?(stat/childrens[i]):NaN);
+				});
+				o.expData = expData;
+			}
+		}
+		return numNodes;
+	};
+
+	var initTree = function(localScope){
+		console.log("initializing tree");
+		
+		if(Array.isArray(localScope)) {
+			localScope = localScope[0];
+		}
+		
+		lastSearchMode = localScope.display;
+		if(lastSearchMode!=='none') {
+			var isDetailed = lastSearchMode==='detailed';
+			localScope.graphData.forEach(function(rangeData) {
+				var clonedTreeData = angular.copy(fetchedTreeData);
+				rangeData.treedata = [];
+				clonedTreeData.forEach(function(cloned) {
+					var numNodes = populateBasicTree(cloned,localScope,rangeData.range,rangeData.stats,isDetailed);
+					rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: localScope.experimentLabels});
+				});
+			});
+		}
+		localScope.searchButtonText = "Search";
+	};
+
+	var defaultSearchUri = 'http://www.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
+	var searchUris = {
+		gene: 'http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core&g=',
+		pathway: 'http://www.reactome.org/content/detail/',
+		transcript: 'http://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core&t=',
+		reaction: 'http://www.reactome.org/content/detail/',
+		region: 'http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core&r=',
+	};
+	
+	var updateChromosomes = function(localScope,isRange){
+		var regions = '';
+		//localScope.chromosomes.forEach(function(d){
+		//	d.c = "chr";
+		//});
+		// Now, let's prepare the backbones!
+		localScope.graphData = [];
+		localScope.rangeQuery.forEach(function(range,i) {
+			console.log('Updating chromosome data '+range.chr);
+			//localScope.chromosomes.forEach(function(d){
+			//	if(d.n == range.chr) {
+			//		d.c = "chr_active";
+			//	}
+			//});
+			
+			if(i>0) {
+				regions += ' ; ';
+			}
+			var rangeStr = range.chr+":"+range.start+"-"+range.end;
+			
+			regions += "<a href='http://www.ensembl.org/Homo_sapiens/Location/View?r="+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
+			
+			// Preparing the charts!
+			var rangeData = {
+				range: range,
+				treedata: null,
+				stats: {
+					bisulfiteSeq: [],
+					rnaSeqG: [],
+					rnaSeqT: [],
+					chipSeq: [],
+					dnaseSeq: [],
+				},
+				gChro: localScope.unknownChromosome,
+				methyl: {
+					options: {
+						chart: {
+							type: DATA_CHART_TYPE,
+							height: DATA_CHART_HEIGHT,
+							x: getX,
+							y: getY,
+							useInteractiveGuideline: true,
+							noData: "Fetching methylated regions from "+rangeStr,
+							xAxis: {
+								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+							}
+						},
+						title: {
+							enable: true,
+							text: 'Methylated regions'
+						},
+					},
+					data: []
+				},
+				exp: {
+					options: {
+						chart: {
+							type: DATA_CHART_TYPE,
+							height: DATA_CHART_HEIGHT,
+							x: getX,
+							y: getY,
+							useInteractiveGuideline: true,
+							noData: "Fetching expression data from "+rangeStr,
+							xAxis: {
+								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+							}
+						},
+						title: {
+							enable: true,
+							text: 'Expression (gene and transcript)'
+						},
+					},
+					data: []
+				},
+				cseq: {
+					options: {
+						chart: {
+							type: DATA_CHART_TYPE,
+							height: DATA_CHART_HEIGHT,
+							x: getX,
+							y: getY,
+							useInteractiveGuideline: true,
+							noData: "Fetching histone peaks from "+rangeStr,
+							xAxis: {
+								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+							}
+						},
+						title: {
+							enable: true,
+							text: 'Histone Peaks (broad and narrow)'
+						},
+					},
+					data: []
+				},
+				dnase: {
+					options: {
+						chart: {
+							type: DATA_CHART_TYPE,
+							height: DATA_CHART_HEIGHT,
+							x: getX,
+							y: getY,
+							useInteractiveGuideline: true,
+							noData: "Fetching regulatory regions from "+rangeStr,
+							xAxis: {
+								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+							}
+						},
+						title: {
+							enable: true,
+							text: 'Regulatory regions (DNASE)'
+						},
+					},
+					data: []
+				},
+			};
+			
+			localScope.chromosomes.some(function(d){
+				if(d.n == range.chr) {
+					rangeData.gChro = d;
+					return true;
+				}
+				return false;
+			});
+			
+			localScope.graphData.push(rangeData);
+		});
+		localScope.found = "Displaying information from region"+((localScope.rangeQuery.length > 1)?'s':'')+": "+regions;
+		if(localScope.currentQuery !== null) {
+			var currentQueryType = isRange ? 'range' : localScope.currentQueryType;
+			var uri = (currentQueryType in searchUris) ? searchUris[currentQueryType] : defaultSearchUri;
+			localScope.found += " ("+localScope.currentQueryType+" <a href='"+uri+localScope.ensemblGeneId+"' target='_blank'>"+localScope.currentQuery+" ["+localScope.ensemblGeneId+"]</a>)";
+		//} else if(localScope.pathwayQuery !== null) {
+		//	localScope.found += " (Pathway <a href='http://www.reactome.org/content/detail/"+localScope.pathwayQuery+"' target='_blank'>"+localScope.pathwayQuery+"</a>)";
+		}
+	};
+
+	var getRanges = function(localScope){
+		var deferred = $q.defer();
+		es.search({
+			index: 'external',
+			type: 'external.features',
+			size: 1000,
+			body: {
+				query:{
+					filtered:{
+						query:{
+							match: {
+								symbol:localScope.currentQuery 
+							}
+						},
+						filter: {
+							terms: {
+								feature: ["gene","pathway","reaction"]
+							}
+						}
+					}
+				}
+			}
+		},function(err,resp){
+			if(typeof(resp.hits.hits) !== undefined){
+				localScope.ensemblGeneId = resp.hits.hits[0]._source.feature_cluster_id;
+				localScope.currentQueryType = resp.hits.hits[0]._source.feature;
+				resp.hits.hits[0]._source.coordinates.forEach(function(range) {
+					localScope.rangeQuery.push({ chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end });
+				});
+				updateChromosomes(localScope);
+				deferred.resolve(localScope);
+			} else {
+				return deferred.reject(err);
+			}
+		});
+		return deferred.promise;
+	};
     
-    var fetchCellTerms = function() {
-	if(fetchedTreeData===undefined) {
+	var fetchCellTerms = function(localScope) {
+		if(fetchedTreeData!==undefined) {
+			return localScope;
+		}
+		
+		
 		var deferred = $q.defer();
         
 		// Let's calculate the unique terms
 		var theUris=[];
 		var theObj = {};
-		$scope.samplesOnt.forEach(function(d) {
+		localScope.samplesOnt.forEach(function(d) {
 			if(!(d in theObj)) {
 				theUris.push(d);
 				theObj[d]=1;
@@ -1318,7 +1491,7 @@ angular.module('blueprintApp')
 						}
 					}
 				});
-				$scope.depth = maxDepth;
+				localScope.depth = maxDepth;
 				
 				/*
 				console.log("Terms");
@@ -1481,7 +1654,7 @@ angular.module('blueprintApp')
 						
 						// Sort by root uri
 						fetchedTreeData = roots.sort(function(a,b) { return a.o_uri.localeCompare(b.o_uri); });
-						deferred.resolve();
+						deferred.resolve(localScope);
 					} else {
 						return deferred.reject(err);
 					}
@@ -1491,234 +1664,204 @@ angular.module('blueprintApp')
 			}
 		});
 		return deferred.promise;
-	}
-    };
+	};
 
-    var preprocessQuery = function(){
+	var topFeatures = {
+		'gene': null,
+		'reaction': null,
+		'pathway': null
+	};
 
-      console.log('Running preprocessQuery');
-      var deferred = $q.defer();
-      var promise = deferred.promise;
-      
-	if($scope.suggestedQuery) {
-		if($scope.suggestedQuery.feature != REACT_FEATURE) {
-			$scope.rangeQuery.push({ chr: $scope.suggestedQuery.chromosome , start: $scope.suggestedQuery.chromosome_start, end: $scope.suggestedQuery.chromosome_end });
-			$scope.ensemblGeneId = $scope.suggestedQuery.feature_cluster_id;
-			$scope.geneQuery = $scope.suggestedQuery.term;
-			$scope.geneQueryType = $scope.suggestedQuery.feature;
-			if($scope.suggestedQuery.feature!=='gene') {
-				$scope.geneQueryType += ' from gene,';
+	var preprocessQuery = function(localScope){
+		console.log('Running preprocessQuery');
+		var deferred = $q.defer();
+		var promise = deferred.promise;
+		
+		if(localScope.suggestedQuery) {
+			localScope.ensemblGeneId = localScope.suggestedQuery.feature_cluster_id;
+			localScope.currentQuery = localScope.suggestedQuery.term;
+			localScope.currentQueryType = localScope.suggestedQuery.feature;
+			if(!(localScope.suggestedQuery.feature in topFeatures)) {
+				localScope.currentQueryType += ' from gene,';
 			}
-			//$scope.rangeQuery.chr = resp.hits.hits[0]._source.chromosome;
-			//$scope.rangeQuery.start = resp.hits.hits[0]._source.chromosome_start;
-			//$scope.rangeQuery.end = resp.hits.hits[0]._source.chromosome_end;
-			//$scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end+ " (Gene: "+$scope.geneQuery+")";
-		} else {
-			$scope.pathwayQuery = $scope.suggestedQuery.term;
-			$scope.suggestedQuery.participants.forEach(function(part) {
-				$scope.rangeQuery.push({ chr: part.chromosome , start: part.chromosome_start, end: part.chromosome_end });
+			localScope.suggestedQuery.coordinates.forEach(function(range) {
+				localScope.rangeQuery.push({ chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end });
 			});
+			updateChromosomes(localScope);
+		} else {
+			
+			var q = localScope.query.trim();
+			var m = q.match('^(?:chr)?([^:-]+):([1-9][0-9]*)-([1-9][0-9]*)$');
+			
+			//range query
+			if(m) {
+				if(m[1] === 'M') {
+					// Normalizing mitochondrial chromosome name
+					m[1] = 'MT';
+				}
+				localScope.rangeQuery.push({chr: m[1], start: m[2], end: m[3]});
+				// localScope.rangeQuery.chr   = m[1];
+				// localScope.rangeQuery.start = m[2];
+				// localScope.rangeQuery.end   = m[3];
+				// localScope.found = "Displaying information from region: chr"+localScope.rangeQuery[0].chr+":"+localScope.rangeQuery[0].start+"-"+localScope.rangeQuery[0].end;
+				updateChromosomes(localScope,true);
+			} else {
+				localScope.currentQuery = q;
+				promise = promise.then(getRanges);
+			}
 		}
-		updateChromosomes();
-      } else {
-      
-        var q = $scope.query.trim();
-        var m = q.match('^chr(.*):(.*)-(.*)$');
-        var react = q.indexOf(REACT_PREFIX) === 0;
-        
-        //range query
-        if(m){
-          if(m[1] === 'M') {
-            // Normalizing mitochondrial chromosome name
-            m[1] = 'MT';
-          }
-          $scope.rangeQuery.push({chr: m[1], start: m[2], end: m[3]});
-          // $scope.rangeQuery.chr   = m[1];
-          // $scope.rangeQuery.start = m[2];
-          // $scope.rangeQuery.end   = m[3];
-          // $scope.found = "Displaying information from region: chr"+$scope.rangeQuery[0].chr+":"+$scope.rangeQuery[0].start+"-"+$scope.rangeQuery[0].end;
-          updateChromosomes();
-        } else if(react) {
-          $scope.pathwayQuery = q;
-          promise = promise.then(getPathwayRanges);
-        } else {
-          $scope.geneQuery = q;
-          promise = promise.then(getGeneRange);
-        } 
-      }
-      deferred.resolve();
-      return promise;
-    };
+		deferred.resolve(localScope);
+		return promise;
+	};
 
     $scope.resultsSearch = [];
     
     $scope.search = function(theSuggest){
-        $scope.found = "";
-        $scope.suggestedQuery = theSuggest;
-        $scope.resultsSearch = [];
-        //$scope.samplesOnt = [];
-        //$scope.samples = [];
-        //$scope.labs = [];
-        //$scope.analyses = [];
-        $scope.bisulfiteSeq = [];
-        $scope.rnaSeqG = [];
-        $scope.rnaSeqT = [];
-        $scope.chipSeq = [];
-        $scope.dnaseSeq = [];
-        $scope.treedata = null;
-        $scope.rangeQuery = [];
-        $scope.geneQuery = null;
-        $scope.ensemblGeneId = null;
-        $scope.pathwayQuery = null;
-
+	$scope.found = "";
+	$scope.suggestedQuery = theSuggest;
+	$scope.resultsSearch = [];
+	//$scope.samplesOnt = [];
+	//$scope.samples = [];
+	//$scope.labs = [];
+	//$scope.analyses = [];
+	//$scope.bisulfiteSeq = [];
+	//$scope.rnaSeqG = [];
+	//$scope.rnaSeqT = [];
+	//$scope.chipSeq = [];
+	//$scope.dnaseSeq = [];
+	//$scope.treedata = null;
+	
+	$scope.rangeQuery = [];
+	$scope.ensemblGeneId = null;
+	$scope.currentQuery = null;
+	$scope.currentQueryType = null;
+	
         $scope.searchButtonText = "Searching...";
 
         var deferred = $q.defer();
         var promise = deferred.promise;
         promise = promise.then(preprocessQuery)
-                         .then(getAnalyses)
-                         .then(getLabs)
-                         .then(getSamples)
-                         .then(fetchCellTerms)
-                         .then(getWgbsData)
-                         .then(getRnaSeqGData)
-                         .then(getRnaSeqTData)
-                         .then(getChipSeqData)
-                         .then(getDnaseData)
-                         //.then(preprocessQuery)
-                         .then(initTree);
-        deferred.resolve();
+		// Done at the beginning
+                 //.then(getAnalyses)
+                 //.then(getLabs)
+                 //.then(getSamples)
+                 //.then(fetchCellTerms)
+                 // Either the browser or the server gets too stressed with this concurrent query
+                 //.then($q.all([launch(getWgbsData),launch(getRnaSeqGData),launch(getRnaSeqTData),launch(getChipSeqData),launch(getDnaseData)]))
+                 .then(launch(getWgbsData))
+                 .then(launch(getRnaSeqGData))
+                 .then(launch(getRnaSeqTData))
+                 .then(launch(getChipSeqData))
+                 .then(launch(getDnaseData))
+                 //.then(preprocessQuery)
+                 .then(initTree);
+                 
+        deferred.resolve($scope);
     };
     
     
 	var my_feature_ranking = {
 		gene: 1,
-		transcript: 2,
-		exon: 3,
-		CDS: 4,
-		UTR: 5,
-		start_codon: 6,
-		stop_codon: 7,
-		Selenocysteine: 8
+		pathway: 2,
+		transcript: 3,
+		exon: 4,
+		reaction: 5,
+		CDS: 6,
+		UTR: 7,
+		start_codon: 8,
+		stop_codon: 9,
+		Selenocysteine: 10
 	};
 	
     $scope.suggest = function() {
+	var deferred = $q.defer();
+	var promise = deferred.promise;
+	
 	$scope.resultsSearch = [];
 	$scope.suggestedQuery = null;
 	
 	if($scope.query.length >= 3) {
-		if($scope.query.indexOf(REACT_PREFIX) === 0) {
-			es.search({
-				index: 'external',
-				type: 'external.reactome',
-				size: 50,
-				body: {
-					query:{
-						filtered: {
-							query: {
-								match_all: {}
-							},
-							filter: {
-								prefix: {
-									pathway_id: $scope.query
-								}
+		var query = $scope.query.toLowerCase();
+		es.search({
+			index: 'external',
+			type: 'external.features',
+			size: 5000,
+			body: {
+				query:{
+					filtered: {
+						query: {
+							match_all: {}
+						},
+						filter: {
+							prefix: {
+								symbol: query
 							}
-						}
-					},
-				}
-			},function(err,resp) {
-				var resultsSearch = [];
-				
-				// Only process at most 50 suggestions
-				resp.hits.hits.forEach(function(sug) {
-					var pathway_id = sug._source.pathway_id;
-					resultsSearch.push({term: pathway_id, fullTerm: pathway_id, feature: REACT_FEATURE, participants: sug._source.participants});
-				});
-				
-				$scope.resultsSearch = resultsSearch;
-			});
-		} else {
-			var query = $scope.query.toLowerCase();
-			es.search({
-				index: 'external',
-				type: 'external.gencode',
-				size: 5000,
-				body: {
-					query:{
-						filtered: {
-							query: {
-								match_all: {}
-							},
-							filter: {
-								prefix: {
-									symbol: query
-								}
-							}
-						}
-					},
-					fields: ['symbol','chromosome','chromosome_start','chromosome_end','feature','feature_cluster_id'],
-				}
-			},function(err,resp){
-				var resultsSearch = [];
-				
-				resp.hits.hits.forEach(function(sug,i) {
-					var theTerm = undefined;
-					var theSecondTerm = undefined;
-					var isFirst = 0;
-					sug.fields.symbol.forEach(function(term) {
-						var termpos = term.toLowerCase().indexOf(query);
-						if(termpos===0) {
-							if(theTerm===undefined || term.length < theTerm.length) {
-								theTerm = term;
-							}
-						} else if(termpos!==-1) {
-							if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
-								theSecondTerm = term;
-							}
-						}
-					});
-					
-					// A backup default
-					if(theTerm===undefined) {
-						if(theSecondTerm !== undefined) {
-							isFirst = 1;
-							theTerm = theSecondTerm;
-						} else {
-							isFirst = 2;
-							theTerm = sug.fields.symbol[0];
 						}
 					}
-					var feature = sug.fields.feature[0];
-					var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
-					resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug.fields.symbol.join(", ")+')', id:sug._id,chromosome:sug.fields.chromosome[0],chromosome_start:sug.fields.chromosome_start[0],chromosome_end:sug.fields.chromosome_end[0],feature:feature,featureScore:featureScore, feature_cluster_id:sug.fields.feature_cluster_id[0]});
+				},
+			}
+		},function(err,resp){
+			var resultsSearch = [];
+			
+			resp.hits.hits.forEach(function(sug,i) {
+				var theTerm = undefined;
+				var theSecondTerm = undefined;
+				var isFirst = 0;
+				sug._source.symbol.forEach(function(term) {
+					var termpos = term.toLowerCase().indexOf(query);
+					if(termpos===0) {
+						if(theTerm===undefined || term.length < theTerm.length) {
+							theTerm = term;
+						}
+					} else if(termpos!==-1) {
+						if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
+							theSecondTerm = term;
+						}
+					}
 				});
 				
-				resultsSearch.sort(function(a,b) {
-					if(a.featureScore != b.featureScore) {
-						return a.featureScore - b.featureScore;
-					} else if(a.isFirst != b.isFirst) {
-						return a.isFirst - b.isFirst;
-					} else if(a.term.length != b.term.length) {
-						return a.term.length - b.term.length;
+				// A backup default
+				if(theTerm===undefined) {
+					if(theSecondTerm !== undefined) {
+						isFirst = 1;
+						theTerm = theSecondTerm;
 					} else {
-						return a.term.localeCompare(b.term);
+						isFirst = 2;
+						theTerm = sug._source.symbol[0];
 					}
-				});
-				
-				var curFeat = '';
-				var numFeat = 0;
-				resultsSearch.forEach(function(r) {
-					if(r.feature != curFeat) {
-						curFeat = r.feature;
-						numFeat = 0;
-					}
-					if(numFeat<4) {
-						$scope.resultsSearch.push(r);
-						numFeat++;
-					}
-				});
+				}
+				var feature = sug._source.feature;
+				var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
+				resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug._source.symbol.join(", ")+')', id:sug._id, coordinates:sug._source.coordinates, feature:feature,featureScore:featureScore, feature_cluster_id:sug._source.feature_cluster_id});
 			});
-		}
+			
+			resultsSearch.sort(function(a,b) {
+				if(a.featureScore != b.featureScore) {
+					return a.featureScore - b.featureScore;
+				} else if(a.isFirst != b.isFirst) {
+					return a.isFirst - b.isFirst;
+				} else if(a.term.length != b.term.length) {
+					return a.term.length - b.term.length;
+				} else {
+					return a.term.localeCompare(b.term);
+				}
+			});
+			
+			var curFeat = '';
+			var numFeat = 0;
+			resultsSearch.forEach(function(r) {
+				if(r.feature != curFeat) {
+					curFeat = r.feature;
+					numFeat = 0;
+				}
+				if(numFeat<4) {
+					$scope.resultsSearch.push(r);
+					numFeat++;
+				}
+			});
+			
+			deferred.resolve();
+		});
 	}
     };
     
@@ -1735,11 +1878,11 @@ angular.module('blueprintApp')
 	var init = function($q) {
 		var deferred = $q.defer();
 		var promise = deferred.promise;
-		promise = promise.then(getDonors)
-				.then(getAnalyses)
+		promise = promise.then(function(localScope) { return $q.all([getDonors(localScope),getSpecimens(localScope),getAnalyses(localScope)]); })
 				.then(getLabs)
-				.then(getSamples);
-		deferred.resolve();
+				.then(getSamples)
+				.then(fetchCellTerms);
+		deferred.resolve($scope);
 	};
 	
 	init($q);

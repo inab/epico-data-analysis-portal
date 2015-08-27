@@ -17,6 +17,51 @@ angular.module('blueprintApp')
 	var SEARCHING_LABEL = "Searching...";
 	var SEARCH_LABEL = "Search";
 	
+	var METHYL_GRAPH = 'methyl';
+	var EXP_GRAPH = 'exp';
+	var CSEQ_GRAPH = 'cseq';
+	var DNASE_GRAPH = 'dnase';
+	var GRAPHS = [
+		{
+			name: METHYL_GRAPH,
+			noData: 'methylated regions',
+			title: 'Methylated regions',
+			yAxisLabel: 'Methylation level',
+		},
+		{
+			name: EXP_GRAPH,
+			noData: 'expression data',
+			title: 'Expression (gene and transcript)',
+			yAxisLabel: 'FPKM',
+		},
+		{
+			name: CSEQ_GRAPH,
+			noData: 'histone peaks',
+			title: 'Histone Peaks (broad and narrow)',
+			yAxisLabel: 'Log10(q-value)',
+		},
+		{
+			name: DNASE_GRAPH,
+			noData: 'regulatory regions',
+			title: 'Regulatory regions (DNASE)',
+			yAxisLabel: 'z-score',
+		},
+	];
+	var DLAT_CONCEPT = 'dlat.mr';
+	var PDNA_CONCEPT = 'pdna.p';
+	var EXPG_CONCEPT = 'exp.g';
+	var EXPT_CONCEPT = 'exp.t';
+	var RREG_CONCEPT = 'rreg.p';
+	
+	var ConceptToChart = {};
+	ConceptToChart[DLAT_CONCEPT] = METHYL_GRAPH;
+	ConceptToChart[PDNA_CONCEPT] = CSEQ_GRAPH;
+	ConceptToChart[EXPG_CONCEPT] = EXP_GRAPH;
+	ConceptToChart[EXPT_CONCEPT] = EXP_GRAPH;
+	ConceptToChart[RREG_CONCEPT] = DNASE_GRAPH;
+	
+	var CHR_SEGMENT_LIMIT = 2500000;	// A bit larger than largest gene
+	
     var pageNum = 1;
     var perPage = 50;
     var experimentLabels = ['Bisulfite-Seq','DNase-Seq','Gene Exp (RNA-Seq)','Transcript Exp (RNA-Seq)'];
@@ -97,8 +142,12 @@ angular.module('blueprintApp')
 
     $scope.results = null;
     
-	var getX = function(d) {
-		return d.x;
+	var getXG = function(d) {
+		return d[0];
+	};
+	
+	var getYG = function(d) {
+		return d[1];
 	};
 	
 	var getKey = function(d) {
@@ -605,7 +654,7 @@ angular.module('blueprintApp')
 		es.search({
 			size:10000000,
 			index: 'primary',
-			type: 'dlat.mr',
+			type: DLAT_CONCEPT,
 			search_type: 'count',
 			body: {
 				query: {
@@ -652,7 +701,7 @@ angular.module('blueprintApp')
 		es.search({
 			size:10000000,	
 			index: 'primary',
-			type: 'exp.g',
+			type: EXPG_CONCEPT,
 			search_type: 'count',
 			body: {
 				query: {
@@ -672,7 +721,7 @@ angular.module('blueprintApp')
 						aggs: {
 							stats_normalized_read_count: {
 								extended_stats: {
-									field: 'normalized_read_count'
+									field: 'expected_count'
 								}
 							}
 						}
@@ -699,7 +748,7 @@ angular.module('blueprintApp')
 		es.search({
 			size:10000000,	
 			index: 'primary',
-			type: 'exp.t',
+			type: EXPT_CONCEPT,
 			search_type: 'count',
 			body: {
 				query: {
@@ -719,7 +768,7 @@ angular.module('blueprintApp')
 						aggs: {
 							stats_normalized_read_count: {
 								extended_stats: {
-									field: 'normalized_read_count'
+									field: 'expected_count'
 								}
 							}
 						}
@@ -746,7 +795,7 @@ angular.module('blueprintApp')
 		es.search({
 			size:10000000,	
 			index: 'primary',
-			type: 'rreg.p',
+			type: RREG_CONCEPT,
 			search_type: 'count',
 			body: {
 				query: {
@@ -798,7 +847,7 @@ angular.module('blueprintApp')
 		es.search({
 			size:10000000,	
 			index: 'primary',
-			type: 'pdna.p',
+			type: PDNA_CONCEPT,
 			search_type: 'count',
 			body: {
 				query: {
@@ -850,7 +899,10 @@ angular.module('blueprintApp')
 	var getChartData = function(localScope,rangeData) {
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData.range);
+		var cStart = rangeData.range.start;
+		var cEnd = rangeData.range.end;
 		var total = 0;
+		//var totalPoints = 0;
 		es.search({
 			size: 5000,
 			index: 'primary',
@@ -865,20 +917,74 @@ angular.module('blueprintApp')
 						}
 					}
 				},
+				sort: [
+					{
+						chromosome_start: {
+							order: "asc"
+						}
+					}
+				]
 			}
 		}, function getMoreChartDataUntilDone(err, resp) {
 			if(resp.hits!==undefined) {
 				resp.hits.hits.forEach(function(segment) {
-					switch(segment._type) {
-						case 'pdna.p':
-							break;
-						case 'exp.t':
-						case 'exp.g':
-							break;
-						case 'dlat.mr':
-							break;
-						case 'rreg.p':
-							break;
+					if(segment._type in ConceptToChart) {
+						var graph = rangeData[ConceptToChart[segment._type]];
+						
+						var analysis_id = segment._source.analysis_id;
+						var seriesValues;
+						if(analysis_id in graph.bpSideData.sampleToIndex) {
+							seriesValues = graph.bpSideData.sampleToIndex[analysis_id];
+						} else {
+							seriesValues = [];
+							var series = {
+								values: seriesValues,
+								key: analysis_id,
+								//color:
+							};
+							graph.bpSideData.sampleToIndex[analysis_id] = seriesValues;
+							graph.loadedData.push(series);
+						}
+						
+						var value;
+						switch(segment._type) {
+							case PDNA_CONCEPT:
+								value = segment._source.log10_qvalue;
+								if(analysis_id.indexOf('_broad_')==-1) {
+									value = -value;
+								}
+								break;
+							case EXPG_CONCEPT:
+								value = -segment._source.FPKM;
+								break;
+							case EXPT_CONCEPT:
+								value = segment._source.FPKM;
+								break;
+							case DLAT_CONCEPT:
+								value = segment._source.meth_level;
+								if(analysis_id.indexOf('_hyper')==-1) {
+									value = -value;
+								}
+								break;
+							case RREG_CONCEPT:
+								value = segment._source.z_score;
+								break;
+						}
+						var chromosome_start = (cStart < segment._source.chromosome_start) ? segment._source.chromosome_start: cStart;
+						var chromosome_end = (cEnd > segment._source.chromosome_end) ? segment._source.chromosome_end: cEnd;
+						if(cStart<chromosome_start) {
+							seriesValues.push([chromosome_start-1,null]);
+						}
+						seriesValues.push([chromosome_start,value]);
+						if(chromosome_start!=chromosome_end) {
+							seriesValues.push([chromosome_end, value]);
+						}
+						if(cEnd>chromosome_end) {
+							seriesValues.push([chromosome_end+1, null]);
+						}
+						// totalPoints += segment._source.chromosome_end - segment._source.chromosome_start + 1;
+					//} else {
+						// Ignoring what we cannot process
 					}
 				});
 				total += resp.hits.hits.length;
@@ -896,6 +1002,12 @@ angular.module('blueprintApp')
 				} else {
 					localScope.searchButtonText = SEARCHING_LABEL;
 					es.clearScroll({scrollId: resp._scroll_id});
+					
+					GRAPHS.forEach(function(g) { 
+						rangeData[g.name].data = rangeData[g.name].loadedData;
+					});
+					//console.log("Total: "+total+"; points: "+totalPoints);
+					
 					//console.log('All data ('+total+') was fetched');
 					deferred.resolve(localScope);
 				}
@@ -1288,14 +1400,13 @@ angular.module('blueprintApp')
 		region: regionSearchUri,
 	};
 	
-	var CHR_SEGMENT_LIMIT = 2500000;
 	var updateChromosomes = function(localScope) {
 		var tooMuch = localScope.rangeQuery.some(function(range) {
 			return ((range.start>=range.end) || (range.end - range.start) > CHR_SEGMENT_LIMIT);
 		});
 		
 		if(tooMuch) {
-			alert("Some of the ranges is larger than "+CHR_SEGMENT_LIMIT+"bp");
+			window.alert("Some of the ranges is larger than "+CHR_SEGMENT_LIMIT+"bp");
 			return false;
 		}
 
@@ -1336,87 +1447,37 @@ angular.module('blueprintApp')
 					dnaseSeq: [],
 				},
 				gChro: localScope.unknownChromosome,
-				methyl: {
-					options: {
-						chart: {
-							type: DATA_CHART_TYPE,
-							height: DATA_CHART_HEIGHT,
-							x: getX,
-							y: getY,
-							useInteractiveGuideline: true,
-							noData: "Fetching methylated regions from "+rangeStr,
-							xAxis: {
-								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
-							}
-						},
-						title: {
-							enable: true,
-							text: 'Methylated regions'
-						},
-					},
-					data: []
-				},
-				exp: {
-					options: {
-						chart: {
-							type: DATA_CHART_TYPE,
-							height: DATA_CHART_HEIGHT,
-							x: getX,
-							y: getY,
-							useInteractiveGuideline: true,
-							noData: "Fetching expression data from "+rangeStr,
-							xAxis: {
-								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
-							}
-						},
-						title: {
-							enable: true,
-							text: 'Expression (gene and transcript)'
-						},
-					},
-					data: []
-				},
-				cseq: {
-					options: {
-						chart: {
-							type: DATA_CHART_TYPE,
-							height: DATA_CHART_HEIGHT,
-							x: getX,
-							y: getY,
-							useInteractiveGuideline: true,
-							noData: "Fetching histone peaks from "+rangeStr,
-							xAxis: {
-								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
-							}
-						},
-						title: {
-							enable: true,
-							text: 'Histone Peaks (broad and narrow)'
-						},
-					},
-					data: []
-				},
-				dnase: {
-					options: {
-						chart: {
-							type: DATA_CHART_TYPE,
-							height: DATA_CHART_HEIGHT,
-							x: getX,
-							y: getY,
-							useInteractiveGuideline: true,
-							noData: "Fetching regulatory regions from "+rangeStr,
-							xAxis: {
-								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
-							}
-						},
-						title: {
-							enable: true,
-							text: 'Regulatory regions (DNASE)'
-						},
-					},
-					data: []
-				},
 			};
+			GRAPHS.forEach(function(gData) {
+				rangeData[gData.name] = {
+					options: {
+						chart: {
+							type: DATA_CHART_TYPE,
+							height: DATA_CHART_HEIGHT,
+							x: getXG,
+							y: getYG,
+							useInteractiveGuideline: true,
+							noData: "Fetching "+gData.noData+" from "+rangeStr,
+							showLegend: false,
+							xAxis: {
+								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+							},
+							yAxis: {
+								axisLabel: gData.yAxisLabel
+							}
+						},
+						title: {
+							enable: true,
+							text: gData.title
+						},
+					},
+					data: [],
+					loadedData: [],
+					bpSideData: {
+						sampleToIndex: {},
+					},
+				};
+			});
 			
 			localScope.chromosomes.some(function(d){
 				if(d.n == range.chr) {
@@ -2020,6 +2081,20 @@ angular.module('blueprintApp')
 		}
 		
 		deferred.resolve($scope);
+		$scope.$on('$locationChangeStart', function(event) {
+			//console.log("He visto algo");
+			if($scope.searchInProgress) {
+				event.preventDefault();
+			}
+		});
+		$scope.$on('$locationChangeSuccess', function(event) {
+			//console.log("Lo vi!!!!!");
+			if('q' in $location.search()) {
+				var query = $location.search().q;
+				$scope.query = query;
+				$scope.search();
+			}
+		});
 	};
 	
 	init($q);

@@ -53,13 +53,16 @@
 <div class="row-fluid" style="margin-top:40px;">
 	<div ng-repeat="rangeData in graphData" class="col-sm-12" ng-cloak>
 		<p class="text-center" ng-bind-html="found"></p>
-		<div class="col-sm-2 text-center" ng-cloak>
+		<div class="col-sm-1 text-center" ng-cloak>
 			<img src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}" ng-cloak>
 		</div>
-		<div class="col-sm-10 text-center vertical-center">
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.methyl.options" data="rangeData.methyl.data"></nvd3>
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.exp.options" data="rangeData.exp.data"></nvd3>
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.cseq.options" data="rangeData.cseq.data"></nvd3>
+		<div class="col-sm-11 text-center vertical-center">
+			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.methyl_hyper.options" data="rangeData.methyl_hyper.data"></nvd3>
+			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.methyl_hypo.options" data="rangeData.methyl_hypo.data"></nvd3>
+			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.exp_t.options" data="rangeData.exp_t.data"></nvd3>
+			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.exp_g.options" data="rangeData.exp_g.data"></nvd3>
+			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.cseq_narrow.options" data="rangeData.cseq_narrow.data"></nvd3>
+			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.cseq_broad.options" data="rangeData.cseq_broad.data"></nvd3>
 			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.dnase.options" data="rangeData.dnase.data"></nvd3>
 		</div>
 		

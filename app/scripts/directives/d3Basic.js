@@ -272,8 +272,8 @@
             nodeEnter.append("svg:circle")
                 .attr("r", 1e-6)
                 .attr('title',function(d) { return d.name; })
-                .style("fill", function(d) {return d.analized ? "rgb(232,0,0)" : ((typeof(d.experimentsCount) !== 'undefined')?"#FFF":  "#CCC"); })
-                .style("stroke", function(d) {return d.analized ? "rgb(232,0,0)" : ((typeof(d.experimentsCount) !== 'undefined')?"#4c00e2":  "#CCC"); })
+                .style("fill", function(d) {return d.analyzed ? ( d.color ? d.color: "rgb(232,0,0)") : ((typeof(d.experimentsCount) !== 'undefined')?"#FFF":  "#CCC"); })
+                .style("stroke", function(d) {return d.analyzed ? ( d.color ? d.color: "rgb(232,0,0)") : ((typeof(d.experimentsCount) !== 'undefined')?"#4c00e2":  "#CCC"); })
 		.on("click", function(d) { scope.toggle(d); scope.update(d); });
 
 		

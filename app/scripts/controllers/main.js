@@ -952,9 +952,20 @@ angular.module('blueprintApp')
 		return a[0] - b[0];
 	};
 	
-	var genMeanSeries = function(values) {
+	var genMeanSeries = function(origValues) {
 		var meanValues = [];
 		
+		// Pre-processing the original values
+		var values = [];
+		origValues.forEach(function(data) {
+			var diff = data[1] - data[0];
+			var sDataS = [data[0],data[2],diff];
+			values.push(sDataS);
+			if(diff!==0) {
+				var sDataE = [data[1],data[2],-1];
+				values.push(sDataE);
+			}
+		});
 		values.sort(dataSeriesComparator);
 		
 		var numPos = 0;
@@ -1007,7 +1018,7 @@ angular.module('blueprintApp')
 		var shouldQuery = genShouldQuery(rangeData.range);
 		var total = 0;
 		//var totalPoints = 0;
-		localScope.searchButtonText = PLOTTING_LABEL;
+		localScope.searchButtonText = FETCHING_LABEL;
 		es.search({
 			size: 5000,
 			index: 'primary',
@@ -1101,15 +1112,9 @@ angular.module('blueprintApp')
 							graph.data.push(meanSeries);
 						}
 						
-						var diff = segment._source.chromosome_end - segment._source.chromosome_start;
-						var sDataS = [segment._source.chromosome_start,value,diff];
+						var sDataS = [segment._source.chromosome_start,segment._source.chromosome_end,value];
 						meanSeriesValues.push(sDataS);
 						seriesValues.push(sDataS);
-						if(diff!==0) {
-							var sDataE = [segment._source.chromosome_end,value,-1];
-							meanSeriesValues.push(sDataE);
-							seriesValues.push(sDataE);
-						}
 						
 						// totalPoints += segment._source.chromosome_end - segment._source.chromosome_start + 1;
 					//} else {
@@ -1981,7 +1986,7 @@ angular.module('blueprintApp')
 									var meanSeries;
 									switch(analysis._type) {
 										case PDNA_CONCEPT_M:
-											var isNarrow = analysis.analysis_id.indexOf('_broad_')==-1;
+											var isNarrow = analysis.analysis_id.indexOf('_broad_')===-1;
 											if(isNarrow) {
 												meanSeries = PDNA_NARROW_SERIES;
 											} else {

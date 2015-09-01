@@ -10,7 +10,7 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$location','$q','es','portalConfig','d3',function($scope,$location,$q, es, portalConfig, d3) {
+  .controller('MainCtrl', ['$scope','$rootScope','$location','$q','es','portalConfig','d3',function($scope,$rootScope,$location,$q, es, portalConfig, d3) {
 	
 	var DATA_CHART_TYPE = 'lineChart';
 	var DATA_CHART_HEIGHT = 250;
@@ -86,6 +86,7 @@ angular.module('blueprintApp')
 	var DLAT_HYPER_SERIES = DLAT_CONCEPT+'_hyper';
 	var EXPG_SERIES = EXPG_CONCEPT;
 	var EXPT_SERIES = EXPT_CONCEPT;
+	var EXP_ANY_SERIES = EXP_CONCEPT_M;
 	var PDNA_BROAD_SERIES = PDNA_CONCEPT + '_broad';
 	var PDNA_NARROW_SERIES = PDNA_CONCEPT + '_narrow';
 	var RREG_SERIES = RREG_CONCEPT;
@@ -1058,10 +1059,11 @@ angular.module('blueprintApp')
 							case PDNA_BROAD_SERIES:
 								value = segment._source.log10_qvalue;
 								break;
-							case EXPG_SERIES:
+							case EXP_ANY_SERIES:
 								switch(segment._type) {
 									case EXPG_CONCEPT:
 										value = segment._source.FPKM;
+										meanSeriesId = EXPG_SERIES;
 										break;
 									case EXPT_CONCEPT:
 										value = segment._source.FPKM;
@@ -1124,6 +1126,20 @@ angular.module('blueprintApp')
 				});
 				total += resp.hits.hits.length;
 				
+				// Now, updating the graphs
+				localScope.searchButtonText = PLOTTING_LABEL;
+				//var xRange = [rangeData.range.start,rangeData.range.end];
+				GRAPHS.forEach(function(g) {
+					//rangeData[g.name].options.chart.xDomain = xRange;
+					rangeData[g.name].data.forEach(function(series) {
+						series.values = genMeanSeries(series.seriesValues);
+						//console.log("DEBUG "+g.name);
+						//console.log(series.seriesValues);
+						//series.seriesValues = undefined;
+					});
+				});
+				
+				// Is there any more data?
 				if(resp.hits.total > total) {
 					var percent = 100.0 * total / resp.hits.total;
 					
@@ -1135,19 +1151,8 @@ angular.module('blueprintApp')
 						scroll: '30s'
 					}, getMoreChartDataUntilDone);
 				} else {
-					localScope.searchButtonText = PLOTTING_LABEL;
 					es.clearScroll({scrollId: resp._scroll_id});
 					
-					var xRange = [rangeData.range.start,rangeData.range.end];
-					GRAPHS.forEach(function(g) {
-						//rangeData[g.name].options.chart.xDomain = xRange;
-						rangeData[g.name].data.forEach(function(series) {
-							series.values = genMeanSeries(series.seriesValues);
-							//console.log("DEBUG "+g.name);
-							//console.log(series.seriesValues);
-							//series.seriesValues = undefined;
-						});
-					});
 					//console.log("Total: "+total+"; points: "+totalPoints);
 					
 					//console.log('All data ('+total+') was fetched');
@@ -1808,7 +1813,7 @@ angular.module('blueprintApp')
 								}
 							}
 						},
-						fields: ['term','term_uri','name','parents']
+						fields: ['term','term_uri','name','parents','ont']
 					}
 				}, function(err, resp) {
 					if(resp.hits.total > 0) {
@@ -1817,28 +1822,45 @@ angular.module('blueprintApp')
 						var treeNodes = {};
 						
 						var termNodes = [];
+						var termNodesOnce = {};
 						var termNodesHash = {};
 						
 						// Roots are the nodes with no parent
 						var roots = [];
 						
 						// First pass, the nodes
-						resp.hits.hits.forEach(function(v) {
+						var rawnodes = resp.hits.hits.map(function(v) {
 							var n = v.fields;
 							var treeNode = {
 								name: n.name[0],
 								o: n.term[0],
-								o_uri: n.term_uri[0]
+								o_uri: n.term_uri[0],
+								ont: n.ont[0],
 							};
+							
 							treeNodes[treeNode.o] = treeNode;
 							fetchedNodes[treeNode.o] = n;
 							
+							return treeNode;
+						});
+						
+						// Sorting by ontology, so we discard cv:EFO terms in case they are already defined in cv:CellOntology or cv:CellLineOntology
+						rawnodes.sort(function(a,b) {
+							return a.ont.localeCompare(b.ont);
+						});
+						
+						rawnodes.forEach(function(treeNode) {
 							// This is needed later
 							if(treeNode.o in theTermsHash) {
-								termNodes.push(treeNode);
-								termNodesHash[treeNode.o_uri] = treeNode;
+								if(!(treeNode.o in termNodesOnce)) {
+									termNodesOnce[treeNode.o]=null;
+									termNodes.push(treeNode);
+									termNodesHash[treeNode.o_uri] = treeNode;
+								}
 							}
 						});
+						
+						rawnodes = undefined;
 						
 						// Giving it a reproducible order
 						termNodes.sort(function(a,b) {
@@ -1971,6 +1993,9 @@ angular.module('blueprintApp')
 							termNode.color = theColor;
 						});
 						
+						// This is needed for the data model
+						$rootScope.termNodes = termNodes;
+						
 						// And now, the colors for the AVG_SERIES
 						var AVG_SERIES_COLORS = {};
 						AVG_SERIES.forEach(function(seriesName, i) {
@@ -1979,7 +2004,7 @@ angular.module('blueprintApp')
 						
 						localScope.AVG_SERIES_COLORS = AVG_SERIES_COLORS;
 						
-						// At last, linking analysis to their corresponding cell types
+						// At last, linking analysis to their corresponding cell types and the mean series
 						localScope.samples.forEach(function(sample) {
 							var term = termNodesHash[sample.ontology];
 							sample.experiments.forEach(function(experiment) {
@@ -1995,7 +2020,7 @@ angular.module('blueprintApp')
 											}
 											break;
 										case EXP_CONCEPT_M:
-											meanSeries = EXPG_SERIES;	// It is truly resolved later for exp.t cases
+											meanSeries = EXP_ANY_SERIES;	// It is truly resolved later to EXPG_SERIES or EXPT_SERIES
 											break;
 										case DLAT_CONCEPT_M:
 											switch(analysis.mr_type) {

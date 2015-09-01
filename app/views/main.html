@@ -53,9 +53,19 @@
 <div class="row-fluid" style="margin-top:40px;">
 	<div ng-repeat="rangeData in graphData" class="col-sm-12" ng-cloak>
 		<p class="text-center" ng-bind-html="found"></p>
+		<!--
 		<div class="col-sm-1 text-center" ng-cloak>
 			<img src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}" ng-cloak>
 		</div>
+		-->
+		<div class="col-sm-1 terms-selector">
+			<table style="width:100%;">
+				<tr style="vertical-align:top;" ng-repeat="termNode in termNodes">
+					<td><span class="circle" style="background-color: {{termNode.color}}"></span></td><td class="term">{{termNode.name}}</div>
+				</tr>
+			</table>
+		</div>
+		
 		<div class="col-sm-11 text-center vertical-center">
 			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.methyl_hyper.options" data="rangeData.methyl_hyper.data"></nvd3>
 			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.exp_t.options" data="rangeData.exp_t.data"></nvd3>

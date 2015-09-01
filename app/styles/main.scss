@@ -190,3 +190,24 @@ div.suggest-container:empty {
 	text-overflow: ellipsis;
 	white-space:nowrap;
 }
+
+.terms-selector {
+	font-size: 10px;
+}
+
+span.circle {
+	border-radius: 50%;
+	-moz-border-radius: 50%;
+	-webkit-border-radius: 50%;
+	width: 1em;
+	height: 1em; 
+	line-height: 1em;
+	display: inline-block;
+	/* vertical-align: -10%; */
+	margin-right: 0.25em;
+	/* width and height can be anything, as long as they're equal */
+}
+
+.term {
+	margin-bottom: 10px;
+}

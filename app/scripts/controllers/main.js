@@ -1082,21 +1082,6 @@ angular.module('blueprintApp')
 						
 						var graph = rangeData[SeriesToChart[meanSeriesId]];
 						
-						var seriesValues;
-						if(seriesId in graph.bpSideData.sampleToIndex) {
-							seriesValues = graph.bpSideData.sampleToIndex[seriesId];
-						} else {
-							seriesValues = [];
-							var series = {
-								values: [],
-								seriesValues: seriesValues,
-								key: analysis.cell_type.name,
-								color: analysis.cell_type.color
-							};
-							graph.bpSideData.sampleToIndex[seriesId] = seriesValues;
-							graph.data.push(series);
-						}
-						
 						var meanSeriesValues;
 						if(meanSeriesId in graph.bpSideData.sampleToIndex) {
 							meanSeriesValues = graph.bpSideData.sampleToIndex[meanSeriesId];
@@ -1110,6 +1095,22 @@ angular.module('blueprintApp')
 							};
 							graph.bpSideData.sampleToIndex[meanSeriesId] = meanSeriesValues;
 							graph.data.push(meanSeries);
+						}
+						
+						var seriesValues;
+						if(seriesId in graph.bpSideData.sampleToIndex) {
+							seriesValues = graph.bpSideData.sampleToIndex[seriesId];
+						} else {
+							seriesValues = [];
+							var series = {
+								values: [],
+								type: 'area',
+								seriesValues: seriesValues,
+								key: analysis.cell_type.name,
+								color: analysis.cell_type.color
+							};
+							graph.bpSideData.sampleToIndex[seriesId] = seriesValues;
+							graph.data.push(series);
 						}
 						
 						var sDataS = [segment._source.chromosome_start,segment._source.chromosome_end,value];

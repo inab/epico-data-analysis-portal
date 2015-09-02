@@ -50,63 +50,55 @@
     </div>
   </div> 
 
-<div class="panel panel-default" style="margin-top:40px;" ng-show="graphData.length &gt; 0">
-	<div ng-repeat="rangeData in graphData">
-		<div class="panel-heading">
-			<h4 class="panel-title text-center">
-				<a ng-click="rangeData.isClosed = !rangeData.isClosed"><i class="pull-left glyphicon" ng-class="{'glyphicon-chevron-down': !rangeData.isClosed, 'glyphicon-chevron-right': rangeData.isClosed}"></i> Chromosomical region: {{rangeData.range.chr}}:{{rangeData.range.start}}-{{rangeData.range.end}} <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !rangeData.isClosed, 'glyphicon-chevron-left': rangeData.isClosed}"></i></a>
-			</h4>
-		</div>
+<tabset style="margin-top:40px;" ng-show="graphData.length &gt; 0">
+	<tab ng-repeat="rangeData in graphData">
+		<tab-heading>Region {{rangeData.range.chr}}:{{rangeData.range.start}}-{{rangeData.range.end}}</tab-heading>
 		<!--
 		<div class="col-sm-1 text-center" ng-cloak>
 			<img src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}" ng-cloak>
 		</div>
 		-->
-		<div collapse="rangeData.isClosed">
-			<div class="panel-body">
-				<p class="text-center" ng-bind-html="found"></p>
-				<div class="col-sm-2 terms-selector">
-					<table style="width:100%;">
-						<tr style="vertical-align:top;" ng-repeat="termNode in termNodes">
-							<td><span class="circle" ng-click="switchTermNode(termNode)" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td><td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'inherit'}};">{{termNode.name}}</div>
-						</tr>
-					</table>
+		<p class="text-center" ng-bind-html="found"></p>
+		<div class="col-sm-2 terms-selector">
+			<table style="width:100%;">
+				<tr style="vertical-align:top;" ng-repeat="termNode in termNodes">
+					<td><span class="circle" ng-click="switchTermNode(termNode)" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td><td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'inherit'}};">{{termNode.name}}</div>
+				</tr>
+			</table>
+		</div>
+		
+		<div class="col-sm-10 text-center vertical-center" ng-show="rangeData.charts.length &gt; 0">
+			<div class="panel panel-default" ng-repeat="chart in rangeData.charts">
+				<div class="panel-heading">
+					<h5 class="panel-title">
+						<a ng-click="chart.isClosed = !chart.isClosed"><i class="pull-left glyphicon" ng-class="{'glyphicon-chevron-down': !chart.isClosed, 'glyphicon-chevron-right': chart.isClosed}"></i>{{chart.title}}<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !chart.isClosed, 'glyphicon-chevron-left': chart.isClosed}"></i></a>
+					</h5>
 				</div>
-				
-				<div class="col-sm-10 text-center vertical-center" ng-show="rangeData.charts.length &gt; 0">
-					<div class="panel panel-default" ng-repeat="chart in rangeData.charts">
-						<div class="panel-heading">
-							<h5 class="panel-title">
-								<a ng-click="chart.isClosed = !chart.isClosed"><i class="pull-left glyphicon" ng-class="{'glyphicon-chevron-down': !chart.isClosed, 'glyphicon-chevron-right': chart.isClosed}"></i>{{chart.title}}<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !chart.isClosed, 'glyphicon-chevron-left': chart.isClosed}"></i></a>
-							</h5>
-						</div>
-						<div collapse="chart.isClosed">
-							<div class="panel-body">
-								<nvd3 options="chart.options" data="chart.data"></nvd3>
-							</div>
-						</div>
+				<div collapse="chart.isClosed">
+					<div class="panel-body">
+						<nvd3 options="chart.options" data="chart.data"></nvd3>
 					</div>
-					
-					<!-- alternate concept
-					<div class="panel panel-default" ng-repeat="ontology in rangeData.treedata">
-						<div class="panel-heading">
-							<h5 class="panel-title">
-								<a ng-click="ontology.isClosed = !ontology.isClosed"><i class="pull-left glyphicon" ng-class="{'glyphicon-chevron-down': !ontology.isClosed, 'glyphicon-chevron-right': ontology.isClosed}"></i><i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !ontology.isClosed, 'glyphicon-chevron-left': ontology.isClosed}"></i></a>
-							</h5>
-						</div>
-						<div collapse="ontology.isClosed">
-							<div class="panel-body">
-								<d3-tree data="ontology" label="name" style="display"></d3-tree>      
-							</div>
-						</div>
-					</div>
-					-->
-				</div>
-				
-				<div ng-repeat="ontology in rangeData.treedata" class="col-sm-12">
-					<d3-tree data="ontology" label="name" style="display"></d3-tree>      
 				</div>
 			</div>
+			
+			<!-- alternate concept
+			<div class="panel panel-default" ng-repeat="ontology in rangeData.treedata">
+				<div class="panel-heading">
+					<h5 class="panel-title">
+						<a ng-click="ontology.isClosed = !ontology.isClosed"><i class="pull-left glyphicon" ng-class="{'glyphicon-chevron-down': !ontology.isClosed, 'glyphicon-chevron-right': ontology.isClosed}"></i><i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !ontology.isClosed, 'glyphicon-chevron-left': ontology.isClosed}"></i></a>
+					</h5>
+				</div>
+				<div collapse="ontology.isClosed">
+					<div class="panel-body">
+						<d3-tree data="ontology" label="name" style="display"></d3-tree>      
+					</div>
+				</div>
+			</div>
+			-->
 		</div>
-	</div>
-</accordion>
+		
+		<div ng-repeat="ontology in rangeData.treedata" class="col-sm-12">
+			<d3-tree data="ontology" label="name" style="display"></d3-tree>      
+		</div>
+	</tab>
+</tabset>

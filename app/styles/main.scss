@@ -193,6 +193,9 @@ div.suggest-container:empty {
 
 .terms-selector {
 	font-size: 10px;
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 1em;
 }
 
 span.circle {
@@ -208,8 +211,10 @@ span.circle {
 	/* vertical-align: -10%; */
 	margin-right: 0.25em;
 	/* width and height can be anything, as long as they're equal */
+	cursor: pointer;
 }
 
 .term {
-	margin-bottom: 10px;
+	line-height: 1em;
+	padding-bottom: 0.5em;
 }

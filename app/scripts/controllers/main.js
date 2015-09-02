@@ -40,22 +40,22 @@ angular.module('blueprintApp')
 			yAxisLabel: 'Methylation level',
 		},
 		{
-			name: EXP_G_GRAPH,
-			noData: 'gene expression data',
-			title: 'Gene Expression',
-			yAxisLabel: 'FPKM',
-		},
-		{
 			name: EXP_T_GRAPH,
 			noData: 'transcript expression data',
 			title: 'Transcript Expression',
 			yAxisLabel: 'FPKM',
 		},
 		{
-			name: CSEQ_BROAD_GRAPH,
-			noData: 'broad histone peaks',
-			title: 'Broad Histone Peaks',
-			yAxisLabel: 'Log10(q-value)',
+			name: EXP_G_GRAPH,
+			noData: 'gene expression data',
+			title: 'Gene Expression',
+			yAxisLabel: 'FPKM',
+		},
+		{
+			name: DNASE_GRAPH,
+			noData: 'regulatory regions',
+			title: 'Regulatory regions (DNASE)',
+			yAxisLabel: 'z-score',
 		},
 		{
 			name: CSEQ_NARROW_GRAPH,
@@ -64,10 +64,10 @@ angular.module('blueprintApp')
 			yAxisLabel: 'Log10(q-value)',
 		},
 		{
-			name: DNASE_GRAPH,
-			noData: 'regulatory regions',
-			title: 'Regulatory regions (DNASE)',
-			yAxisLabel: 'z-score',
+			name: CSEQ_BROAD_GRAPH,
+			noData: 'broad histone peaks',
+			title: 'Broad Histone Peaks',
+			yAxisLabel: 'Log10(q-value)',
 		},
 	];
 	var DLAT_CONCEPT_M = 'dlat.m';
@@ -1021,7 +1021,7 @@ angular.module('blueprintApp')
 		//var totalPoints = 0;
 		localScope.searchButtonText = FETCHING_LABEL;
 		es.search({
-			size: 1000,
+			size: 10000,
 			index: 'primary',
 			scroll: '30s',
 			body: {
@@ -1034,13 +1034,14 @@ angular.module('blueprintApp')
 						}
 					}
 				},
-				//sort: [
-				//	{
-				//		chromosome_start: {
-				//			order: "asc"
-				//		}
-				//	}
-				//]
+				// With this sort, sent data compresses better
+				sort: [
+					{
+						chromosome_start: {
+							order: "asc"
+						}
+					}
+				]
 			}
 		}, function getMoreChartDataUntilDone(err, resp) {
 			if(resp.hits!==undefined) {
@@ -1590,6 +1591,7 @@ angular.module('blueprintApp')
 			var rangeData = {
 				range: range,
 				treedata: null,
+				charts: [],
 				stats: {
 					bisulfiteSeq: [],
 					rnaSeqG: [],
@@ -1600,7 +1602,7 @@ angular.module('blueprintApp')
 				gChro: localScope.unknownChromosome,
 			};
 			GRAPHS.forEach(function(gData) {
-				rangeData[gData.name] = {
+				var chart = {
 					options: {
 						chart: {
 							type: DATA_CHART_TYPE,
@@ -1611,6 +1613,7 @@ angular.module('blueprintApp')
 							interpolate: 'step',
 							noData: "Fetching "+gData.noData+" from "+rangeStr,
 							showLegend: false,
+							transitionDuration: 0,
 							xAxis: {
 								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
 							},
@@ -1620,7 +1623,7 @@ angular.module('blueprintApp')
 							}
 						},
 						title: {
-							enable: true,
+							enable: false,
 							text: gData.title
 						},
 					},
@@ -1628,7 +1631,10 @@ angular.module('blueprintApp')
 					bpSideData: {
 						sampleToIndex: {},
 					},
+					title: gData.title,
 				};
+				rangeData.charts.push(chart);
+				rangeData[gData.name] = chart;
 			});
 			
 			localScope.chromosomes.some(function(d){

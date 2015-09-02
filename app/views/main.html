@@ -50,7 +50,7 @@
     </div>
   </div> 
 
-<div class="row-fluid" style="margin-top:40px;">
+<div class="row-fluid" style="margin-top:40px;" ng-show="graphData.length &gt; 0">
 	<div ng-repeat="rangeData in graphData" class="col-sm-12" ng-cloak>
 		<p class="text-center" ng-bind-html="found"></p>
 		<!--
@@ -58,22 +58,22 @@
 			<img src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}" ng-cloak>
 		</div>
 		-->
-		<div class="col-sm-1 terms-selector">
+		<div class="col-sm-2 terms-selector">
 			<table style="width:100%;">
 				<tr style="vertical-align:top;" ng-repeat="termNode in termNodes">
-					<td><span class="circle" style="background-color: {{termNode.color}}"></span></td><td class="term">{{termNode.name}}</div>
+					<td><span class="circle" ng-click="switchTermNode(termNode)" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td><td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'inherit'}};">{{termNode.name}}</div>
 				</tr>
 			</table>
 		</div>
 		
-		<div class="col-sm-11 text-center vertical-center">
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.methyl_hyper.options" data="rangeData.methyl_hyper.data"></nvd3>
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.exp_t.options" data="rangeData.exp_t.data"></nvd3>
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.methyl_hypo.options" data="rangeData.methyl_hypo.data"></nvd3>
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.exp_g.options" data="rangeData.exp_g.data"></nvd3>
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.cseq_narrow.options" data="rangeData.cseq_narrow.data"></nvd3>
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.dnase.options" data="rangeData.dnase.data"></nvd3>
-			<nvd3 class="col-sm-6 text-center vertical-center" options="rangeData.cseq_broad.options" data="rangeData.cseq_broad.data"></nvd3>
+		<div class="col-sm-10 text-center vertical-center">
+			<nvd3 class="col-sm-12 text-center vertical-center" options="rangeData.methyl_hyper.options" data="rangeData.methyl_hyper.data"></nvd3>
+			<nvd3 class="col-sm-12 text-center vertical-center" options="rangeData.methyl_hypo.options" data="rangeData.methyl_hypo.data"></nvd3>
+			<nvd3 class="col-sm-12 text-center vertical-center" options="rangeData.exp_t.options" data="rangeData.exp_t.data"></nvd3>
+			<nvd3 class="col-sm-12 text-center vertical-center" options="rangeData.exp_g.options" data="rangeData.exp_g.data"></nvd3>
+			<nvd3 class="col-sm-12 text-center vertical-center" options="rangeData.dnase.options" data="rangeData.dnase.data"></nvd3>
+			<nvd3 class="col-sm-12 text-center vertical-center" options="rangeData.cseq_narrow.options" data="rangeData.cseq_narrow.data"></nvd3>
+			<nvd3 class="col-sm-12 text-center vertical-center" options="rangeData.cseq_broad.options" data="rangeData.cseq_broad.data"></nvd3>
 		</div>
 		
 		<div ng-repeat="ontology in rangeData.treedata" class="col-sm-12">

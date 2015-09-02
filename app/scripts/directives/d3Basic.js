@@ -217,9 +217,11 @@
           //define toogle function
           scope.toggle = function toggle(d) {
             if (d.children) {
+              d.termHidden = true;
               d._children = d.children;
               d.children = null;
             } else {
+              d.termHidden = false;
               d.children = d._children;
               d._children = null;
             }

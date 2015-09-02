@@ -13,7 +13,7 @@ angular.module('blueprintApp')
   .controller('MainCtrl', ['$scope','$rootScope','$location','$q','es','portalConfig','d3',function($scope,$rootScope,$location,$q, es, portalConfig, d3) {
 	
 	var DATA_CHART_TYPE = 'lineChart';
-	var DATA_CHART_HEIGHT = 250;
+	var DATA_CHART_HEIGHT = 300;
 	var SEARCHING_LABEL = "Searching...";
 	var FETCHING_LABEL = "Fetching...";
 	var PLOTTING_LABEL = "Plotting...";
@@ -1021,7 +1021,7 @@ angular.module('blueprintApp')
 		//var totalPoints = 0;
 		localScope.searchButtonText = FETCHING_LABEL;
 		es.search({
-			size: 5000,
+			size: 1000,
 			index: 'primary',
 			scroll: '30s',
 			body: {
@@ -1991,6 +1991,7 @@ angular.module('blueprintApp')
 						termNodes.forEach(function(termNode,i) {
 							var theColor = cc(i);
 							termNode.color = theColor;
+							termNode.termHidden = false;
 						});
 						
 						// This is needed for the data model
@@ -2308,6 +2309,12 @@ angular.module('blueprintApp')
 				$scope.search();
 			//}
 		}
+	};
+	
+	$scope.switchTermNode = function(termNode) {
+		termNode.termHidden = !termNode.termHidden;
+		
+		// In the future, reflow here the graphs
 	};
 
 	var init = function($q) {

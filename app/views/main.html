@@ -61,8 +61,8 @@
 		<p class="text-center" ng-bind-html="found"></p>
 		<div class="col-sm-2 terms-selector">
 			<table style="width:100%;">
-				<tr style="vertical-align:top;" ng-repeat="termNode in termNodes">
-					<td><span class="circle" ng-click="switchTermNode(termNode)" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td><td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'inherit'}};">{{termNode.name}}</div>
+				<tr style="vertical-align:top;" ng-repeat="termNode in rangeData.termNodes">
+					<td><span class="circle" ng-click="switchTermNode(termNode,$parent.rangeData)" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td><td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'inherit'}};">{{termNode.name}}</div>
 				</tr>
 			</table>
 		</div>
@@ -76,7 +76,8 @@
 				</div>
 				<div collapse="chart.isClosed">
 					<div class="panel-body">
-						<nvd3 options="chart.options" data="chart.data"></nvd3>
+						<nvd3 ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
+						<canvasjs ng-if="chart.library==='canvasjs'" options="chart.options" data="chart.data"></canvasjs>
 					</div>
 				</div>
 			</div>

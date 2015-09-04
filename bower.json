@@ -18,6 +18,7 @@
     "angular-bootstrap": "~0.11.0",
     "elasticsearch": "~4.0.2",
     "angular-nvd3": "~1.0.0-rc.2",
+    "bower-canvasjs": "inab/bower-canvasjs#~1.7.0",
     "roboto-fontface": "~0.4.3"
   },
   "overrides": {

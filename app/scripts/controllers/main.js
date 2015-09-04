@@ -10,9 +10,8 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$rootScope','$location','$q','es','portalConfig','d3',function($scope,$rootScope,$location,$q, es, portalConfig, d3) {
+  .controller('MainCtrl', ['$scope','$location','$q','es','portalConfig','d3',function($scope,$location,$q, es, portalConfig, d3) {
 	
-	var DATA_CHART_TYPE = 'lineChart';
 	var DATA_CHART_HEIGHT = 300;
 	var SEARCHING_LABEL = "Searching...";
 	var FETCHING_LABEL = "Fetching...";
@@ -26,48 +25,60 @@ angular.module('blueprintApp')
 	var CSEQ_BROAD_GRAPH = 'cseq_broad';
 	var CSEQ_NARROW_GRAPH = 'cseq_narrow';
 	var DNASE_GRAPH = 'dnase';
+	
+	var GRAPH_TYPE_STEP_NVD3 = 'step-nvd3';
+	var GRAPH_TYPE_STEP_CANVASJS = 'step-canvas';
+	var GRAPH_TYPE_BOXPLOT_NVD3 = 'boxplot-nvd3';
+	
 	var GRAPHS = [
 		{
 			name: METHYL_HYPER_GRAPH,
 			noData: 'hyper-methylated regions',
 			title: 'Hyper-methylated regions',
 			yAxisLabel: 'Methylation level',
+			type: GRAPH_TYPE_STEP_NVD3,
 		},
 		{
 			name: METHYL_HYPO_GRAPH,
 			noData: 'hypo-methylated regions',
 			title: 'Hypo-methylated regions',
 			yAxisLabel: 'Methylation level',
+			type: GRAPH_TYPE_STEP_NVD3,
 		},
 		{
 			name: EXP_T_GRAPH,
 			noData: 'transcript expression data',
 			title: 'Transcript Expression',
 			yAxisLabel: 'FPKM',
+			type: GRAPH_TYPE_STEP_NVD3,
 		},
 		{
 			name: EXP_G_GRAPH,
 			noData: 'gene expression data',
 			title: 'Gene Expression',
 			yAxisLabel: 'FPKM',
+			type: GRAPH_TYPE_STEP_NVD3,
 		},
 		{
 			name: DNASE_GRAPH,
 			noData: 'regulatory regions',
 			title: 'Regulatory regions (DNASE)',
 			yAxisLabel: 'z-score',
+			type: GRAPH_TYPE_STEP_NVD3,
 		},
 		{
 			name: CSEQ_NARROW_GRAPH,
 			noData: 'narrow histone peaks',
 			title: 'Narrow Histone Peaks',
 			yAxisLabel: 'Log10(q-value)',
+			type: GRAPH_TYPE_STEP_NVD3,
 		},
 		{
 			name: CSEQ_BROAD_GRAPH,
 			noData: 'broad histone peaks',
 			title: 'Broad Histone Peaks',
 			yAxisLabel: 'Log10(q-value)',
+			type: GRAPH_TYPE_STEP_NVD3,
 		},
 	];
 	var DLAT_CONCEPT_M = 'dlat.m';
@@ -949,11 +960,118 @@ angular.module('blueprintApp')
 		return deferred.promise;
 	};
 	
-	var dataSeriesComparator = function(a,b) {
+	function genBoxPlotSeries(origValues) {
+		// First, process data
+		var samps = {};
+		var sampsPos = [];
+		
+		origValues.forEach(function(data) {
+			var label = data[3];
+			var samp;
+			if(label in samps) {
+				samp = samps[label];
+			} else {
+				samp = {
+					series: [],
+					start: data[0],
+					label: label,
+				};
+				samps[label] = samp;
+				sampsPos.push(samp);
+			}
+			// Saving the data
+			samp.series.push(data[2]);
+		});
+		
+		// Now, sort by position
+		sampsPos.sort(function(a,b) {
+			return a.start - b.start;
+		});
+		
+		// And last, process each one
+		var boxplots = sampsPos.map(function(samp) {
+			var lastPos = samp.series.length-1;
+			var Q1;
+			var Q2;
+			var Q3;
+			var Wl;
+			var Wh;
+			var outliers = [];
+			if(lastPos>1) {
+				samp.series.sort();
+				
+				var Q2pos = (lastPos >> 1);
+				var lastQ1pos = Q2pos;
+				var firstQ3pos = Q2pos;
+				if((lastPos & 1)===0) {	// fast remainder by 2
+					Q2 = samp.series[Q2pos];
+				} else {
+					Q2 = (samp.series[Q2pos] + samp.series[Q2pos+1]) / 2.0;
+					
+					// Calibrating it for next step
+					firstQ3pos++;
+				}
+				
+				var Q1pos = lastQ1pos>>1;
+				var Q3pos = firstQ3pos + Q1pos;
+				if((lastQ1pos & 1)===0) {	// fast remainder by 2
+					Q1 = samp.series[Q1pos];
+					Q3 = samp.series[Q3pos];
+				} else if((lastPos & 3)===0) {	// fast remainder by 4
+					Q1 = (samp.series[Q1pos] + 3.0*samp.series[Q1pos+1]) / 4.0;
+					Q3 = (3.0*samp.series[Q3pos] + samp.series[Q3pos+1]) / 4.0;
+				} else {
+					Q1 = (3.0*samp.series[Q1pos] + samp.series[Q1pos+1]) / 4.0;
+					Q3 = (samp.series[Q3pos] + 3.0*samp.series[Q3pos+1]) / 4.0;
+				}
+				
+				// The "wishkers"
+				var IQR = Q3 - Q1;
+				Wl = Q1 - 1.5 * IQR;
+				Wh = Q3 + 1.5 * IQR;
+				
+				// And last, the outliers
+				samp.series.forEach(function(d) {
+					if(d<Wl || d>Wh) {
+						outliers.push(d);
+					}
+				});
+			} else if(lastPos===1) {
+				Q1 = samp.series[0];
+				Q3 = samp.series[1];
+				Q2 = (Q1+Q3) / 2.0;
+				if(Q1>Q3) {
+					var Qtmp = Q3;
+					Q3 = Q1;
+					Q1 = Qtmp;
+				}
+				Wl = Q1;
+				Wh = Q3;
+			} else {
+				Wl = Wh = Q1 = Q2 = Q3 = samp.series[0];
+			}
+			
+			return {
+				label: samp.label,
+				values: {
+					Q1: Q1,
+					Q2: Q2,
+					Q3: Q3,
+					whisker_low: Wl,
+					whisker_high: Wh,
+					outliers: outliers
+				}
+			};
+		});
+		
+		return boxplots;
+	}
+
+	function dataSeriesComparator(a,b) {
 		return a[0] - b[0];
-	};
+	}
 	
-	var genMeanSeries = function(origValues) {
+	function genMeanSeries(origValues) {
 		var meanValues = [];
 		
 		// Pre-processing the original values
@@ -1012,7 +1130,26 @@ angular.module('blueprintApp')
 		}
 		
 		return meanValues;
-	};
+	}
+	
+	function redrawCharts(charts) {
+		charts.forEach(function(chart) {
+			//rangeData[g.name].options.chart.xDomain = xRange;
+			var data = [];
+			chart.allData.forEach(function(series) {
+				if(!series.values) {
+					series.values = series.seriesGenerator(series.seriesValues);
+				}
+				//console.log("DEBUG "+g.name);
+				//console.log(series.seriesValues);
+				//series.seriesValues = undefined;
+				if(!('cell_type' in series) || !series.cell_type.termHidden) {
+					data.push(series);
+				}
+			});
+			chart.data = data;
+		});
+	}
 	
 	var getChartData = function(localScope,rangeData) {
 		var deferred = $q.defer();
@@ -1053,6 +1190,7 @@ angular.module('blueprintApp')
 						var seriesId = analysis.cell_type.o_uri;
 						
 						var value;
+						var payload;
 						switch(meanSeriesId) {
 							case PDNA_NARROW_SERIES:
 								value = segment._source.log10_qvalue;
@@ -1065,10 +1203,12 @@ angular.module('blueprintApp')
 									case EXPG_CONCEPT:
 										value = segment._source.FPKM;
 										meanSeriesId = EXPG_SERIES;
+										payload = segment._source.gene_stable_id;
 										break;
 									case EXPT_CONCEPT:
 										value = segment._source.FPKM;
 										meanSeriesId = EXPT_SERIES;
+										payload = segment._source.transcript_stable_id;
 										break;
 								}
 								break;
@@ -1090,14 +1230,34 @@ angular.module('blueprintApp')
 							meanSeriesValues = graph.bpSideData.sampleToIndex[meanSeriesId];
 						} else {
 							meanSeriesValues = [];
-							var meanSeries = {
-								values: [],
-								seriesValues: meanSeriesValues,
-								key: meanSeriesId,
-								color: localScope.AVG_SERIES_COLORS[meanSeriesId]
-							};
+							var meanSeries;
+							
+							switch(graph.type) {
+								case GRAPH_TYPE_STEP_CANVASJS:
+									break;
+								case GRAPH_TYPE_BOXPLOT_NVD3:
+									meanSeries = {
+										values: [],
+										type: 'area',
+										seriesValues: meanSeriesValues,
+										seriesGenerator: genBoxPlotSeries,
+										key: meanSeriesId,
+										color: localScope.AVG_SERIES_COLORS[meanSeriesId]
+									};
+									break;
+								case GRAPH_TYPE_STEP_NVD3:
+									meanSeries = {
+										values: [],
+										type: 'area',
+										seriesValues: meanSeriesValues,
+										seriesGenerator: genMeanSeries,
+										key: meanSeriesId,
+										color: localScope.AVG_SERIES_COLORS[meanSeriesId]
+									};
+									break;
+							}
 							graph.bpSideData.sampleToIndex[meanSeriesId] = meanSeriesValues;
-							graph.data.push(meanSeries);
+							graph.allData.push(meanSeries);
 						}
 						
 						var seriesValues;
@@ -1105,18 +1265,36 @@ angular.module('blueprintApp')
 							seriesValues = graph.bpSideData.sampleToIndex[seriesId];
 						} else {
 							seriesValues = [];
-							var series = {
-								values: [],
-								type: 'area',
-								seriesValues: seriesValues,
-								key: analysis.cell_type.name,
-								color: analysis.cell_type.color
-							};
+							var series;
+							
+							
+							switch(graph.type) {
+								case GRAPH_TYPE_STEP_CANVASJS:
+									break;
+								case GRAPH_TYPE_BOXPLOT_NVD3:
+									series = {
+										values: null,
+										seriesValues: seriesValues,
+										seriesGenerator: genBoxPlotSeries,
+										key: analysis.cell_type.name,
+										color: analysis.cell_type.color
+									};
+									break;
+								case GRAPH_TYPE_STEP_NVD3:
+									series = {
+										values: null,
+										seriesValues: seriesValues,
+										seriesGenerator: genMeanSeries,
+										key: analysis.cell_type.name,
+										color: analysis.cell_type.color
+									};
+									break;
+							}
 							graph.bpSideData.sampleToIndex[seriesId] = seriesValues;
-							graph.data.push(series);
+							graph.allData.push(series);
 						}
 						
-						var sDataS = [segment._source.chromosome_start,segment._source.chromosome_end,value];
+						var sDataS = [segment._source.chromosome_start,segment._source.chromosome_end,value,payload];
 						meanSeriesValues.push(sDataS);
 						seriesValues.push(sDataS);
 						
@@ -1130,15 +1308,9 @@ angular.module('blueprintApp')
 				// Now, updating the graphs
 				localScope.searchButtonText = PLOTTING_LABEL;
 				//var xRange = [rangeData.range.start,rangeData.range.end];
-				GRAPHS.forEach(function(g) {
-					//rangeData[g.name].options.chart.xDomain = xRange;
-					rangeData[g.name].data.forEach(function(series) {
-						series.values = genMeanSeries(series.seriesValues);
-						//console.log("DEBUG "+g.name);
-						//console.log(series.seriesValues);
-						//series.seriesValues = undefined;
-					});
-				});
+				
+				// Re-drawing charts
+				redrawCharts(rangeData.charts);
 				
 				// Is there any more data?
 				if(resp.hits.total > total) {
@@ -1350,12 +1522,31 @@ angular.module('blueprintApp')
 		return {notBroad:value, broad:valueB}; 
 	};
 	
-	var populateBasicTree = function(o,localScope,range,stats,isDetailed) {
+	var populateBasicTree = function(o,localScope,rangeData,isDetailed) {
 		var numNodes = 1;
 		// First, the children
 		if(o.children) {
+			var termNodesHash = rangeData.termNodesHash;
+			var children = [];
+			var changed = false;
+			
+			// First, replace those nodes which are termNodes
 			o.children.forEach(function(child) {
-				numNodes += populateBasicTree(child,localScope,range,stats,isDetailed);
+				if(child.o_uri && (child.o_uri in termNodesHash)) {
+					child = termNodesHash[child.o_uri];
+					changed = true;
+				}
+				
+				children.push(child);
+			});
+			
+			if(changed) {
+				o.children = children;
+			}
+			
+			// Then, populate them!
+			o.children.forEach(function(child) {
+				numNodes += populateBasicTree(child,localScope,rangeData,isDetailed);
 			});
 		} else {
 			o.children = [];
@@ -1363,6 +1554,9 @@ angular.module('blueprintApp')
 		
 		// And now, me!
 		if(o.o_uri) {
+			var range = rangeData.range;
+			var stats = rangeData.stats;
+			
 			var aggregated_statistics = [];
 			var childrens = [];
 			localScope.experimentLabels.forEach(function() {
@@ -1535,7 +1729,7 @@ angular.module('blueprintApp')
 				var clonedTreeData = angular.copy(localScope.fetchedTreeData);
 				rangeData.treedata = [];
 				clonedTreeData.forEach(function(cloned) {
-					var numNodes = populateBasicTree(cloned,localScope,rangeData.range,rangeData.stats,isDetailed);
+					var numNodes = populateBasicTree(cloned,localScope,rangeData,isDetailed);
 					rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: localScope.experimentLabels});
 				});
 			});
@@ -1602,37 +1796,91 @@ angular.module('blueprintApp')
 				gChro: localScope.unknownChromosome,
 			};
 			GRAPHS.forEach(function(gData) {
-				var chart = {
-					options: {
-						chart: {
-							type: DATA_CHART_TYPE,
-							height: DATA_CHART_HEIGHT,
-							x: getXG,
-							y: getYG,
-							useInteractiveGuideline: true,
-							interpolate: 'step',
-							noData: "Fetching "+gData.noData+" from "+rangeStr,
-							showLegend: false,
-							transitionDuration: 0,
-							xAxis: {
-								axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+				var chart;
+				
+				switch(gData.type) {
+					case GRAPH_TYPE_STEP_NVD3:
+						chart = {
+							options: {
+								chart: {
+									type: 'lineChart',
+									height: DATA_CHART_HEIGHT,
+									x: getXG,
+									y: getYG,
+									useInteractiveGuideline: true,
+									interpolate: 'step',
+									noData: "Fetching "+gData.noData+" from "+rangeStr,
+									showLegend: false,
+									transitionDuration: 0,
+									xAxis: {
+										axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+									},
+									yAxis: {
+										axisLabel: gData.yAxisLabel,
+										tickFormat: d3.format('.3g')
+									}
+								},
+								title: {
+									enable: false,
+									text: gData.title
+								},
 							},
-							yAxis: {
-								axisLabel: gData.yAxisLabel,
-								tickFormat: d3.format('.3g')
-							}
-						},
-						title: {
-							enable: false,
-							text: gData.title
-						},
-					},
-					data: [],
-					bpSideData: {
-						sampleToIndex: {},
-					},
-					title: gData.title,
+							library: 'nvd3',
+						};
+						break;
+					case GRAPH_TYPE_STEP_CANVASJS:
+						chart = {
+							options: {
+								//title: {
+								//	text: gData.title,
+								//},
+								toolTip: {
+									shared: true,
+								},
+								animationEnabled: true,
+							},
+							library: 'canvasjs',
+						};
+						break;
+					case GRAPH_TYPE_BOXPLOT_NVD3:
+						chart = {
+							options: {
+								chart: {
+									type: 'boxPlot',
+									height: DATA_CHART_HEIGHT,
+									x: getXG,
+									y: getYG,
+									staggerLabels: true,
+									noData: "Fetching "+gData.noData+" from "+rangeStr,
+									showLegend: false,
+									transitionDuration: 0,
+									xAxis: {
+										axisLabel: 'Cell types'
+									},
+									yAxis: {
+										axisLabel: gData.yAxisLabel,
+										tickFormat: d3.format('.3g')
+									}
+								},
+								title: {
+									enable: false,
+									text: gData.title
+								},
+							},
+							library: 'nvd3',
+						};
+						break;
+				}
+				
+				// Common attributes
+				chart.type = gData.type;
+				chart.data = [];
+				chart.allData = [];
+				chart.bpSideData = {
+					sampleToIndex: {},
 				};
+				chart.title = gData.title;
+
 				rangeData.charts.push(chart);
 				rangeData[gData.name] = chart;
 			});
@@ -2001,7 +2249,7 @@ angular.module('blueprintApp')
 						});
 						
 						// This is needed for the data model
-						$rootScope.termNodes = termNodes;
+						localScope.termNodes = angular.copy(termNodes);
 						
 						// And now, the colors for the AVG_SERIES
 						var AVG_SERIES_COLORS = {};
@@ -2317,13 +2565,14 @@ angular.module('blueprintApp')
 		}
 	};
 	
-	$scope.switchTermNode = function(termNode) {
+	$scope.switchTermNode = function(termNode,rangeData) {
 		termNode.termHidden = !termNode.termHidden;
 		
 		// In the future, reflow here the graphs
+		redrawCharts(rangeData.charts);
 	};
 
-	var init = function($q) {
+	function init($q) {
 		var deferred = $q.defer();
 		var promise = deferred.promise;
 		promise = promise.then(function(localScope) { return $q.all([getDonors(localScope),getSpecimens(localScope),getAnalyses(localScope)]); })
@@ -2354,7 +2603,7 @@ angular.module('blueprintApp')
 				$scope.search();
 			}
 		});
-	};
+	}
 	
 	init($q);
 }]);

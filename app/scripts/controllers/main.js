@@ -1187,6 +1187,7 @@ angular.module('blueprintApp')
 					if(analysis_id in localScope.analysesHash) {
 						var analysis = localScope.analysesHash[analysis_id];
 						var meanSeriesId = analysis.meanSeries;
+						
 						var seriesId = analysis.cell_type.o_uri;
 						
 						var value;
@@ -1267,7 +1268,11 @@ angular.module('blueprintApp')
 							seriesValues = [];
 							var series;
 							
-							
+							// We need this shared reference
+							var cell_type = rangeData.termNodesHash[analysis.cell_type.o_uri];
+							// and signal this cell_type
+							cell_type.wasSeen = true;
+								
 							switch(graph.type) {
 								case GRAPH_TYPE_STEP_CANVASJS:
 									break;
@@ -1276,6 +1281,7 @@ angular.module('blueprintApp')
 										values: null,
 										seriesValues: seriesValues,
 										seriesGenerator: genBoxPlotSeries,
+										cell_type: cell_type,
 										key: analysis.cell_type.name,
 										color: analysis.cell_type.color
 									};
@@ -1285,6 +1291,7 @@ angular.module('blueprintApp')
 										values: null,
 										seriesValues: seriesValues,
 										seriesGenerator: genMeanSeries,
+										cell_type: cell_type,
 										key: analysis.cell_type.name,
 										color: analysis.cell_type.color
 									};
@@ -1782,9 +1789,16 @@ angular.module('blueprintApp')
 			regions += "<a href='"+regionSearchUri+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
 			
 			// Preparing the charts!
+			var termNodes = angular.copy(localScope.termNodes);
+			var termNodesHash = {};
+			termNodes.forEach(function(termNode) {
+				termNodesHash[termNode.o_uri] = termNode;
+			});
 			var rangeData = {
 				range: range,
 				treedata: null,
+				termNodes: termNodes,
+				termNodesHash: termNodesHash,
 				charts: [],
 				stats: {
 					bisulfiteSeq: [],
@@ -2249,7 +2263,7 @@ angular.module('blueprintApp')
 						});
 						
 						// This is needed for the data model
-						localScope.termNodes = angular.copy(termNodes);
+						localScope.termNodes = termNodes;
 						
 						// And now, the colors for the AVG_SERIES
 						var AVG_SERIES_COLORS = {};
@@ -2567,6 +2581,24 @@ angular.module('blueprintApp')
 	
 	$scope.switchTermNode = function(termNode,rangeData) {
 		termNode.termHidden = !termNode.termHidden;
+		
+		// In the future, reflow here the graphs
+		redrawCharts(rangeData.charts);
+	};
+
+	$scope.showAllSeries = function(rangeData) {
+		rangeData.termNodes.forEach(function(termNode) {
+			termNode.termHidden = false;
+		});
+		
+		// In the future, reflow here the graphs
+		redrawCharts(rangeData.charts);
+	};
+
+	$scope.hideAllSeries = function(rangeData) {
+		rangeData.termNodes.forEach(function(termNode) {
+			termNode.termHidden = true;
+		});
 		
 		// In the future, reflow here the graphs
 		redrawCharts(rangeData.charts);

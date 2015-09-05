@@ -198,12 +198,9 @@ div.suggest-container:empty {
 	border-radius: 1em;
 }
 
-span.circle {
+span.circle , span.square {
 	border-style: solid;
 	border-width: 1px;
-	border-radius: 50%;
-	-moz-border-radius: 50%;
-	-webkit-border-radius: 50%;
 	width: 1em;
 	height: 1em; 
 	line-height: 1em;
@@ -212,6 +209,13 @@ span.circle {
 	margin-right: 0.25em;
 	/* width and height can be anything, as long as they're equal */
 	cursor: pointer;
+}
+
+span.circle {
+	border-radius: 50%;
+	-moz-border-radius: 50%;
+	-webkit-border-radius: 50%;
+	-ms-border-radius: 50%;
 }
 
 .term {

@@ -107,23 +107,47 @@ angular.module('blueprintApp')
 	var RREG_SERIES = RREG_CONCEPT;
 	
 	var AVG_SERIES = [
-		DLAT_HYPO_SERIES,
-		DLAT_HYPER_SERIES,
-		EXPG_SERIES,
-		EXPT_SERIES,
-		PDNA_BROAD_SERIES,
-		PDNA_NARROW_SERIES,
-		RREG_SERIES
+		{
+			seriesId: DLAT_HYPO_SERIES,
+			name: 'Mean hypo-methylated regions',
+			chartId: METHYL_HYPO_GRAPH
+		},
+		{
+			seriesId: DLAT_HYPER_SERIES,
+			name: 'Mean hyper-methylated regions',
+			chartId: METHYL_HYPER_GRAPH
+		},
+		{
+			seriesId: EXPG_SERIES,
+			name: 'Mean gene expression',
+			chartId: CSEQ_BROAD_GRAPH
+		},
+		{
+			seriesId: EXPT_SERIES,
+			name: 'Mean transcript expression',
+			chartId: CSEQ_NARROW_GRAPH
+		},
+		{
+			seriesId: PDNA_BROAD_SERIES,
+			name: 'Mean broad histone peaks',
+			chartId: EXP_G_GRAPH
+		},
+		{
+			seriesId: PDNA_NARROW_SERIES,
+			name: 'Mean narrow histone peaks',
+			chartId: EXP_T_GRAPH
+		},
+		{
+			seriesId: RREG_SERIES,
+			name: 'Mean chromatin accessibility',
+			chartId: DNASE_GRAPH
+		},
 	];
 	
 	var SeriesToChart = {};
-	SeriesToChart[DLAT_HYPO_SERIES] = METHYL_HYPO_GRAPH;
-	SeriesToChart[DLAT_HYPER_SERIES] = METHYL_HYPER_GRAPH;
-	SeriesToChart[PDNA_BROAD_SERIES] = CSEQ_BROAD_GRAPH;
-	SeriesToChart[PDNA_NARROW_SERIES] = CSEQ_NARROW_GRAPH;
-	SeriesToChart[EXPG_SERIES] = EXP_G_GRAPH;
-	SeriesToChart[EXPT_SERIES] = EXP_T_GRAPH;
-	SeriesToChart[RREG_SERIES] = DNASE_GRAPH;
+	AVG_SERIES.forEach(function(avgSeries) {
+		SeriesToChart[avgSeries.seriesId] = avgSeries.chartId;
+	});
 	
 	var CHR_SEGMENT_LIMIT = 2500000;	// A bit larger than largest gene
 
@@ -1308,8 +1332,8 @@ angular.module('blueprintApp')
 												seriesGenerator: genBoxPlotSeries,
 												seriesDest: 'data',
 												series: {
-													name: meanSeriesId,
-													color: localScope.AVG_SERIES_COLORS[meanSeriesId]
+													name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
+													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
 												}
 											};
 											graph.options.series.push(meanSeries.series);
@@ -1321,8 +1345,8 @@ angular.module('blueprintApp')
 												seriesDest: 'values',
 												series: {
 													type: 'area',
-													key: meanSeriesId,
-													color: localScope.AVG_SERIES_COLORS[meanSeriesId]
+													key: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
+													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
 												}
 											};
 											graph.data.push(meanSeries.series);
@@ -2352,9 +2376,11 @@ angular.module('blueprintApp')
 						localScope.termNodes = termNodes;
 						
 						// And now, the colors for the AVG_SERIES
+						localScope.AVG_SERIES = angular.copy(AVG_SERIES);
 						var AVG_SERIES_COLORS = {};
-						AVG_SERIES.forEach(function(seriesName, i) {
-							AVG_SERIES_COLORS[seriesName] = cc(i+termNodes.length);
+						localScope.AVG_SERIES.forEach(function(meanSeriesDesc, i) {
+							meanSeriesDesc.color = cc(i+termNodes.length);
+							AVG_SERIES_COLORS[meanSeriesDesc.seriesId] = meanSeriesDesc;
 						});
 						
 						localScope.AVG_SERIES_COLORS = AVG_SERIES_COLORS;

@@ -61,12 +61,23 @@
 		<p class="text-center" ng-bind-html="found"></p>
 		<div class="col-sm-2 terms-selector">
 			<table style="width:100%;">
-				<tr style="vertical-align:top;" ng-click="hideAllSeries(rangeData)"><td><span class="square" style="border-color: #202020 ; background-color: white;"></span></td><td class="term">Hide all cell types</td></tr>
-				<tr style="vertical-align:top;" ng-click="showAllSeries(rangeData)"><td><span class="square" style="border-color: #202020 ; background-color: #202020;"></span></td><td class="term">Show all cell types</td></tr>
+				<tr class="termItem" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES">
+					<td><span class="square" style="border-color: {{meanSeriesDesc.color}} ; background-color: {{ meanSeriesDesc.color}};"></span></td>
+					<td class="term" style="color: initial;">{{meanSeriesDesc.name}}</td>
+				</tr>
 				<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
-				<tr style="vertical-align:top;" ng-click="switchTermNode(termNode,$parent.rangeData)" ng-repeat="termNode in rangeData.termNodes" ng-if="termNode.wasSeen">
+				<tr class="termItem pointer" ng-click="hideAllSeries(rangeData)">
+					<td><span class="circle" style="border-color: #202020 ; background-color: white;"></span></td>
+					<td class="term">Hide all cell types</td>
+				</tr>
+				<tr class="termItem pointer" ng-click="showAllSeries(rangeData)">
+					<td><span class="circle" style="border-color: #202020 ; background-color: #202020;"></span></td>
+					<td class="term">Show all cell types</td>
+				</tr>
+				<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+				<tr class="termItem pointer" ng-click="switchTermNode(termNode,$parent.rangeData)" ng-repeat="termNode in rangeData.termNodes" ng-if="termNode.wasSeen">
 					<td><span class="circle" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td>
-					<td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'inherit'}};">{{termNode.name}}</td>
+					<td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'initial'}};">{{termNode.name}}</td>
 				</tr>
 			</table>
 		</div>

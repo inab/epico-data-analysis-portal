@@ -210,7 +210,11 @@ span.circle , span.square {
 	/* width and height can be anything, as long as they're equal */
 }
 
-span.circle , span.square , .term , i.glyphicon {
+tr.termItem {
+	vertical-align: top;
+}
+
+tr.termItem.pointer , i.glyphicon {
 	cursor: pointer;
 }
 	

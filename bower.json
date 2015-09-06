@@ -3,19 +3,19 @@
   "version": "0.0.1",
   "description": "BLUEPRINT Data Portal",
   "dependencies": {
-    "angular": "~1.2.28",
+    "angular": "~1.4.5",
     "json3": "~3.3.1",
     "es5-shim": "~3.1.0",
     "d3": "~3.5.6",
     "nvd3": "~1.8.1",
     "bootstrap-sass-official": "~3.2.0",
-    "angular-resource": "~1.2.28",
-    "angular-cookies": "~1.2.28",
-    "angular-sanitize": "~1.2.28",
-    "angular-animate": "~1.2.28",
-    "angular-touch": "~1.2.28",
-    "angular-route": "~1.2.28",
-    "angular-bootstrap": "~0.11.0",
+    "angular-resource": "~1.4.5",
+    "angular-cookies": "~1.4.5",
+    "angular-sanitize": "~1.4.5",
+    "angular-animate": "~1.4.5",
+    "angular-touch": "~1.4.5",
+    "angular-route": "~1.4.5",
+    "angular-bootstrap": "~0.13.0",
     "elasticsearch": "~4.0.2",
     "angular-nvd3": "~1.0.0-rc.2",
     "bower-canvasjs": "inab/bower-canvasjs#~1.7.0",
@@ -29,8 +29,8 @@
     }
   },
   "devDependencies": {
-    "angular-mocks": "~1.2.28",
-    "angular-scenario": "~1.2.28"
+    "angular-mocks": "~1.4.5",
+    "angular-scenario": "~1.4.5"
   },
   "authors": [
     {

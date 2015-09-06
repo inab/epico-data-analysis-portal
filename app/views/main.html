@@ -75,7 +75,7 @@
 					<td class="term">Show all cell types</td>
 				</tr>
 				<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
-				<tr class="termItem pointer" ng-click="switchTermNode(termNode,$parent.rangeData)" ng-repeat="termNode in rangeData.termNodes" ng-if="termNode.wasSeen">
+				<tr class="termItem pointer" ng-repeat="termNode in rangeData.termNodes" ng-if="termNode.wasSeen" ng-click="switchTermNode($event,termNode,$parent.rangeData)" tooltip-html="$parent.$parent.termTooltip" tooltip-popup-delay="500">
 					<td><span class="circle" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td>
 					<td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'initial'}};">{{termNode.name}}</td>
 				</tr>

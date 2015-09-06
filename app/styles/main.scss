@@ -216,6 +216,13 @@ tr.termItem {
 
 tr.termItem.pointer , i.glyphicon {
 	cursor: pointer;
+	
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 	
 span.circle {
@@ -232,4 +239,5 @@ span.circle {
 
 .datachart {
 	height: 300px;
+	width: 100%;
 }

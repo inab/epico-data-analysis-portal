@@ -10,12 +10,14 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$location','$q','es','portalConfig','d3',function($scope,$location,$q, es, portalConfig, d3) {
+  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3',function($scope,$sce,$location,$q, es, portalConfig, d3) {
 	
 	var SEARCHING_LABEL = "Searching...";
 	var FETCHING_LABEL = "Fetching...";
 	var PLOTTING_LABEL = "Plotting...";
 	var SEARCH_LABEL = "Search";
+	
+	$scope.termTooltip = $sce.trustAsHtml("<b>Click</b>: switches term&apos;s results<br /><b>Ctrl+Click</b>: focus on term&apos;s results");
 	
 	var METHYL_HYPER_GRAPH = 'methyl_hyper';
 	var METHYL_HYPO_GRAPH = 'methyl_hypo';
@@ -120,22 +122,22 @@ angular.module('blueprintApp')
 		{
 			seriesId: EXPG_SERIES,
 			name: 'Mean gene expression',
-			chartId: CSEQ_BROAD_GRAPH
+			chartId: EXP_G_GRAPH
 		},
 		{
 			seriesId: EXPT_SERIES,
 			name: 'Mean transcript expression',
-			chartId: CSEQ_NARROW_GRAPH
+			chartId: EXP_T_GRAPH
 		},
 		{
 			seriesId: PDNA_BROAD_SERIES,
 			name: 'Mean broad histone peaks',
-			chartId: EXP_G_GRAPH
+			chartId: CSEQ_BROAD_GRAPH
 		},
 		{
 			seriesId: PDNA_NARROW_SERIES,
 			name: 'Mean narrow histone peaks',
-			chartId: EXP_T_GRAPH
+			chartId: CSEQ_NARROW_GRAPH
 		},
 		{
 			seriesId: RREG_SERIES,
@@ -2691,19 +2693,24 @@ angular.module('blueprintApp')
 		}
 	};
 	
-	$scope.switchTermNode = function(termNode,rangeData) {
-		termNode.termHidden = !termNode.termHidden;
+	$scope.switchTermNode = function(event,termNode,rangeData) {
+		if(event.ctrlKey) {
+			rangeData.termNodes.forEach(function(termNode) {
+				termNode.termHidden = true;
+			});
+			termNode.termHidden = false;
+		} else {
+			termNode.termHidden = !termNode.termHidden;
+		}
 		
-		// In the future, reflow here the graphs
 		redrawCharts(rangeData.charts);
 	};
-
+	
 	$scope.showAllSeries = function(rangeData) {
 		rangeData.termNodes.forEach(function(termNode) {
 			termNode.termHidden = false;
 		});
 		
-		// In the future, reflow here the graphs
 		redrawCharts(rangeData.charts);
 	};
 
@@ -2712,7 +2719,6 @@ angular.module('blueprintApp')
 			termNode.termHidden = true;
 		});
 		
-		// In the future, reflow here the graphs
 		redrawCharts(rangeData.charts);
 	};
 

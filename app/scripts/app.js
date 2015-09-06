@@ -19,6 +19,7 @@ angular.module('blueprintApp', [
     'blueprintApp.elasticsearch',
     'blueprintApp.controllers',
     'nvd3',
+    'highcharts-ng',
     'ngAnimate',
     'ngCookies',
     'ngResource',

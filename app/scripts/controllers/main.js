@@ -12,7 +12,6 @@
 angular.module('blueprintApp')
   .controller('MainCtrl', ['$scope','$location','$q','es','portalConfig','d3',function($scope,$location,$q, es, portalConfig, d3) {
 	
-	var DATA_CHART_HEIGHT = 300;
 	var SEARCHING_LABEL = "Searching...";
 	var FETCHING_LABEL = "Fetching...";
 	var PLOTTING_LABEL = "Plotting...";
@@ -26,60 +25,65 @@ angular.module('blueprintApp')
 	var CSEQ_NARROW_GRAPH = 'cseq_narrow';
 	var DNASE_GRAPH = 'dnase';
 	
-	var GRAPH_TYPE_STEP_NVD3 = 'step-nvd3';
-	var GRAPH_TYPE_STEP_CANVASJS = 'step-canvas';
-	var GRAPH_TYPE_BOXPLOT_NVD3 = 'boxplot-nvd3';
+	var LIBRARY_NVD3 = 'nvd3';
+	var LIBRARY_CANVASJS = 'canvasjs';
+	var LIBRARY_HIGHCHARTS = 'highcharts';
+	
+	var GRAPH_TYPE_STEP_NVD3 = 'step-'+LIBRARY_NVD3;
+	var GRAPH_TYPE_STEP_CANVASJS = 'step-'+LIBRARY_CANVASJS;
+	var GRAPH_TYPE_BOXPLOT_HIGHCHARTS = 'boxplot-'+LIBRARY_HIGHCHARTS;
+	
 	
 	var GRAPHS = [
-		{
-			name: METHYL_HYPER_GRAPH,
-			noData: 'hyper-methylated regions',
-			title: 'Hyper-methylated regions',
-			yAxisLabel: 'Methylation level',
-			type: GRAPH_TYPE_STEP_NVD3,
-		},
-		{
-			name: METHYL_HYPO_GRAPH,
-			noData: 'hypo-methylated regions',
-			title: 'Hypo-methylated regions',
-			yAxisLabel: 'Methylation level',
-			type: GRAPH_TYPE_STEP_NVD3,
-		},
+	//	{
+	//		name: METHYL_HYPER_GRAPH,
+	//		noData: 'hyper-methylated regions',
+	//		title: 'Hyper-methylated regions',
+	//		yAxisLabel: 'Methylation level',
+	//		type: GRAPH_TYPE_STEP_NVD3,
+	//	},
+	//	{
+	//		name: METHYL_HYPO_GRAPH,
+	//		noData: 'hypo-methylated regions',
+	//		title: 'Hypo-methylated regions',
+	//		yAxisLabel: 'Methylation level',
+	//		type: GRAPH_TYPE_STEP_NVD3,
+	//	},
 		{
 			name: EXP_T_GRAPH,
 			noData: 'transcript expression data',
 			title: 'Transcript Expression',
 			yAxisLabel: 'FPKM',
-			type: GRAPH_TYPE_STEP_NVD3,
+			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 		},
 		{
 			name: EXP_G_GRAPH,
 			noData: 'gene expression data',
 			title: 'Gene Expression',
 			yAxisLabel: 'FPKM',
-			type: GRAPH_TYPE_STEP_NVD3,
+			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 		},
-		{
-			name: DNASE_GRAPH,
-			noData: 'regulatory regions',
-			title: 'Regulatory regions (DNASE)',
-			yAxisLabel: 'z-score',
-			type: GRAPH_TYPE_STEP_NVD3,
-		},
-		{
-			name: CSEQ_NARROW_GRAPH,
-			noData: 'narrow histone peaks',
-			title: 'Narrow Histone Peaks',
-			yAxisLabel: 'Log10(q-value)',
-			type: GRAPH_TYPE_STEP_NVD3,
-		},
-		{
-			name: CSEQ_BROAD_GRAPH,
-			noData: 'broad histone peaks',
-			title: 'Broad Histone Peaks',
-			yAxisLabel: 'Log10(q-value)',
-			type: GRAPH_TYPE_STEP_NVD3,
-		},
+	//	{
+	//		name: DNASE_GRAPH,
+	//		noData: 'regulatory regions',
+	//		title: 'Regulatory regions (DNASE)',
+	//		yAxisLabel: 'z-score',
+	//		type: GRAPH_TYPE_STEP_NVD3,
+	//	},
+	//	{
+	//		name: CSEQ_NARROW_GRAPH,
+	//		noData: 'narrow histone peaks',
+	//		title: 'Narrow Histone Peaks',
+	//		yAxisLabel: 'Log10(q-value)',
+	//		type: GRAPH_TYPE_STEP_NVD3,
+	//	},
+	//	{
+	//		name: CSEQ_BROAD_GRAPH,
+	//		noData: 'broad histone peaks',
+	//		title: 'Broad Histone Peaks',
+	//		yAxisLabel: 'Log10(q-value)',
+	//		type: GRAPH_TYPE_STEP_NVD3,
+	//	},
 	];
 	var DLAT_CONCEPT_M = 'dlat.m';
 	var PDNA_CONCEPT_M = 'pdna.m';
@@ -203,21 +207,21 @@ angular.module('blueprintApp')
 
     $scope.results = null;
     
-	var getXG = function(d) {
-		return d[0];
-	};
+	function getXG(d) {
+		return d.x;
+	}
 	
-	var getYG = function(d) {
-		return d[1];
-	};
-	
-	var getKey = function(d) {
-		return d.key;
-	};
-	
-	var getY = function(d) {
+	function getYG(d) {
 		return d.y;
-	};
+	}
+	
+	function getKey(d) {
+		return d.key;
+	}
+	
+	function getY(d) {
+		return d.y;
+	}
 	
 	$scope.subtotals = {
 		options: {
@@ -983,11 +987,6 @@ angular.module('blueprintApp')
 			samp.series.push(data[2]);
 		});
 		
-		// Now, sort by position
-		sampsPos.sort(function(a,b) {
-			return a.start - b.start;
-		});
-		
 		// And last, process each one
 		var boxplots = sampsPos.map(function(samp) {
 			var lastPos = samp.series.length-1;
@@ -998,7 +997,7 @@ angular.module('blueprintApp')
 			var Wh;
 			var outliers = [];
 			if(lastPos>1) {
-				samp.series.sort();
+				samp.series.sort(function(a,b) { return a-b; });
 				
 				var Q2pos = (lastPos >> 1);
 				var lastQ1pos = Q2pos;
@@ -1051,22 +1050,98 @@ angular.module('blueprintApp')
 				Wl = Wh = Q1 = Q2 = Q3 = samp.series[0];
 			}
 			
-			return {
-				label: samp.label,
-				values: {
-					Q1: Q1,
-					Q2: Q2,
-					Q3: Q3,
-					whisker_low: Wl,
-					whisker_high: Wh,
-					outliers: outliers
-				}
-			};
+			//return {
+			//	label: samp.label,
+			//	values: {
+			//		Q1: Q1,
+			//		Q2: Q2,
+			//		Q3: Q3,
+			//		whisker_low: Wl,
+			//		whisker_high: Wh,
+			//		outliers: outliers
+			//	}
+			//};
+			
+			// Outliers are available, but they must be injected in a different chart
+			return {label:samp.label, start:samp.start, data:[Wl,Q1,Q2,Q3,Wh]};
 		});
 		
+		//console.log("Orig values");
+		//console.log(origValues);
+		//console.log("Boxplots data");
+		//console.log(boxplots);
 		return boxplots;
 	}
-
+	
+	function highchartsBoxPlotAggregator(chart,doGenerate) {
+		if(doGenerate || !chart.boxPlotCategories) {
+			var allEnsIds = [];
+			var allEnsIdsHash = {};
+			chart.allData.forEach(function(series) {
+				if(doGenerate || !series.seriesPreDigestedValues) {
+					series.seriesPreDigestedValues = series.seriesGenerator(series.seriesValues);
+				}
+				
+				series.seriesPreDigestedValues.forEach(function(boxplot) {
+					if(!(boxplot.label in allEnsIdsHash)) {
+						var category = { label: boxplot.label, start: boxplot.start };
+						allEnsIds.push(category);
+						allEnsIdsHash[boxplot.label] = category;
+					}
+				});
+			});
+			
+			// Sorting them
+			allEnsIds.sort(function(a,b) {
+				return a.start - b.start;
+			});
+			
+			var categories = [];
+			allEnsIds.forEach(function(ensIdObj,x) {
+				categories.push(ensIdObj.label);
+				ensIdObj.x = x;
+			});
+			
+			// At last! Setting the categories!!
+			chart.options.xAxis.categories = categories;
+			
+			chart.boxPlotCategories = allEnsIdsHash;
+		}
+		
+		// Now, second pass!!
+		chart.allData.forEach(function(series,iSeries) {
+			if(doGenerate || !series.seriesDigestedValues) {
+				var preparedValues = new Array(chart.options.xAxis.categories.length);
+				
+				series.seriesPreDigestedValues.forEach(function(boxplot) {
+					preparedValues[chart.boxPlotCategories[boxplot.label].x] = boxplot.data;
+				});
+				series.seriesDigestedValues = preparedValues;
+				chart.options.series[iSeries].data = series.seriesDigestedValues;
+			}
+			//console.log("DEBUG "+g.name);
+			//console.log(series.seriesValues);
+			//series.seriesValues = undefined;
+			chart.options.series[iSeries].visible = !('cell_type' in series) || !series.cell_type.termHidden;
+		});
+	}
+	
+	function defaultSeriesAggregator(chart,doGenerate) {
+		chart.allData.forEach(function(series) {
+			if(doGenerate || !series.seriesDigestedValues) {
+				series.seriesDigestedValues = series.seriesGenerator(series.seriesValues);
+			}
+			//console.log("DEBUG "+g.name);
+			//console.log(series.seriesValues);
+			//series.seriesValues = undefined;
+			if(('cell_type' in series) && series.cell_type.termHidden) {
+				series.series[series.seriesDest] = [];
+			} else {
+				series.series[series.seriesDest] = series.seriesDigestedValues;
+			}
+		});
+	}
+	
 	function dataSeriesComparator(a,b) {
 		return a[0] - b[0];
 	}
@@ -1098,14 +1173,14 @@ angular.module('blueprintApp')
 			if(prevPos!=point[0]) {
 				if(numPos!==0) {
 					var mean = sumPosVal  / numPos;
-					meanValues.push([prevPos,mean],[point[0],mean]);
-					//meanValues.push([prevPos,mean],[point[0],mean],[point[0],null]);
+					meanValues.push({x: prevPos,y: mean},{x: point[0],y: mean});
+					//meanValues.push({x: prevPos,y: mean},{x: point[0],y: mean},{x: point[0],y: null});
 				}
 				prevPos = point[0];
 				if(numEq!==0) {
 					var meanEq = (sumPosVal + sumEqVal) / (numPos+numEq);
-					meanValues.push([prevPos,null],[prevPos,meanEq],[prevPos,null]);
-					//meanValues.push([prevPos,meanEq],[prevPos,null]);
+					meanValues.push({x: prevPos,y:null},{x: prevPos,y: meanEq},{x: prevPos,y: null});
+					//meanValues.push({x: prevPos,y: meanEq},{x: prevPos,y: null});
 					numEq = 0;
 					sumEqVal = 0.0;
 				}
@@ -1125,29 +1200,16 @@ angular.module('blueprintApp')
 		// Corner case
 		if(numEq!==0) {
 			var meanEq = (sumPosVal + sumEqVal) / (numPos+numEq);
-			meanValues.push([prevPos,null],[prevPos,meanEq],[prevPos,null]);
-			//meanValues.push([prevPos,meanEq],[prevPos,null]);
+			meanValues.push({x: prevPos,y: null},{x: prevPos,y: meanEq},{x: prevPos,y: null});
+			//meanValues.push({x: prevPos,y: meanEq},{x: prevPos,y: null});
 		}
 		
 		return meanValues;
 	}
 	
-	function redrawCharts(charts) {
+	function redrawCharts(charts,doGenerate) {
 		charts.forEach(function(chart) {
-			//rangeData[g.name].options.chart.xDomain = xRange;
-			var data = [];
-			chart.allData.forEach(function(series) {
-				if(!series.values) {
-					series.values = series.seriesGenerator(series.seriesValues);
-				}
-				//console.log("DEBUG "+g.name);
-				//console.log(series.seriesValues);
-				//series.seriesValues = undefined;
-				if(!('cell_type' in series) || !series.cell_type.termHidden) {
-					data.push(series);
-				}
-			});
-			chart.data = data;
+			chart.seriesAggregator(chart,doGenerate);
 		});
 	}
 	
@@ -1224,87 +1286,105 @@ angular.module('blueprintApp')
 								break;
 						}
 						
-						var graph = rangeData[SeriesToChart[meanSeriesId]];
-						
-						var meanSeriesValues;
-						if(meanSeriesId in graph.bpSideData.sampleToIndex) {
-							meanSeriesValues = graph.bpSideData.sampleToIndex[meanSeriesId];
-						} else {
-							meanSeriesValues = [];
-							var meanSeries;
+						if(meanSeriesId in SeriesToChart) {
+							var chartId = SeriesToChart[meanSeriesId];
 							
-							switch(graph.type) {
-								case GRAPH_TYPE_STEP_CANVASJS:
-									break;
-								case GRAPH_TYPE_BOXPLOT_NVD3:
-									meanSeries = {
-										values: [],
-										type: 'area',
-										seriesValues: meanSeriesValues,
-										seriesGenerator: genBoxPlotSeries,
-										key: meanSeriesId,
-										color: localScope.AVG_SERIES_COLORS[meanSeriesId]
-									};
-									break;
-								case GRAPH_TYPE_STEP_NVD3:
-									meanSeries = {
-										values: [],
-										type: 'area',
-										seriesValues: meanSeriesValues,
-										seriesGenerator: genMeanSeries,
-										key: meanSeriesId,
-										color: localScope.AVG_SERIES_COLORS[meanSeriesId]
-									};
-									break;
-							}
-							graph.bpSideData.sampleToIndex[meanSeriesId] = meanSeriesValues;
-							graph.allData.push(meanSeries);
-						}
-						
-						var seriesValues;
-						if(seriesId in graph.bpSideData.sampleToIndex) {
-							seriesValues = graph.bpSideData.sampleToIndex[seriesId];
-						} else {
-							seriesValues = [];
-							var series;
-							
-							// We need this shared reference
-							var cell_type = rangeData.termNodesHash[analysis.cell_type.o_uri];
-							// and signal this cell_type
-							cell_type.wasSeen = true;
+							if(chartId in rangeData) {
+								var graph = rangeData[chartId];
 								
-							switch(graph.type) {
-								case GRAPH_TYPE_STEP_CANVASJS:
-									break;
-								case GRAPH_TYPE_BOXPLOT_NVD3:
-									series = {
-										values: null,
-										seriesValues: seriesValues,
-										seriesGenerator: genBoxPlotSeries,
-										cell_type: cell_type,
-										key: analysis.cell_type.name,
-										color: analysis.cell_type.color
-									};
-									break;
-								case GRAPH_TYPE_STEP_NVD3:
-									series = {
-										values: null,
-										seriesValues: seriesValues,
-										seriesGenerator: genMeanSeries,
-										cell_type: cell_type,
-										key: analysis.cell_type.name,
-										color: analysis.cell_type.color
-									};
-									break;
+								var meanSeriesValues;
+								if(meanSeriesId in graph.bpSideData.sampleToIndex) {
+									meanSeriesValues = graph.bpSideData.sampleToIndex[meanSeriesId];
+								} else {
+									meanSeriesValues = [];
+									var meanSeries;
+									
+									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CANVASJS:
+											break;
+										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genBoxPlotSeries,
+												seriesDest: 'data',
+												series: {
+													name: meanSeriesId,
+													color: localScope.AVG_SERIES_COLORS[meanSeriesId]
+												}
+											};
+											graph.options.series.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_STEP_NVD3:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'values',
+												series: {
+													type: 'area',
+													key: meanSeriesId,
+													color: localScope.AVG_SERIES_COLORS[meanSeriesId]
+												}
+											};
+											graph.data.push(meanSeries.series);
+											break;
+									}
+									meanSeries.series[meanSeries.seriesDest] = [];
+									graph.bpSideData.sampleToIndex[meanSeriesId] = meanSeriesValues;
+									graph.allData.push(meanSeries);
+								}
+								
+								var seriesValues;
+								if(seriesId in graph.bpSideData.sampleToIndex) {
+									seriesValues = graph.bpSideData.sampleToIndex[seriesId];
+								} else {
+									seriesValues = [];
+									var series;
+									
+									// We need this shared reference
+									var cell_type = rangeData.termNodesHash[analysis.cell_type.o_uri];
+									// and signal this cell_type
+									cell_type.wasSeen = true;
+										
+									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CANVASJS:
+											break;
+										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genBoxPlotSeries,
+												seriesDest: 'data',
+												cell_type: cell_type,
+												series: {
+													name: analysis.cell_type.name,
+													color: analysis.cell_type.color
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_NVD3:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'values',
+												cell_type: cell_type,
+												series: {
+													key: analysis.cell_type.name,
+													color: analysis.cell_type.color
+												}
+											};
+											graph.data.push(series.series);
+											break;
+									}
+									series.series[series.seriesDest] = [];
+									graph.bpSideData.sampleToIndex[seriesId] = seriesValues;
+									graph.allData.push(series);
+								}
+								
+								var sDataS = [segment._source.chromosome_start,segment._source.chromosome_end,value,payload];
+								meanSeriesValues.push(sDataS);
+								seriesValues.push(sDataS);
 							}
-							graph.bpSideData.sampleToIndex[seriesId] = seriesValues;
-							graph.allData.push(series);
 						}
-						
-						var sDataS = [segment._source.chromosome_start,segment._source.chromosome_end,value,payload];
-						meanSeriesValues.push(sDataS);
-						seriesValues.push(sDataS);
-						
 						// totalPoints += segment._source.chromosome_end - segment._source.chromosome_start + 1;
 					//} else {
 						// Ignoring what we cannot process
@@ -1317,7 +1397,7 @@ angular.module('blueprintApp')
 				//var xRange = [rangeData.range.start,rangeData.range.end];
 				
 				// Re-drawing charts
-				redrawCharts(rangeData.charts);
+				redrawCharts(rangeData.charts,true);
 				
 				// Is there any more data?
 				if(resp.hits.total > total) {
@@ -1327,6 +1407,7 @@ angular.module('blueprintApp')
 					
 					//console.log("Hay "+total+' de '+resp.hits.total);
 					es.scroll({
+						index: 'primary',
 						scrollId: resp._scroll_id,
 						scroll: '30s'
 					}, getMoreChartDataUntilDone);
@@ -1818,7 +1899,6 @@ angular.module('blueprintApp')
 							options: {
 								chart: {
 									type: 'lineChart',
-									height: DATA_CHART_HEIGHT,
 									x: getXG,
 									y: getYG,
 									useInteractiveGuideline: true,
@@ -1835,11 +1915,12 @@ angular.module('blueprintApp')
 									}
 								},
 								title: {
-									enable: false,
 									text: gData.title
 								},
 							},
-							library: 'nvd3',
+							data: [],
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_NVD3,
 						};
 						break;
 					case GRAPH_TYPE_STEP_CANVASJS:
@@ -1852,43 +1933,48 @@ angular.module('blueprintApp')
 									shared: true,
 								},
 								animationEnabled: true,
+								data: []
 							},
-							library: 'canvasjs',
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_CANVASJS,
 						};
 						break;
-					case GRAPH_TYPE_BOXPLOT_NVD3:
+					case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
 						chart = {
 							options: {
-								chart: {
-									type: 'boxPlot',
-									height: DATA_CHART_HEIGHT,
-									x: getXG,
-									y: getYG,
-									staggerLabels: true,
-									noData: "Fetching "+gData.noData+" from "+rangeStr,
-									showLegend: false,
-									transitionDuration: 0,
-									xAxis: {
-										axisLabel: 'Cell types'
+								options: {
+									chart: {
+										type: 'boxplot',
 									},
-									yAxis: {
-										axisLabel: gData.yAxisLabel,
-										tickFormat: d3.format('.3g')
-									}
+									legend: {
+										enabled: false,
+									},
 								},
 								title: {
-									enable: false,
 									text: gData.title
 								},
+								xAxis: {
+									title: {
+										text: 'Ensembl Ids'
+									},
+									categories: []
+								},
+								yAxis: {
+									title: {
+										text: gData.yAxisLabel
+									}
+								},
+								series: [],
+								loading: false,
 							},
-							library: 'nvd3',
+							seriesAggregator: highchartsBoxPlotAggregator,
+							library: LIBRARY_HIGHCHARTS,
 						};
 						break;
 				}
 				
 				// Common attributes
 				chart.type = gData.type;
-				chart.data = [];
 				chart.allData = [];
 				chart.bpSideData = {
 					sampleToIndex: {},

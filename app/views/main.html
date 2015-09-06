@@ -61,26 +61,28 @@
 		<p class="text-center" ng-bind-html="found"></p>
 		<div class="col-sm-2 terms-selector">
 			<table style="width:100%;">
-				<tr style="vertical-align:top;"><td><span class="square" ng-click="hideAllSeries(rangeData)" style="border-color: #202020 ; background-color: white;"></span></td><td class="term">Hide all cell types</td></tr>
-				<tr style="vertical-align:top;"><td><span class="square" ng-click="showAllSeries(rangeData)" style="border-color: #202020 ; background-color: #202020;"></span></td><td class="term">Show all cell types</td></tr>
+				<tr style="vertical-align:top;" ng-click="hideAllSeries(rangeData)"><td><span class="square" style="border-color: #202020 ; background-color: white;"></span></td><td class="term">Hide all cell types</td></tr>
+				<tr style="vertical-align:top;" ng-click="showAllSeries(rangeData)"><td><span class="square" style="border-color: #202020 ; background-color: #202020;"></span></td><td class="term">Show all cell types</td></tr>
 				<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
-				<tr style="vertical-align:top;" ng-repeat="termNode in rangeData.termNodes" ng-if="termNode.wasSeen">
-					<td><span class="circle" ng-click="switchTermNode(termNode,$parent.rangeData)" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td><td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'inherit'}};">{{termNode.name}}</td>
+				<tr style="vertical-align:top;" ng-click="switchTermNode(termNode,$parent.rangeData)" ng-repeat="termNode in rangeData.termNodes" ng-if="termNode.wasSeen">
+					<td><span class="circle" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td>
+					<td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'inherit'}};">{{termNode.name}}</td>
 				</tr>
 			</table>
 		</div>
 		
-		<div class="col-sm-10 text-center vertical-center" ng-show="rangeData.charts.length &gt; 0">
+		<div class="col-sm-10 text-center vertical-center" ng-if="rangeData.charts.length &gt; 0">
 			<div class="panel panel-default" ng-repeat="chart in rangeData.charts">
 				<div class="panel-heading">
 					<h5 class="panel-title">
-						<a ng-click="chart.isClosed = !chart.isClosed"><i class="pull-left glyphicon" ng-class="{'glyphicon-chevron-down': !chart.isClosed, 'glyphicon-chevron-right': chart.isClosed}"></i>{{chart.title}}<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !chart.isClosed, 'glyphicon-chevron-left': chart.isClosed}"></i></a>
+						<a ng-click="chart.isClosed = !chart.isClosed"><i class="pull-left glyphicon" ng-class="{'glyphicon-chevron-down': !chart.isClosed, 'glyphicon-chevron-right': chart.isClosed}"></i><span ng-show="chart.isClosed">{{chart.title}}</span><i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': !chart.isClosed, 'glyphicon-chevron-left': chart.isClosed}"></i></a>
 					</h5>
 				</div>
 				<div collapse="chart.isClosed">
 					<div class="panel-body">
-						<nvd3 ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
-						<canvasjs ng-if="chart.library==='canvasjs'" options="chart.options" data="chart.data"></canvasjs>
+						<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
+						<canvasjs class="datachart" ng-if="chart.library==='canvasjs'" options="chart.options" data="chart.data"></canvasjs>
+						<highchart class="datachart" ng-if="chart.library==='highcharts'" config="chart.options"></highchart>
 					</div>
 				</div>
 			</div>

@@ -18,14 +18,7 @@
 				
 				scope.chart = new CanvasJS.Chart(element[0],scope.options);
 				
-				scope.$watch('data',function(newdata,olddata) {
-					if(newdata!==olddata) {
-						scope.options.data = newdata;
-					}
-					scope.chart.render();
-				});
-				
-				scope.$watch('options',function(oldoptions,newoptions) {
+				scope.$watch('options.data',function(oldoptions,newoptions) {
 					if(newoptions!==oldoptions) {
 						scope.chart = new CanvasJS.Chart(element[0],scope.options);
 					}

@@ -19,6 +19,8 @@
     "elasticsearch": "~4.0.2",
     "angular-nvd3": "~1.0.0-rc.2",
     "bower-canvasjs": "inab/bower-canvasjs#~1.7.0",
+    "highcharts-release": "~4.1.8",
+    "highcharts-ng": "~0.0.10",
     "roboto-fontface": "~0.4.3"
   },
   "overrides": {

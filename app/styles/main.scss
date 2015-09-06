@@ -208,9 +208,12 @@ span.circle , span.square {
 	/* vertical-align: -10%; */
 	margin-right: 0.25em;
 	/* width and height can be anything, as long as they're equal */
-	cursor: pointer;
 }
 
+span.circle , span.square , .term , i.glyphicon {
+	cursor: pointer;
+}
+	
 span.circle {
 	border-radius: 50%;
 	-moz-border-radius: 50%;
@@ -221,4 +224,8 @@ span.circle {
 .term {
 	line-height: 1em;
 	padding-bottom: 0.5em;
+}
+
+.datachart {
+	height: 300px;
 }

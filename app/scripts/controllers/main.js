@@ -10,7 +10,7 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3',function($scope,$sce,$location,$q, es, portalConfig, d3) {
+  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3','$timeout',function($scope,$sce,$location,$q, es, portalConfig, d3, $timeout) {
 	
 	var SEARCHING_LABEL = "Searching...";
 	var FETCHING_LABEL = "Fetching...";
@@ -52,26 +52,19 @@ angular.module('blueprintApp')
 	//		type: GRAPH_TYPE_STEP_NVD3,
 	//	},
 		{
-			name: EXP_T_GRAPH,
-			noData: 'transcript expression data',
-			title: 'Transcript Expression',
-			yAxisLabel: 'FPKM',
-			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
-		},
-		{
 			name: EXP_G_GRAPH,
 			noData: 'gene expression data',
 			title: 'Gene Expression',
 			yAxisLabel: 'FPKM',
 			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 		},
-	//	{
-	//		name: DNASE_GRAPH,
-	//		noData: 'regulatory regions',
-	//		title: 'Regulatory regions (DNASE)',
-	//		yAxisLabel: 'z-score',
-	//		type: GRAPH_TYPE_STEP_NVD3,
-	//	},
+		{
+			name: EXP_T_GRAPH,
+			noData: 'transcript expression data',
+			title: 'Transcript Expression',
+			yAxisLabel: 'FPKM',
+			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+		},
 	//	{
 	//		name: CSEQ_NARROW_GRAPH,
 	//		noData: 'narrow histone peaks',
@@ -84,6 +77,13 @@ angular.module('blueprintApp')
 	//		noData: 'broad histone peaks',
 	//		title: 'Broad Histone Peaks',
 	//		yAxisLabel: 'Log10(q-value)',
+	//		type: GRAPH_TYPE_STEP_NVD3,
+	//	},
+	//	{
+	//		name: DNASE_GRAPH,
+	//		noData: 'regulatory regions',
+	//		title: 'Regulatory regions (DNASE)',
+	//		yAxisLabel: 'z-score',
 	//		type: GRAPH_TYPE_STEP_NVD3,
 	//	},
 	];
@@ -1992,6 +1992,13 @@ angular.module('blueprintApp')
 								},
 								series: [],
 								loading: false,
+								func: function(chart) {
+									// This is needed to reflow the chart
+									// to its final width
+									$timeout(function() {
+										chart.reflow();
+									},0);
+								},
 							},
 							seriesAggregator: highchartsBoxPlotAggregator,
 							library: LIBRARY_HIGHCHARTS,

@@ -59,7 +59,7 @@
 		</div>
 		-->
 		<p class="text-center" ng-bind-html="found"></p>
-		<div class="col-sm-2 terms-selector">
+		<div class="col-md-2 col-lg-1 terms-selector">
 			<table style="width:100%;">
 				<tr class="termItem" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES">
 					<td><span class="square" style="border-color: {{meanSeriesDesc.color}} ; background-color: {{ meanSeriesDesc.color}};"></span></td>
@@ -82,7 +82,16 @@
 			</table>
 		</div>
 		
-		<div class="col-sm-10 text-center vertical-center" ng-if="rangeData.charts.length &gt; 0">
+		<div class="col-md-10 col-lg-11 text-center vertical-center" ng-if="rangeData.charts.length &gt; 0">
+			<div class="row">
+				<div class="col-md-12 col-lg-6" ng-repeat="chart in rangeData.charts">
+					<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
+					<canvasjs class="datachart" ng-if="chart.library==='canvasjs'" options="chart.options" data="chart.data"></canvasjs>
+					<highchart class="datachart" ng-if="chart.library==='highcharts'" config="chart.options"></highchart>
+				</div>
+			</div>
+			
+			<!-- panel concept
 			<div class="panel panel-default" ng-repeat="chart in rangeData.charts">
 				<div class="panel-heading">
 					<h5 class="panel-title">
@@ -97,6 +106,7 @@
 					</div>
 				</div>
 			</div>
+			-->
 			
 			<!-- alternate concept
 			<div class="panel panel-default" ng-repeat="ontology in rangeData.treedata">

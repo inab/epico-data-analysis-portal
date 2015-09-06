@@ -34,23 +34,24 @@ angular.module('blueprintApp')
 	var GRAPH_TYPE_STEP_NVD3 = 'step-'+LIBRARY_NVD3;
 	var GRAPH_TYPE_STEP_CANVASJS = 'step-'+LIBRARY_CANVASJS;
 	var GRAPH_TYPE_BOXPLOT_HIGHCHARTS = 'boxplot-'+LIBRARY_HIGHCHARTS;
+	var GRAPH_TYPE_STEP_HIGHCHARTS = 'step-'+LIBRARY_HIGHCHARTS;
 	
 	
 	var GRAPHS = [
-	//	{
-	//		name: METHYL_HYPER_GRAPH,
-	//		noData: 'hyper-methylated regions',
-	//		title: 'Hyper-methylated regions',
-	//		yAxisLabel: 'Methylation level',
-	//		type: GRAPH_TYPE_STEP_NVD3,
-	//	},
-	//	{
-	//		name: METHYL_HYPO_GRAPH,
-	//		noData: 'hypo-methylated regions',
-	//		title: 'Hypo-methylated regions',
-	//		yAxisLabel: 'Methylation level',
-	//		type: GRAPH_TYPE_STEP_NVD3,
-	//	},
+		{
+			name: METHYL_HYPER_GRAPH,
+			noData: 'hyper-methylated regions',
+			title: 'Hyper-methylated regions',
+			yAxisLabel: 'Methylation level',
+			type: GRAPH_TYPE_STEP_CANVASJS,
+		},
+		{
+			name: METHYL_HYPO_GRAPH,
+			noData: 'hypo-methylated regions',
+			title: 'Hypo-methylated regions',
+			yAxisLabel: 'Methylation level',
+			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+		},
 		{
 			name: EXP_G_GRAPH,
 			noData: 'gene expression data',
@@ -65,27 +66,27 @@ angular.module('blueprintApp')
 			yAxisLabel: 'FPKM',
 			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 		},
-	//	{
-	//		name: CSEQ_NARROW_GRAPH,
-	//		noData: 'narrow histone peaks',
-	//		title: 'Narrow Histone Peaks',
-	//		yAxisLabel: 'Log10(q-value)',
-	//		type: GRAPH_TYPE_STEP_NVD3,
-	//	},
-	//	{
-	//		name: CSEQ_BROAD_GRAPH,
-	//		noData: 'broad histone peaks',
-	//		title: 'Broad Histone Peaks',
-	//		yAxisLabel: 'Log10(q-value)',
-	//		type: GRAPH_TYPE_STEP_NVD3,
-	//	},
-	//	{
-	//		name: DNASE_GRAPH,
-	//		noData: 'regulatory regions',
-	//		title: 'Regulatory regions (DNASE)',
-	//		yAxisLabel: 'z-score',
-	//		type: GRAPH_TYPE_STEP_NVD3,
-	//	},
+		//{
+		//	name: CSEQ_NARROW_GRAPH,
+		//	noData: 'narrow histone peaks',
+		//	title: 'Narrow Histone Peaks',
+		//	yAxisLabel: 'Log10(q-value)',
+		//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+		//},
+		//{
+		//	name: CSEQ_BROAD_GRAPH,
+		//	noData: 'broad histone peaks',
+		//	title: 'Broad Histone Peaks',
+		//	yAxisLabel: 'Log10(q-value)',
+		//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+		//},
+		//{
+		//	name: DNASE_GRAPH,
+		//	noData: 'regulatory regions',
+		//	title: 'Regulatory regions (DNASE)',
+		//	yAxisLabel: 'z-score',
+		//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+		//},
 	];
 	var DLAT_CONCEPT_M = 'dlat.m';
 	var PDNA_CONCEPT_M = 'pdna.m';
@@ -1233,6 +1234,12 @@ angular.module('blueprintApp')
 		return meanValues;
 	}
 	
+	function genMeanSeriesHighcharts(origValues) {
+		return genMeanSeries(origValues).map(function(meanValue) {
+			return [meanValue.x,meanValue.y];
+		});
+	}
+	
 	function redrawCharts(charts,doGenerate) {
 		charts.forEach(function(chart) {
 			chart.seriesAggregator(chart,doGenerate);
@@ -1327,6 +1334,17 @@ angular.module('blueprintApp')
 									
 									switch(graph.type) {
 										case GRAPH_TYPE_STEP_CANVASJS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'dataPoints',
+												series: {
+													type: "stepLine",
+													name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
+													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
+												}
+											};
+											graph.options.data.push(meanSeries.series);
 											break;
 										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
 											meanSeries = {
@@ -1336,6 +1354,19 @@ angular.module('blueprintApp')
 												series: {
 													name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
 													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
+												}
+											};
+											graph.options.series.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_STEP_HIGHCHARTS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeriesHighcharts,
+												seriesDest: 'data',
+												series: {
+													name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
+													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color,
+													step: true,
 												}
 											};
 											graph.options.series.push(meanSeries.series);
@@ -1373,6 +1404,17 @@ angular.module('blueprintApp')
 										
 									switch(graph.type) {
 										case GRAPH_TYPE_STEP_CANVASJS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'dataPoints',
+												series: {
+													type: "stepLine",
+													name: analysis.cell_type.name,
+													color: analysis.cell_type.color
+												}
+											};
+											graph.options.data.push(series.series);
 											break;
 										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
 											series = {
@@ -1383,6 +1425,20 @@ angular.module('blueprintApp')
 												series: {
 													name: analysis.cell_type.name,
 													color: analysis.cell_type.color
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeriesHighcharts,
+												seriesDest: 'data',
+												cell_type: cell_type,
+												series: {
+													name: analysis.cell_type.name,
+													color: analysis.cell_type.color,
+													step: true,
 												}
 											};
 											graph.options.series.push(series.series);
@@ -1952,13 +2008,15 @@ angular.module('blueprintApp')
 					case GRAPH_TYPE_STEP_CANVASJS:
 						chart = {
 							options: {
-								//title: {
-								//	text: gData.title,
-								//},
+								title: {
+									text: gData.title,
+								},
 								toolTip: {
 									shared: true,
 								},
 								animationEnabled: true,
+								zoomEnabled: true,
+								exportEnabled: true,
 								data: []
 							},
 							seriesAggregator: defaultSeriesAggregator,
@@ -1997,10 +2055,49 @@ angular.module('blueprintApp')
 									// to its final width
 									$timeout(function() {
 										chart.reflow();
-									},0);
+									},250);
 								},
 							},
 							seriesAggregator: highchartsBoxPlotAggregator,
+							library: LIBRARY_HIGHCHARTS,
+						};
+						break;
+					case GRAPH_TYPE_STEP_HIGHCHARTS:
+						chart = {
+							options: {
+								options: {
+									chart: {
+										type: 'line',
+										zoomType: 'x'
+									},
+									legend: {
+										enabled: false,
+									},
+								},
+								title: {
+									text: gData.title
+								},
+								xAxis: {
+									title: {
+										text: 'Coordinates (at chromosome '+range.chr+')'
+									},
+								},
+								yAxis: {
+									title: {
+										text: gData.yAxisLabel
+									}
+								},
+								series: [],
+								loading: false,
+								func: function(chart) {
+									// This is needed to reflow the chart
+									// to its final width
+									$timeout(function() {
+										chart.reflow();
+									},250);
+								},
+							},
+							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
 						};
 						break;

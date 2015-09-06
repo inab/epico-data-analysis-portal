@@ -36,7 +36,7 @@
           );
 
           // watch for data changes and re-render
-          scope.$watch('data', function(newVals, oldVals) {
+          scope.$watch('data', function(newVals) {
             return scope.render(newVals);
           }, true);
 
@@ -208,7 +208,7 @@
           );
 
           // watch for data changes and re-render
-          scope.$watch('data', function(newVals, oldVals) {
+          scope.$watch('data', function(newVals) {
             if(typeof(newVals)==="object"){ 
               return scope.render(newVals);
             }

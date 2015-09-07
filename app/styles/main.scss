@@ -107,10 +107,14 @@ body{
 }
 
 #search{
-  border: 1px solid rgb(81, 0, 255);
-  color: rgb(255, 255, 255);
-  background: #00c0e4 !important;
-  border-radius: 20px;
+	/* Removing the border */
+	/*
+	border: 1px solid rgb(81, 0, 255);
+	*/
+	border-style: none;
+	color: rgb(255, 255, 255);
+	background: #00c0e4 !important;
+	border-radius: 20px;
 }
 
 #search::-webkit-input-placeholder { color:#FFF; }

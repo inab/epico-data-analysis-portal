@@ -237,13 +237,16 @@ span.circle {
 	padding-bottom: 0.5em;
 }
 
-.datachart {
+.datachart ,.datachartContainer {
 	height: 400px;
+}
+
+.datachart {
 	width: 100%;
 }
 
 @media (min-width: 1170px){
-	.datachart {
-		height: 350px!important;
+	.datachart , .datachartContainer {
+		height: 350px !important;
 	}
 }

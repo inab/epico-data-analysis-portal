@@ -1,16 +1,16 @@
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
-            <div class="col-sm-3 text-center vertical-center">
+            <div class="col-sm-3 text-center vertical-center" style="max-width: 350px;">
 		    <nvd3 options="subtotals.options" data="subtotals.data"></nvd3>
             </div>
-            <div class="col-xs-6 text-center">
+            <div class="col-sm-6 text-center">
                 <h2>Explore the behaviour of your candidate genes, pathways or genome regions across the Blueprint datasets.</h2>
-                <p>The Blueprint project will provide at least 100 reference epigenomes to the scientific community. These epigenomes are characterized by: RNAseq, BisulfiteSeq, DNase-seq, and 8 Histone marks</p>
+                <p>The Blueprint project is providing in this release epigenomic analysis from {{samples.length}} samples to the scientific community. Their associated epigenomes are characterized by: gene and transcript expression (from RNA-Seq experiments), hyper and hypo methylated regions (derived from WGBS experiments), chromatin accessibility (DNAse-Seq), and {{numHistones}} Histone marks binding activity (ChIP-Seq)</p>
                 <p>Use this tool to explore the behaviour of your gene in the different cell types</p>
                 <p>
-                <a tooltip-placement="bottom" tooltip="{{dataDesc}}"><b>Data release - {{dataRelease}}</b></a>
+                <a tooltip-placement="bottom" tooltip="{{getDataDesc()}}"><b>Data release - {{dataRelease}}</b></a>
                 </p>           
             </div>
-            <div class="col-sm-3 text-center vertical-center">
+            <div class="col-sm-3 text-center vertical-center" style="max-width: 350px;">
 		    <nvd3 options="analysisSubtotals.options" data="analysisSubtotals.data"></nvd3>
             </div>
 </div>
@@ -39,18 +39,18 @@
 	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'; search()" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a>, <a ng-click="query='pathway:Cell Cycle, Mitotic'; search()">pathway:Cell Cycle, Mitotic</a></p>
 		<div class="suggest-container">
 		  <div ng-repeat="suggest in resultsSearch" class="suggest-item">
-			  <i>({{suggest.feature}})</i> <a ng-click="query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.fullTerm}}</a>
+			  <i>({{suggest.feature}})</i> <a ng-click="$parent.query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.fullTerm}}</a>
 			  <br />
 		  </div>
 		</div>
           </div>
-          <div class="col-sm-3 text-center"><button ng-click="search()" ng-disabled="queryInProgress" type="button" class="btn btn-primary btn-lg">{{searchButtonText}}</button></div>
+          <div class="col-sm-3 text-center"><button ng-click="search()" ng-disabled="queryInProgress" type="button" class="btn btn-primary btn-lg" ng-bind-html="searchButtonText">Search</button></div>
         </div>
       </form>
     </div>
   </div> 
 
-<tabset style="margin-top:40px;" ng-show="graphData.length &gt; 0">
+<tabset style="margin-top:40px;" ng-if="graphData.length &gt; 0">
 	<tab ng-repeat="rangeData in graphData">
 		<tab-heading>Region {{rangeData.range.chr}}:{{rangeData.range.start}}-{{rangeData.range.end}}</tab-heading>
 		<!--
@@ -83,10 +83,11 @@
 		</div>
 		
 		<div class="col-md-10 col-lg-11 text-center vertical-center" ng-if="rangeData.charts.length &gt; 0">
-			<div class="row">
+			<div class="row" style="width:100%">
 				<div class="col-md-12 col-lg-6" ng-repeat="chart in rangeData.charts">
 					<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
 					<canvasjs class="datachart" ng-if="chart.library==='canvasjs'" config="chart.options"></canvasjs>
+					<chartjs class="datachart" ng-if="chart.library==='chartjs'" config="chart.options"></chartjs>
 					<highchart class="datachart" ng-if="chart.library==='highcharts'" config="chart.options"></highchart>
 				</div>
 			</div>

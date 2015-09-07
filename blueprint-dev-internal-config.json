@@ -2,5 +2,5 @@
 	"esHost": "http://blueprint-dev.bioinfo.cnio.es/2015-08/es",
 	"debug": true,
 	"dataRelease": "Dev Version!",
-	"dataDesc": "This release includes data from monocytes, granulocyte neutrophils, eosinophils, macrophages ( M0 , M1 and M2 ), naive CD4+ and naive CD8+ cells apart from 7 cell line samples."
+	"dataDesc": "This release includes data from {{termNodes.length}} cell types, including {{numCellularLines}} cell lines."
 }

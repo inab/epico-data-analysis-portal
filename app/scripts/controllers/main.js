@@ -10,7 +10,7 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3','$timeout',function($scope,$sce,$location,$q, es, portalConfig, d3, $timeout) {
+  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3','$timeout','$interpolate',function($scope,$sce,$location,$q, es, portalConfig, d3, $timeout,$interpolate) {
 	
 	var SEARCHING_LABEL = "Searching...";
 	var FETCHING_LABEL = "Fetching...";
@@ -29,10 +29,12 @@ angular.module('blueprintApp')
 	
 	var LIBRARY_NVD3 = 'nvd3';
 	var LIBRARY_CANVASJS = 'canvasjs';
+	var LIBRARY_CHARTJS = 'chartjs';
 	var LIBRARY_HIGHCHARTS = 'highcharts';
 	
 	var GRAPH_TYPE_STEP_NVD3 = 'step-'+LIBRARY_NVD3;
 	var GRAPH_TYPE_STEP_CANVASJS = 'step-'+LIBRARY_CANVASJS;
+	var GRAPH_TYPE_STEP_CHARTJS = 'step-'+LIBRARY_CHARTJS;
 	var GRAPH_TYPE_BOXPLOT_HIGHCHARTS = 'boxplot-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_STEP_HIGHCHARTS = 'step-'+LIBRARY_HIGHCHARTS;
 	
@@ -43,7 +45,7 @@ angular.module('blueprintApp')
 			noData: 'hyper-methylated regions',
 			title: 'Hyper-methylated regions',
 			yAxisLabel: 'Methylation level',
-			type: GRAPH_TYPE_STEP_CANVASJS,
+			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},
 		{
 			name: METHYL_HYPO_GRAPH,
@@ -66,27 +68,27 @@ angular.module('blueprintApp')
 			yAxisLabel: 'FPKM',
 			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 		},
-		//{
-		//	name: CSEQ_NARROW_GRAPH,
-		//	noData: 'narrow histone peaks',
-		//	title: 'Narrow Histone Peaks',
-		//	yAxisLabel: 'Log10(q-value)',
-		//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
-		//},
-		//{
-		//	name: CSEQ_BROAD_GRAPH,
-		//	noData: 'broad histone peaks',
-		//	title: 'Broad Histone Peaks',
-		//	yAxisLabel: 'Log10(q-value)',
-		//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
-		//},
-		//{
-		//	name: DNASE_GRAPH,
-		//	noData: 'regulatory regions',
-		//	title: 'Regulatory regions (DNASE)',
-		//	yAxisLabel: 'z-score',
-		//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
-		//},
+		{
+			name: CSEQ_NARROW_GRAPH,
+			noData: 'narrow histone peaks',
+			title: 'Narrow Histone Peaks',
+			yAxisLabel: 'Log10(q-value)',
+			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+		},
+		{
+			name: CSEQ_BROAD_GRAPH,
+			noData: 'broad histone peaks',
+			title: 'Broad Histone Peaks',
+			yAxisLabel: 'Log10(q-value)',
+			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+		},
+		{
+			name: DNASE_GRAPH,
+			noData: 'regulatory regions',
+			title: 'Regulatory regions (DNASE)',
+			yAxisLabel: 'z-score',
+			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+		},
 	];
 	var DLAT_CONCEPT_M = 'dlat.m';
 	var PDNA_CONCEPT_M = 'pdna.m';
@@ -184,13 +186,10 @@ angular.module('blueprintApp')
     $scope.analyses = [];
     $scope.experimentLabels = [];
     $scope.depth=null;
+    $scope.numHistones = 8;	// Default value
+    $scope.numCellularLines = 7;	// Default value
     $scope.histoneMap = {};
-    //$scope.bisulfiteSeq = [];
-    //$scope.rnaSeqG = [];
-    //$scope.rnaSeqT = [];
-    //$scope.chipSeq = [];
-    //$scope.dnaseSeq = [];
-    //$scope.treedata = null;
+    
     $scope.rangeQuery = [];
     $scope.ensemblGeneId = null;
     $scope.currentQuery = null;
@@ -640,6 +639,7 @@ angular.module('blueprintApp')
 						iHis++;
 					}
 				});
+				localScope.numHistones = histones.length;
 				localScope.histoneMap = histoneMap;
 				
 				deferred.resolve(localScope);
@@ -1157,11 +1157,14 @@ angular.module('blueprintApp')
 		chart.allData.forEach(function(series) {
 			if(doGenerate || !series.seriesDigestedValues) {
 				series.seriesDigestedValues = series.seriesGenerator(series.seriesValues);
+				series.series[series.seriesDest] = series.seriesDigestedValues;
 			}
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
-			if(('cell_type' in series) && series.cell_type.termHidden) {
+			if(chart.library!==LIBRARY_NVD3) {
+				series.series.visible = !('cell_type' in series) || !series.cell_type.termHidden;
+			} else if(('cell_type' in series) && series.cell_type.termHidden) {
 				series.series[series.seriesDest] = [];
 			} else {
 				series.series[series.seriesDest] = series.seriesDigestedValues;
@@ -1252,6 +1255,8 @@ angular.module('blueprintApp')
 		var total = 0;
 		//var totalPoints = 0;
 		localScope.searchButtonText = FETCHING_LABEL;
+		
+		var scrolled = false;
 		es.search({
 			size: 10000,
 			index: 'primary',
@@ -1333,6 +1338,18 @@ angular.module('blueprintApp')
 									var meanSeries;
 									
 									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CHARTJS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'data',
+												series: {
+													label: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
+													strokeColor: localScope.AVG_SERIES_COLORS[meanSeriesId].color
+												}
+											};
+											graph.options.data.datasets.push(meanSeries.series);
+											break;
 										case GRAPH_TYPE_STEP_CANVASJS:
 											meanSeries = {
 												seriesValues: meanSeriesValues,
@@ -1366,7 +1383,19 @@ angular.module('blueprintApp')
 												series: {
 													name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
 													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color,
-													step: true,
+													animation: false,
+													shadow: false,
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														animation: false,
+														shadow: false,
+													},
+													turboThreshold: 0,
+													step: 'left',
 												}
 											};
 											graph.options.series.push(meanSeries.series);
@@ -1403,6 +1432,18 @@ angular.module('blueprintApp')
 									cell_type.wasSeen = true;
 										
 									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CHARTJS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'data',
+												series: {
+													label: analysis.cell_type.name,
+													strokeColor: analysis.cell_type.color
+												}
+											};
+											graph.options.data.datasets.push(series.series);
+											break;
 										case GRAPH_TYPE_STEP_CANVASJS:
 											series = {
 												seriesValues: seriesValues,
@@ -1438,7 +1479,19 @@ angular.module('blueprintApp')
 												series: {
 													name: analysis.cell_type.name,
 													color: analysis.cell_type.color,
-													step: true,
+													animation: false,
+													shadow: false,
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														animation: false,
+														shadow: false,
+													},
+													turboThreshold: 0,
+													step: 'left',
 												}
 											};
 											graph.options.series.push(series.series);
@@ -1488,13 +1541,16 @@ angular.module('blueprintApp')
 					localScope.searchButtonText = "Loaded "+percent.toPrecision(2)+'%';
 					
 					//console.log("Hay "+total+' de '+resp.hits.total);
+					scrolled = true;
 					es.scroll({
 						index: 'primary',
 						scrollId: resp._scroll_id,
 						scroll: '30s'
 					}, getMoreChartDataUntilDone);
 				} else {
-					es.clearScroll({scrollId: resp._scroll_id});
+					if(scrolled) {
+						es.clearScroll({scrollId: resp._scroll_id});
+					}
 					
 					//console.log("Total: "+total+"; points: "+totalPoints);
 					
@@ -1603,6 +1659,7 @@ angular.module('blueprintApp')
 						y: numPooledDonors
 					}
 				);
+				localScope.numCellularLines = numCellularLines;
 				
 				if(numOther>0) {
 					subtotalsData.push({
@@ -2005,6 +2062,43 @@ angular.module('blueprintApp')
 							library: LIBRARY_NVD3,
 						};
 						break;
+					case GRAPH_TYPE_STEP_CHARTJS:
+						// Unfinished
+						chart = {
+							options: {
+								type: 'line',
+								options: {
+									responsive: true,
+									scales: {
+										xAxes: [
+											{
+												display: true
+											}
+										],
+										yAxes: [
+											{
+												display: true
+											}
+										]
+									}
+								},
+								title: {
+									text: gData.title,
+								},
+								toolTip: {
+									shared: true,
+								},
+								animationEnabled: true,
+								zoomEnabled: true,
+								exportEnabled: true,
+								data: {
+									datasets: []
+								}
+							},
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_CHARTJS,
+						};
+						break;
 					case GRAPH_TYPE_STEP_CANVASJS:
 						chart = {
 							options: {
@@ -2029,6 +2123,17 @@ angular.module('blueprintApp')
 								options: {
 									chart: {
 										type: 'boxplot',
+										events: {
+											// reflowing after load and redraw events led to blank drawings
+											addSeries: function() {
+												var chart = this;
+												//this.reflow();
+												$timeout(function() {
+													chart.reflow();
+												},0);
+											}
+										},
+										zoomType: 'x'
 									},
 									legend: {
 										enabled: false,
@@ -2050,13 +2155,13 @@ angular.module('blueprintApp')
 								},
 								series: [],
 								loading: false,
-								func: function(chart) {
-									// This is needed to reflow the chart
-									// to its final width
-									$timeout(function() {
-										chart.reflow();
-									},250);
-								},
+								//func: function(chart) {
+								//	// This is needed to reflow the chart
+								//	// to its final width
+								//	$timeout(function() {
+								//		chart.reflow();
+								//	},0);
+								//},
 							},
 							seriesAggregator: highchartsBoxPlotAggregator,
 							library: LIBRARY_HIGHCHARTS,
@@ -2068,6 +2173,16 @@ angular.module('blueprintApp')
 								options: {
 									chart: {
 										type: 'line',
+										events: {
+											// reflowing after load and redraw events led to blank drawings
+											addSeries: function() {
+												var chart = this;
+												//this.reflow();
+												$timeout(function() {
+													chart.reflow();
+												},0);
+											}
+										},
 										zoomType: 'x'
 									},
 									legend: {
@@ -2089,13 +2204,13 @@ angular.module('blueprintApp')
 								},
 								series: [],
 								loading: false,
-								func: function(chart) {
-									// This is needed to reflow the chart
-									// to its final width
-									$timeout(function() {
-										chart.reflow();
-									},250);
-								},
+								//func: function(chart) {
+								//	// This is needed to reflow the chart
+								//	// to its final width
+								//	$timeout(function() {
+								//		chart.reflow();
+								//	},0);
+								//},
 							},
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
@@ -2499,7 +2614,7 @@ angular.module('blueprintApp')
 									var meanSeries;
 									switch(analysis._type) {
 										case PDNA_CONCEPT_M:
-											var isNarrow = analysis.analysis_id.indexOf('_broad_')===-1;
+											var isNarrow = analysis.analysis_id.indexOf('_broad')===-1;
 											if(isNarrow) {
 												meanSeries = PDNA_NARROW_SERIES;
 											} else {
@@ -2824,6 +2939,10 @@ angular.module('blueprintApp')
 		});
 		
 		redrawCharts(rangeData.charts);
+	};
+	
+	$scope.getDataDesc = function() {
+		return $interpolate($scope.dataDesc)($scope);
 	};
 
 	function init($q) {

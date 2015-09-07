@@ -312,7 +312,7 @@
                 var nodeData = de.expData; 
                 
                 nodeData.forEach(function(v,i){
-			var theText = (!isNaN(v) && isFinite(v) && v !== -1)?(v==0?'0':(v<0.01?v.toExponential(1):v.toPrecision(2))):"--";
+			var theText = (!isNaN(v) && isFinite(v) && v !== -1)?(v==0?'0':(v<0.01?v.toExponential(1):v.toPrecision(3))):"--";
 			var theX = treew+sepFromTree-de.y-(svgMargin/2)+expDataWidth*i;
 
                     thisnode.append("svg:text")

@@ -383,12 +383,12 @@ angular.module('blueprintApp')
 				tooltip: {
 					contentGenerator: analysisPieTooltipGenerator,
 				},
-				legend: {
-					margin: {
-						left: 3,
-					},
-					//key: function(d) { console.log(d) },
-				},
+				//legend: {
+				//	margin: {
+				//		left: 3,
+				//	},
+				//	//key: function(d) { console.log(d) },
+				//},
 				transitionDuration: 500,
 				labelThreshold: 0.01,
 				valueFormat: d3.format('d')
@@ -501,12 +501,12 @@ angular.module('blueprintApp')
 				
 				var analysisSubtotals = [
 					{
-						key: 'Hyper-m regions',
+						key: 'Hyper-m',
 						desc: 'Hyper-methylated regions',
 						y: numDlatHyper
 					},
 					{
-						key: 'Hypo-m regions',
+						key: 'Hypo-m',
 						desc: 'Hypo-methylated regions',
 						y: numDlatHypo
 					},
@@ -537,7 +537,7 @@ angular.module('blueprintApp')
 						y: numExpG
 					},
 					{
-						key: 'Transcript exp',
+						key: 'Trans exp',
 						desc: 'Transcript expression',
 						y: numExpT
 					},

@@ -196,6 +196,7 @@ div.suggest-container:empty {
 	border-style: solid;
 	border-width: 1px;
 	border-radius: 1em;
+	padding: 1em;
 }
 
 span.circle , span.square {
@@ -214,7 +215,7 @@ tr.termItem {
 	vertical-align: top;
 }
 
-tr.termItem.pointer , i.glyphicon {
+.termItem.pointer , i.glyphicon {
 	cursor: pointer;
 	
 	-webkit-touch-callout: none;
@@ -224,7 +225,7 @@ tr.termItem.pointer , i.glyphicon {
 	-ms-user-select: none;
 	user-select: none;
 }
-	
+
 span.circle {
 	border-radius: 50%;
 	-moz-border-radius: 50%;
@@ -249,4 +250,18 @@ span.circle {
 	.datachart , .datachartContainer {
 		height: 350px !important;
 	}
+}
+
+div.termItem {
+	display: flex;
+	padding: 0px;
+}
+
+div.termItem .term {
+	flex-grow: 1;
+}
+
+div.termItem span.circle , div.termItem span.square {
+	flex-shrink: 0;
+	flex-basis: initial;
 }

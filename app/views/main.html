@@ -1,8 +1,8 @@
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
-            <div class="col-sm-3 text-center vertical-center" style="max-width: 350px;">
+            <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
 		    <nvd3 options="subtotals.options" data="subtotals.data"></nvd3>
             </div>
-            <div class="col-sm-6 text-center">
+            <div class="col-xs-12 col-sm-4 col-md-6 col-lg-8 text-center">
                 <h2>Explore the behaviour of your candidate genes, pathways or genome regions across the Blueprint datasets.</h2>
                 <p>The Blueprint project is providing in this release epigenomic analysis from {{samples.length}} samples to the scientific community. Their associated epigenomes are characterized by: gene and transcript expression (from RNA-Seq experiments), hyper and hypo methylated regions (derived from WGBS experiments), chromatin accessibility (DNAse-Seq), and {{numHistones}} Histone marks binding activity (ChIP-Seq)</p>
                 <p>Use this tool to explore the behaviour of your gene in the different cell types</p>
@@ -10,7 +10,7 @@
                 <a tooltip-placement="bottom" tooltip="{{getDataDesc()}}"><b>Data release - {{dataRelease}}</b></a>
                 </p>           
             </div>
-            <div class="col-sm-3 text-center vertical-center" style="max-width: 350px;">
+            <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
 		    <nvd3 options="analysisSubtotals.options" data="analysisSubtotals.data"></nvd3>
             </div>
 </div>
@@ -20,7 +20,7 @@
       <form class="form-horizontal" role="form">
         <div class="form-group form-group-lg">
 	<div class="col-sm-3 text-center">
-		<label>Tree options</label>
+		<label>Tree Stats options</label>
 		<div class="form-group">
 			<label class="checkbox-inline">
 				<input type="radio" name="display" ng-model="display" ng-disabled="queryInProgress" value="compact"> Compact
@@ -59,30 +59,28 @@
 		</div>
 		-->
 		<p class="text-center" ng-bind-html="found"></p>
-		<div class="col-md-2 col-lg-1 terms-selector">
-			<table style="width:100%;">
-				<tr class="termItem" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES">
-					<td><span class="square" style="border-color: {{meanSeriesDesc.color}} ; background-color: {{ meanSeriesDesc.color}};"></span></td>
-					<td class="term" style="color: initial;">{{meanSeriesDesc.name}}</td>
-				</tr>
-				<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
-				<tr class="termItem pointer" ng-click="hideAllSeries(rangeData)">
-					<td><span class="circle" style="border-color: #202020 ; background-color: white;"></span></td>
-					<td class="term">Hide all cell types</td>
-				</tr>
-				<tr class="termItem pointer" ng-click="showAllSeries(rangeData)">
-					<td><span class="circle" style="border-color: #202020 ; background-color: #202020;"></span></td>
-					<td class="term">Show all cell types</td>
-				</tr>
-				<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
-				<tr class="termItem pointer" ng-repeat="termNode in rangeData.termNodes" ng-if="termNode.wasSeen" ng-click="switchTermNode($event,termNode,$parent.rangeData)" tooltip-html="$parent.$parent.termTooltip" tooltip-popup-delay="500">
-					<td><span class="circle" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span></td>
-					<td class="term" style="color: {{ termNode.termHidden ? 'gray' : 'initial'}};">{{termNode.name}}</td>
-				</tr>
-			</table>
+		<div class="col-xs-12 col-sm-2 col-lg-1 terms-selector">
+				<div class="col-xs-1 col-sm-12 termItem" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES">
+					<span class="square" style="border-color: {{meanSeriesDesc.color}} ; background-color: {{ meanSeriesDesc.color}};"></span>
+					<span class="term" style="color: initial;">{{meanSeriesDesc.name}}</span>
+				</div>
+				<div class="col-xs-1 col-sm-12">&nbsp;</div>
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData)">
+					<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
+					<span class="term">Hide all cell types</span>
+				</div>
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllSeries(rangeData)">
+					<span class="circle" style="border-color: #202020 ; background-color: #202020;"></span>
+					<span class="term">Show all cell types</span>
+				</div>
+				<div class="col-xs-1 col-sm-12">&nbsp;</div>
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.termNodes" ng-click="switchTermNode($event,termNode,$parent.rangeData)" ng-if="termNode.wasSeen" tooltip-html="$parent.$parent.termTooltip" tooltip-popup-delay="500">
+					<span class="circle" style="border-color: {{termNode.color}} ; background-color: {{ termNode.termHidden ? 'white' : termNode.color}};"></span>
+					<span class="term" style="color: {{ termNode.termHidden ? 'gray' : 'initial'}};">{{termNode.name}}</span>
+				</div>
 		</div>
 		
-		<div class="col-md-10 col-lg-11 text-center vertical-center" ng-if="rangeData.charts.length &gt; 0">
+		<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center" ng-if="rangeData.charts.length &gt; 0">
 			<div class="row" style="width:100%">
 				<div class="col-md-12 col-lg-6" ng-repeat="chart in rangeData.charts">
 					<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
@@ -125,8 +123,9 @@
 			-->
 		</div>
 		
-		<div ng-repeat="ontology in rangeData.treedata" class="col-sm-12">
+		<div ng-repeat="ontology in rangeData.treedata" class="row">
 			<d3-tree data="ontology" label="name" style="display"></d3-tree>      
 		</div>
 	</tab>
 </tabset>
+</div>

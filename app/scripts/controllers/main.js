@@ -1083,7 +1083,14 @@ angular.module('blueprintApp')
 				// The "wishkers"
 				var IQR = Q3 - Q1;
 				Wl = Q1 - 1.5 * IQR;
+				// Setting the wishkers properly
+				if(Wl<samp.series[0]) {
+					Wl = samp.series[0];
+				}
 				Wh = Q3 + 1.5 * IQR;
+				if(Wh>samp.series[lastPos]) {
+					Wh = samp.series[lastPos];
+				}
 				
 				// And last, the outliers
 				samp.series.forEach(function(d) {

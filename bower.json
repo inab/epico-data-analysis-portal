@@ -21,11 +21,15 @@
     "bower-canvasjs": "inab/bower-canvasjs#~1.7.0",
     "highcharts-release": "~4.1.8",
     "highcharts-ng": "~0.0.10",
+    "highcharts-export-csv": "highslide-software/export-csv#7baa0e1e6ec3a4852379e82e17adbb9a39e5efc4",
     "roboto-fontface": "~0.4.3"
   },
   "overrides": {
     "elasticsearch": {
       "main": "elasticsearch.angular.js"
+    },
+    "highcharts-export-csv": {
+      "main": "export-csv.js"
     }
   },
   "devDependencies": {

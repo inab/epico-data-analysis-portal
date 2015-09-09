@@ -80,7 +80,7 @@
 				</div>
 		</div>
 		
-		<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center" ng-if="rangeData.charts.length &gt; 0">
+		<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
 			<div class="row" style="width:100%">
 				<div class="col-md-12 col-lg-6" ng-repeat="chart in rangeData.charts">
 					<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>

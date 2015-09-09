@@ -58,6 +58,7 @@ angular.module('blueprintApp')
 			name: EXP_G_GRAPH,
 			noData: 'gene expression data',
 			title: 'Gene Expression',
+			floor: 0.0,
 			yAxisLabel: 'FPKM',
 			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 		},
@@ -65,6 +66,7 @@ angular.module('blueprintApp')
 			name: EXP_T_GRAPH,
 			noData: 'transcript expression data',
 			title: 'Transcript Expression',
+			floor: 0.0,
 			yAxisLabel: 'FPKM',
 			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 		},
@@ -72,14 +74,16 @@ angular.module('blueprintApp')
 			name: CSEQ_NARROW_GRAPH,
 			noData: 'narrow histone peaks',
 			title: 'Narrow Histone Peaks',
-			yAxisLabel: 'Log10(q-value)',
+			floor: 0.0,
+			yAxisLabel: '-Log10(q-value)',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},
 		{
 			name: CSEQ_BROAD_GRAPH,
 			noData: 'broad histone peaks',
 			title: 'Broad Histone Peaks',
-			yAxisLabel: 'Log10(q-value)',
+			floor: 0.0,
+			yAxisLabel: '-Log10(q-value)',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},
 		{
@@ -155,6 +159,13 @@ angular.module('blueprintApp')
 	});
 	
 	var CHR_SEGMENT_LIMIT = 2500000;	// A bit larger than largest gene
+	
+	var REGION_FEATURE_GENE = 'gene';
+	var REGION_FEATURE_TRANSCRIPT = 'transcript';
+	var REGION_FEATURES = [REGION_FEATURE_GENE , REGION_FEATURE_TRANSCRIPT];
+	var REGION_FEATURES_COLORS = {};
+	REGION_FEATURES_COLORS[REGION_FEATURE_GENE] = '#ffffcc';
+	REGION_FEATURES_COLORS[REGION_FEATURE_TRANSCRIPT] = 'orange';
 
     var pageNum = 1;
     var perPage = 50;
@@ -662,56 +673,68 @@ angular.module('blueprintApp')
 		
 		return deferred.promise;
 	};
-    
-	var genShouldQuery = function(rangeQueryArr) {
+     
+	var genShouldQuery = function(rangeQueryArr,prefix) {
 		// We transform it into an array, in case it is not yet
 		if(!Array.isArray(rangeQueryArr)) {
 			rangeQueryArr = [ rangeQueryArr ];
 		}
+		var chromosome_name = 'chromosome';
+		var chromosome_start_name = 'chromosome_start';
+		var chromosome_end_name = 'chromosome_end';
+		if(prefix!==undefined) {
+			chromosome_name = prefix + '.' + chromosome_name;
+			chromosome_start_name = prefix + '.' + chromosome_start_name;
+			chromosome_end_name = prefix + '.' + chromosome_end_name;
+		}
 		var shouldQuery = rangeQueryArr.map(function(q) {
+			var termQuery = {};
+			termQuery[chromosome_name] = q.chr;
+			
+			var commonRange = {
+				gte: q.start,
+				lte: q.end
+			};
+			
+			var chromosome_start_range = {};
+			chromosome_start_range[chromosome_start_name] = commonRange;
+			
+			var chromosome_end_range = {};
+			chromosome_end_range[chromosome_end_name] = commonRange;
+			
+			var chromosome_start_lte_range = {};
+			chromosome_start_lte_range[chromosome_start_name] = {
+				lte: q.end
+			};
+			
+			var chromosome_end_gte_range = {};
+			chromosome_end_gte_range[chromosome_end_name] = {
+				gte: q.start
+			};
+			
 			return {
 				bool: {
 					must: [
 						{
-							term: {
-								chromosome: q.chr
-							}
+							term: termQuery
 						},
 						{
 							bool: {
 								should: [
 									{
-										range: {
-											chromosome_start: {
-												gte: q.start,
-												lte: q.end
-											}
-										}
+										range: chromosome_start_range
 									},
 									{
-										range: {
-											chromosome_end: {
-												gte: q.start,
-												lte: q.end
-											}
-										}
+										range: chromosome_end_range
 									},
 									{
 										bool: {
 											must: [
 												{
-													range: {
-														chromosome_start: {
-															lte: q.end
-														}
-													}
+													range: chromosome_start_lte_range
 												},
 												{
-													range: {
-														chromosome_end: {
-															gte: q.start
-														}
-													}
+													range: chromosome_end_gte_range
 												}
 											]
 										}
@@ -723,6 +746,20 @@ angular.module('blueprintApp')
 				}
 			};
 		});
+		
+		// Preparing for the nested query
+		if(prefix!==undefined) {
+			shouldQuery = {
+				nested: {
+					path: prefix,
+					filter: {
+						bool: {
+							should: shouldQuery
+						}
+					}
+				}
+			};
+		}
 		
 		return shouldQuery;
 	};
@@ -1083,11 +1120,11 @@ angular.module('blueprintApp')
 				// The "wishkers"
 				var IQR = Q3 - Q1;
 				Wl = Q1 - 1.5 * IQR;
+				Wh = Q3 + 1.5 * IQR;
 				// Setting the wishkers properly
 				if(Wl<samp.series[0]) {
 					Wl = samp.series[0];
 				}
-				Wh = Q3 + 1.5 * IQR;
 				if(Wh>samp.series[lastPos]) {
 					Wh = samp.series[lastPos];
 				}
@@ -1185,7 +1222,9 @@ angular.module('blueprintApp')
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
-			chart.options.series[iSeries].visible = !('cell_type' in series) || !series.cell_type.termHidden;
+			var visibilityState = !('cell_type' in series) || !series.cell_type.termHidden;
+			chart.options.series[iSeries].visible = visibilityState;
+			chart.options.series[iSeries].showInLegend = visibilityState;
 		});
 	}
 	
@@ -1199,7 +1238,9 @@ angular.module('blueprintApp')
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
 			if(chart.library!==LIBRARY_NVD3) {
-				series.series.visible = !('cell_type' in series) || !series.cell_type.termHidden;
+				var visibilityState = !('cell_type' in series) || !series.cell_type.termHidden;
+				series.series.visible = visibilityState;
+				series.series.showInLegend = visibilityState;
 			} else if(('cell_type' in series) && series.cell_type.termHidden) {
 				series.series[series.seriesDest] = [];
 			} else {
@@ -1285,9 +1326,367 @@ angular.module('blueprintApp')
 		});
 	}
 	
+	var getGeneLayout = function(localScope,rangeData) {
+		var deferred = $q.defer();
+		var nestedShouldQuery = genShouldQuery(rangeData.range,'coordinates');
+		
+		localScope.searchButtonText = FETCHING_LABEL;
+		es.search({
+			size: 10000,
+			index: 'external',
+			type: 'external.features',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								must: [
+									{
+										terms: {
+											feature: REGION_FEATURES
+										},
+									},
+									nestedShouldQuery,
+								]
+							}
+						}
+					}
+				},
+			}
+		}, function(err, resp) {
+			if(err) {
+				deferred.reject(err);
+			} else if(resp.hits!==undefined) {
+				// Now, we have the region layout
+				rangeData.regionLayout = {};
+				resp.hits.hits.forEach(function(feature) {
+					var dest = feature._source.feature;
+					if(!(dest in rangeData.regionLayout)) {
+						rangeData.regionLayout[dest] = [];
+					}
+					
+					// Saving for later processing
+					rangeData.regionLayout[dest].push(feature._source);
+				});
+				
+				var range = rangeData.range;
+				var rangeStr = range.chr+":"+range.start+"-"+range.end;
+				
+				var HighchartsCommonExportingOptions = {
+					scale: 1,
+					sourceWidth: Math.round(2*2.57*297), // This is needed due a bug with floating coordinates in export server
+					sourceHeight: Math.round(2*2.57*209.9), // This is needed due a bug with floating coordinates in export server
+					chartOptions: {
+						legend: {
+							enabled: true,
+							//itemDistance: 1,
+							//symbolWidth: 4,
+							itemStyle: {
+							//	fontSize: '1.5mm',
+								fontWeight: 'normal'
+							}
+						},
+						// To render a watermark
+						//chart: {
+						//	events: {
+						//		load: function() {
+						//			this.renderer.image('http://highsoft.com/images/media/Highsoft-Solutions-143px.png', 80, 40, 143, 57);
+						//		}
+						//	}
+						//}
+					}
+				};
+				
+				// So, we can prepare the charts
+				GRAPHS.forEach(function(gData) {
+					var chart;
+					
+					switch(gData.type) {
+						case GRAPH_TYPE_STEP_NVD3:
+							chart = {
+								options: {
+									chart: {
+										type: 'lineChart',
+										x: getXG,
+										y: getYG,
+										useInteractiveGuideline: true,
+										interpolate: 'step',
+										noData: "Fetching "+gData.noData+" from "+rangeStr,
+										showLegend: false,
+										transitionDuration: 0,
+										xAxis: {
+											axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+										},
+										yAxis: {
+											axisLabel: gData.yAxisLabel,
+											tickFormat: d3.format('.3g')
+										}
+									},
+									title: {
+										text: gData.title
+									},
+								},
+								data: [],
+								seriesAggregator: defaultSeriesAggregator,
+								library: LIBRARY_NVD3,
+							};
+							break;
+						case GRAPH_TYPE_STEP_CHARTJS:
+							// Unfinished
+							chart = {
+								options: {
+									type: 'line',
+									options: {
+										responsive: true,
+										scales: {
+											xAxes: [
+												{
+													display: true
+												}
+											],
+											yAxes: [
+												{
+													display: true
+												}
+											]
+										}
+									},
+									title: {
+										text: gData.title,
+									},
+									toolTip: {
+										shared: true,
+									},
+									animationEnabled: true,
+									zoomEnabled: true,
+									exportEnabled: true,
+									data: {
+										datasets: []
+									}
+								},
+								seriesAggregator: defaultSeriesAggregator,
+								library: LIBRARY_CHARTJS,
+							};
+							break;
+						case GRAPH_TYPE_STEP_CANVASJS:
+							chart = {
+								options: {
+									title: {
+										text: gData.title,
+									},
+									toolTip: {
+										shared: true,
+									},
+									animationEnabled: true,
+									zoomEnabled: true,
+									exportEnabled: true,
+									data: []
+								},
+								seriesAggregator: defaultSeriesAggregator,
+								library: LIBRARY_CANVASJS,
+							};
+							break;
+						case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+							chart = {
+								options: {
+									options: {
+										chart: {
+											type: 'boxplot',
+											events: {
+												// reflowing after load and redraw events led to blank drawings
+												addSeries: function() {
+													var chart = this;
+													//this.reflow();
+													$timeout(function() {
+														chart.reflow();
+													},0);
+												}
+											},
+											zoomType: 'x'
+										},
+										legend: {
+											enabled: false,
+										},
+										exporting: HighchartsCommonExportingOptions,
+									},
+									title: {
+										text: gData.title
+									},
+									xAxis: {
+										title: {
+											text: 'Ensembl Ids (at '+rangeStr+')'
+										},
+										categories: []
+									},
+									yAxis: {
+										title: {
+											text: gData.yAxisLabel
+										}
+									},
+									series: [],
+									loading: false,
+									//func: function(chart) {
+									//	// This is needed to reflow the chart
+									//	// to its final width
+									//	$timeout(function() {
+									//		chart.reflow();
+									//	},0);
+									//},
+								},
+								seriesAggregator: highchartsBoxPlotAggregator,
+								library: LIBRARY_HIGHCHARTS,
+							};
+							
+							// Setting the floor and ceiling when available
+							if(gData.floor!==undefined) {
+								chart.options.yAxis.floor = gData.floor;
+							}
+							
+							if(gData.ceiling!==undefined) {
+								chart.options.yAxis.ceiling = gData.ceiling;
+							}
+							break;
+						case GRAPH_TYPE_STEP_HIGHCHARTS:
+							var plotBands = [];
+							chart = {
+								options: {
+									options: {
+										chart: {
+											type: 'line',
+											events: {
+												// reflowing after load and redraw events led to blank drawings
+												addSeries: function() {
+													var chart = this;
+													//this.reflow();
+													$timeout(function() {
+														chart.reflow();
+													},0);
+												}
+											},
+											zoomType: 'x'
+										},
+										legend: {
+											enabled: false,
+										},
+										exporting: HighchartsCommonExportingOptions,
+									},
+									title: {
+										text: gData.title
+									},
+									xAxis: {
+										title: {
+											text: 'Coordinates (at '+rangeStr+')'
+										},
+										min: range.start,
+										max: range.end,
+										allowDecimals: false,
+										plotBands: plotBands
+									},
+									yAxis: {
+										title: {
+											text: gData.yAxisLabel
+										}
+									},
+									series: [],
+									loading: false,
+									//func: function(chart) {
+									//	// This is needed to reflow the chart
+									//	// to its final width
+									//	$timeout(function() {
+									//		chart.reflow();
+									//	},0);
+									//},
+								},
+								seriesAggregator: defaultSeriesAggregator,
+								library: LIBRARY_HIGHCHARTS,
+							};
+							
+							// Setting the floor and ceiling when available
+							if(gData.floor!==undefined) {
+								chart.options.yAxis.floor = gData.floor;
+							}
+							
+							if(gData.ceiling!==undefined) {
+								chart.options.yAxis.ceiling = gData.ceiling;
+							}
+							
+							// Adding the gene and transcript regions
+							//REGION_FEATURES.forEach(function(featureType) {
+							//	var featureColor = REGION_FEATURES_COLORS[featureType];
+							//	rangeData.regionLayout[featureType].forEach(function(featureRegion) {
+							//		var featureLabel;
+							//		
+							//		featureRegion.symbol.some(function(symbol) {
+							//			if(symbol.indexOf('ENSG')!==0 && symbol.indexOf('ENST')!==0 && symbol.indexOf('HGNC:')!==0) {
+							//				featureLabel = symbol;
+							//				return true;
+							//			}
+							//			return false;
+							//		});
+							//		
+							//		// Default case
+							//		if(featureLabel===undefined) {
+							//			featureLabel = featureRegion.symbol[0];
+							//		}
+							//		
+							//		featureRegion.coordinates.forEach(function(coords) {
+							//			var plotBand = {
+							//				borderColor: {
+							//					linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+							//					stops: [
+							//						[0, featureColor],
+							//						[1, '#000000']
+							//					]
+							//				},
+							//				borderWidth: 1,
+							//				from: coords.chromosome_start,
+							//				to: coords.chromosome_end,
+							//			};
+							//			plotBands.push(plotBand);
+							//			
+							//			switch(featureType) {
+							//				case REGION_FEATURE_GENE:
+							//					plotBand.label = {
+							//						text: featureLabel,
+							//						fontSize: '8px',
+							//						rotation: 330
+							//					};
+							//					break;
+							//			}
+							//		});
+							//	});
+							//});
+							break;
+					}
+					
+					
+					// Common attributes
+					chart.type = gData.type;
+					chart.allData = [];
+					chart.bpSideData = {
+						sampleToIndex: {},
+					};
+					chart.title = gData.title;
+
+					rangeData.charts.push(chart);
+					rangeData[gData.name] = chart;
+				});
+				
+				deferred.resolve(localScope);
+			} else {
+				deferred.reject(err);
+			}
+		});
+		
+		return deferred.promise;
+	};
+	
 	var getChartData = function(localScope,rangeData) {
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData.range);
+		var range_start = rangeData.range.start;
+		var range_end = rangeData.range.end;
+		
 		var total = 0;
 		//var totalPoints = 0;
 		localScope.searchButtonText = FETCHING_LABEL;
@@ -1405,6 +1804,7 @@ angular.module('blueprintApp')
 												seriesGenerator: genBoxPlotSeries,
 												seriesDest: 'data',
 												series: {
+													animation: false,
 													name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
 													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
 												}
@@ -1500,6 +1900,7 @@ angular.module('blueprintApp')
 												seriesDest: 'data',
 												cell_type: cell_type,
 												series: {
+													animation: false,
 													name: analysis.cell_type.name,
 													color: analysis.cell_type.color
 												}
@@ -1551,7 +1952,18 @@ angular.module('blueprintApp')
 									graph.allData.push(series);
 								}
 								
-								var sDataS = [segment._source.chromosome_start,segment._source.chromosome_end,value,payload];
+								// Clipping to the viewed region
+								var chromosome_start = segment._source.chromosome_start;
+								var chromosome_end = segment._source.chromosome_end;
+								
+								if(chromosome_start < range_start) {
+									chromosome_start = range_start;
+								}
+								if(chromosome_end > range_end) {
+									chromosome_end = range_end;
+								}
+								
+								var sDataS = [chromosome_start,chromosome_end,value,payload];
 								meanSeriesValues.push(sDataS);
 								seriesValues.push(sDataS);
 							}
@@ -2064,206 +2476,6 @@ angular.module('blueprintApp')
 				},
 				gChro: localScope.unknownChromosome,
 			};
-			GRAPHS.forEach(function(gData) {
-				var chart;
-				
-				switch(gData.type) {
-					case GRAPH_TYPE_STEP_NVD3:
-						chart = {
-							options: {
-								chart: {
-									type: 'lineChart',
-									x: getXG,
-									y: getYG,
-									useInteractiveGuideline: true,
-									interpolate: 'step',
-									noData: "Fetching "+gData.noData+" from "+rangeStr,
-									showLegend: false,
-									transitionDuration: 0,
-									xAxis: {
-										axisLabel: 'Coordinates (at chromosome '+range.chr+')'
-									},
-									yAxis: {
-										axisLabel: gData.yAxisLabel,
-										tickFormat: d3.format('.3g')
-									}
-								},
-								title: {
-									text: gData.title
-								},
-							},
-							data: [],
-							seriesAggregator: defaultSeriesAggregator,
-							library: LIBRARY_NVD3,
-						};
-						break;
-					case GRAPH_TYPE_STEP_CHARTJS:
-						// Unfinished
-						chart = {
-							options: {
-								type: 'line',
-								options: {
-									responsive: true,
-									scales: {
-										xAxes: [
-											{
-												display: true
-											}
-										],
-										yAxes: [
-											{
-												display: true
-											}
-										]
-									}
-								},
-								title: {
-									text: gData.title,
-								},
-								toolTip: {
-									shared: true,
-								},
-								animationEnabled: true,
-								zoomEnabled: true,
-								exportEnabled: true,
-								data: {
-									datasets: []
-								}
-							},
-							seriesAggregator: defaultSeriesAggregator,
-							library: LIBRARY_CHARTJS,
-						};
-						break;
-					case GRAPH_TYPE_STEP_CANVASJS:
-						chart = {
-							options: {
-								title: {
-									text: gData.title,
-								},
-								toolTip: {
-									shared: true,
-								},
-								animationEnabled: true,
-								zoomEnabled: true,
-								exportEnabled: true,
-								data: []
-							},
-							seriesAggregator: defaultSeriesAggregator,
-							library: LIBRARY_CANVASJS,
-						};
-						break;
-					case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-						chart = {
-							options: {
-								options: {
-									chart: {
-										type: 'boxplot',
-										events: {
-											// reflowing after load and redraw events led to blank drawings
-											addSeries: function() {
-												var chart = this;
-												//this.reflow();
-												$timeout(function() {
-													chart.reflow();
-												},0);
-											}
-										},
-										zoomType: 'x'
-									},
-									legend: {
-										enabled: false,
-									},
-								},
-								title: {
-									text: gData.title
-								},
-								xAxis: {
-									title: {
-										text: 'Ensembl Ids'
-									},
-									categories: []
-								},
-								yAxis: {
-									title: {
-										text: gData.yAxisLabel
-									}
-								},
-								series: [],
-								loading: false,
-								//func: function(chart) {
-								//	// This is needed to reflow the chart
-								//	// to its final width
-								//	$timeout(function() {
-								//		chart.reflow();
-								//	},0);
-								//},
-							},
-							seriesAggregator: highchartsBoxPlotAggregator,
-							library: LIBRARY_HIGHCHARTS,
-						};
-						break;
-					case GRAPH_TYPE_STEP_HIGHCHARTS:
-						chart = {
-							options: {
-								options: {
-									chart: {
-										type: 'line',
-										events: {
-											// reflowing after load and redraw events led to blank drawings
-											addSeries: function() {
-												var chart = this;
-												//this.reflow();
-												$timeout(function() {
-													chart.reflow();
-												},0);
-											}
-										},
-										zoomType: 'x'
-									},
-									legend: {
-										enabled: false,
-									},
-								},
-								title: {
-									text: gData.title
-								},
-								xAxis: {
-									title: {
-										text: 'Coordinates (at chromosome '+range.chr+')'
-									},
-								},
-								yAxis: {
-									title: {
-										text: gData.yAxisLabel
-									}
-								},
-								series: [],
-								loading: false,
-								//func: function(chart) {
-								//	// This is needed to reflow the chart
-								//	// to its final width
-								//	$timeout(function() {
-								//		chart.reflow();
-								//	},0);
-								//},
-							},
-							seriesAggregator: defaultSeriesAggregator,
-							library: LIBRARY_HIGHCHARTS,
-						};
-						break;
-				}
-				
-				// Common attributes
-				chart.type = gData.type;
-				chart.allData = [];
-				chart.bpSideData = {
-					sampleToIndex: {},
-				};
-				chart.title = gData.title;
-
-				rangeData.charts.push(chart);
-				rangeData[gData.name] = chart;
-			});
 			
 			localScope.chromosomes.some(function(d){
 				if(d.n == range.chr) {
@@ -2793,6 +3005,7 @@ angular.module('blueprintApp')
 			var deferred = $q.defer();
 			var promise = deferred.promise;
 			promise = promise.then(preprocessQuery)
+				.then(launch(getGeneLayout))
 				.then(launch(getChartData))
 				// Either the browser or the server gets too stressed with this concurrent query
 				//.then($q.all([launch(getWgbsData),launch(getRnaSeqGData),launch(getRnaSeqTData),launch(getChipSeqData),launch(getDnaseData)]))

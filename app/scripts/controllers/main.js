@@ -1790,7 +1790,7 @@ angular.module('blueprintApp')
 		es.search({
 			size: 10000,
 			index: 'primary',
-			scroll: '30s',
+			scroll: '60s',
 			body: {
 				query: {
 					filtered: {
@@ -2083,7 +2083,7 @@ angular.module('blueprintApp')
 					es.scroll({
 						index: 'primary',
 						scrollId: resp._scroll_id,
-						scroll: '30s'
+						scroll: '60s'
 					}, getMoreChartDataUntilDone);
 				} else {
 					if(scrolled) {

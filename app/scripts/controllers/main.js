@@ -10,7 +10,7 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3','$timeout','$interpolate',function($scope,$sce,$location,$q, es, portalConfig, d3, $timeout,$interpolate) {
+  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3','$timeout','$modal','$interpolate',function($scope,$sce,$location,$q, es, portalConfig, d3, $timeout,$modal,$interpolate) {
 	
 	var SEARCHING_LABEL = "Searching...";
 	var FETCHING_LABEL = "Fetching...";
@@ -44,6 +44,7 @@ angular.module('blueprintApp')
 			name: METHYL_HYPER_GRAPH,
 			noData: 'hyper-methylated regions',
 			title: 'Hyper-methylated regions',
+			floor: 0.0,
 			yAxisLabel: 'Methylation level',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},
@@ -51,6 +52,7 @@ angular.module('blueprintApp')
 			name: METHYL_HYPO_GRAPH,
 			noData: 'hypo-methylated regions',
 			title: 'Hypo-methylated regions',
+			floor: 0.0,
 			yAxisLabel: 'Methylation level',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},
@@ -89,7 +91,7 @@ angular.module('blueprintApp')
 		{
 			name: DNASE_GRAPH,
 			noData: 'regulatory regions',
-			title: 'Regulatory regions (DNASE)',
+			title: 'Regulatory regions (DNAse)',
 			yAxisLabel: 'z-score',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},
@@ -241,9 +243,35 @@ angular.module('blueprintApp')
                   ];
 
 	$scope.unknownChromosome = { n: "(unknown)", f: "images/chr.svg" };
-
-    $scope.results = null;
-    
+	
+	$scope.doRefresh = function() {
+		setTimeout(function() {
+			$scope.$broadcast('highchartsng.reflow');
+		},10);
+		
+		return '';
+	};
+	
+	function openModal(state,message,callback,size) {
+		var modalInstance = $modal.open({
+			animation: false,
+			templateUrl: 'messages.html',
+			controller: 'ModalInstanceCtrl',
+			//bindToController: true,
+			size: size,
+			resolve: {
+				modalState: function() { return state; },
+				modalMessage: function() { return message; },
+			}
+		});
+		
+		modalInstance.result.then(callback);
+		//    }, function () {
+		//      $log.info('Modal dismissed at: ' + new Date());
+		//    });
+		
+	}
+	
 	function getXG(d) {
 		return d.x;
 	}
@@ -767,26 +795,32 @@ angular.module('blueprintApp')
 	var launch = function() {
 		var theArgs = arguments;
 		return function(localScope) {
-			if(Array.isArray(localScope)) {
-				localScope = localScope[0];
-			}
-			
-			var queries = [];
-			
-			for(var t=0;t<theArgs.length;t++) {
-				var theFunc = theArgs[t];
-				localScope.graphData.forEach(function(rangeData) {
-					//try {
-						queries.push(theFunc(localScope,rangeData));
-					//} catch(e) {
-					//	console.log("Mira");
-					//	console.log(e);
-					//}
-				});
-			}
-			
-			if(queries.length > 0) {
-				return queries.length===1 ? queries[0] : $q.all(queries);
+			if(localScope!==undefined) {
+				if(Array.isArray(localScope)) {
+					localScope = localScope[0];
+				}
+				
+				var queries = [];
+				
+				for(var t=0;t<theArgs.length;t++) {
+					var theFunc = theArgs[t];
+					localScope.graphData.forEach(function(rangeData) {
+						//try {
+							queries.push(theFunc(localScope,rangeData));
+						//} catch(e) {
+						//	console.log("Mira");
+						//	console.log(e);
+						//}
+					});
+				}
+				
+				if(queries.length > 0) {
+					return queries.length===1 ? queries[0] : $q.all(queries);
+				} else {
+					return undefined;
+				}
+			} else {
+				return undefined;
 			}
 		};
 	};
@@ -1173,7 +1207,7 @@ angular.module('blueprintApp')
 		return boxplots;
 	}
 	
-	function highchartsBoxPlotAggregator(chart,doGenerate) {
+	function highchartsBoxPlotAggregator(chart,doGenerate,stillLoading) {
 		if(doGenerate || !chart.boxPlotCategories) {
 			var allEnsIds = [];
 			var allEnsIdsHash = {};
@@ -1198,7 +1232,13 @@ angular.module('blueprintApp')
 			
 			var categories = [];
 			allEnsIds.forEach(function(ensIdObj,x) {
-				categories.push(ensIdObj.label);
+				var label = ensIdObj.label;
+				
+				if(label in chart.regionFeature) {
+					label = chart.regionFeature[label].label + ' ('+label+')';
+				}
+				
+				categories.push(label);
 				ensIdObj.x = x;
 			});
 			
@@ -1210,7 +1250,8 @@ angular.module('blueprintApp')
 		
 		// Now, second pass!!
 		chart.allData.forEach(function(series,iSeries) {
-			if(doGenerate || !series.seriesDigestedValues) {
+			var reDigest = !stillLoading || !('cell_type' in series);
+			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
 				var preparedValues = new Array(chart.options.xAxis.categories.length);
 				
 				series.seriesPreDigestedValues.forEach(function(boxplot) {
@@ -1222,31 +1263,33 @@ angular.module('blueprintApp')
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
-			var visibilityState = !('cell_type' in series) || !series.cell_type.termHidden;
+			var visibilityState = !('cell_type' in series) || (!stillLoading && !series.cell_type.termHidden);
 			chart.options.series[iSeries].visible = visibilityState;
 			chart.options.series[iSeries].showInLegend = visibilityState;
 		});
 	}
 	
-	function defaultSeriesAggregator(chart,doGenerate) {
+	function defaultSeriesAggregator(chart,doGenerate,stillLoading) {
 		chart.allData.forEach(function(series) {
-			if(doGenerate || !series.seriesDigestedValues) {
+			var reDigest = !stillLoading || !('cell_type' in series);
+			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
 				series.seriesDigestedValues = series.seriesGenerator(series.seriesValues);
 				series.series[series.seriesDest] = series.seriesDigestedValues;
 			}
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
+			var visibilityState = !('cell_type' in series) || (!stillLoading && !series.cell_type.termHidden);
 			if(chart.library!==LIBRARY_NVD3) {
-				var visibilityState = !('cell_type' in series) || !series.cell_type.termHidden;
 				series.series.visible = visibilityState;
 				series.series.showInLegend = visibilityState;
-			} else if(('cell_type' in series) && series.cell_type.termHidden) {
+			} else if(visibilityState) {
 				series.series[series.seriesDest] = [];
 			} else {
 				series.series[series.seriesDest] = series.seriesDigestedValues;
 			}
 		});
+		
 	}
 	
 	function dataSeriesComparator(a,b) {
@@ -1320,9 +1363,18 @@ angular.module('blueprintApp')
 		});
 	}
 	
-	function redrawCharts(charts,doGenerate) {
+	function redrawCharts(charts,doGenerate,stillLoading) {
+		// Normalizing stillLoading to a boolean
+		stillLoading = !!stillLoading;
 		charts.forEach(function(chart) {
-			chart.seriesAggregator(chart,doGenerate);
+			setTimeout(function() {
+				try {
+					chart.seriesAggregator(chart,doGenerate,stillLoading);
+					chart.options.loading = stillLoading;
+				} catch(e) {
+					console.log(e);
+				}
+			},0);
 		});
 	}
 	
@@ -1357,20 +1409,59 @@ angular.module('blueprintApp')
 			if(err) {
 				deferred.reject(err);
 			} else if(resp.hits!==undefined) {
-				// Now, we have the region layout
+				var range = rangeData.range;
+				var rangeStr = range.chr+":"+range.start+"-"+range.end;
+				
+				// Now, we have the region layout and features
 				rangeData.regionLayout = {};
+				var regionFeature = {};
+				var found = '';
 				resp.hits.hits.forEach(function(feature) {
-					var dest = feature._source.feature;
+					var featureRegion = feature._source;
+					var dest = featureRegion.feature;
 					if(!(dest in rangeData.regionLayout)) {
 						rangeData.regionLayout[dest] = [];
 					}
 					
 					// Saving for later processing
-					rangeData.regionLayout[dest].push(feature._source);
+					rangeData.regionLayout[dest].push(featureRegion);
+					
+					// Getting a understandable label
+					var featureLabel;
+					
+					featureRegion.symbol.some(function(symbol) {
+						if(symbol.indexOf('ENSG')!==0 && symbol.indexOf('ENST')!==0 && symbol.indexOf('HGNC:')!==0) {
+							featureLabel = symbol;
+							return true;
+						}
+						return false;
+					});
+					
+					// Default case for the label
+					if(featureLabel===undefined) {
+						featureLabel = featureRegion.symbol[0];
+					}
+					
+					featureRegion.label = featureLabel;
+					
+					var uri = (dest in SEARCH_URIS) ? SEARCH_URIS[dest] : DEFAULT_SEARCH_URI;
+					// Matching the feature_id to its region
+					featureRegion.coordinates.forEach(function(coordinates) {
+						regionFeature[coordinates.feature_id] = featureRegion;
+						
+						// Preparing the label
+						if(found.length > 0) {
+							found += ', ';
+						}
+						found += dest+" <a href='"+uri+coordinates.feature_id+"' title='"+coordinates.feature_id+"' target='_blank'>"+featureLabel+"</a>";
+					});
 				});
-				
-				var range = rangeData.range;
-				var rangeStr = range.chr+":"+range.start+"-"+range.end;
+				if(found.length>0) {
+					found = "Region <a href='"+REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a> matches "+found;
+				} else {
+					found = 'No gene or transcript in this region';
+				}
+				rangeData.found = found;
 				
 				var HighchartsCommonExportingOptions = {
 					scale: 1,
@@ -1497,15 +1588,24 @@ angular.module('blueprintApp')
 												addSeries: function() {
 													var chart = this;
 													//this.reflow();
-													$timeout(function() {
+													setTimeout(function() {
 														chart.reflow();
 													},0);
 												}
 											},
+											animation: false,
 											zoomType: 'x'
 										},
 										legend: {
 											enabled: false,
+										},
+										tooltip: {
+											animation: false,
+										},
+										plotOptions: {
+											series: {
+												animation: false
+											}
 										},
 										exporting: HighchartsCommonExportingOptions,
 									},
@@ -1524,7 +1624,7 @@ angular.module('blueprintApp')
 										}
 									},
 									series: [],
-									loading: false,
+									loading: true,
 									//func: function(chart) {
 									//	// This is needed to reflow the chart
 									//	// to its final width
@@ -1558,15 +1658,24 @@ angular.module('blueprintApp')
 												addSeries: function() {
 													var chart = this;
 													//this.reflow();
-													$timeout(function() {
+													setTimeout(function() {
 														chart.reflow();
 													},0);
 												}
 											},
+											animation: false,
 											zoomType: 'x'
 										},
 										legend: {
 											enabled: false,
+										},
+										tooltip: {
+											animation: false,
+										},
+										plotOptions: {
+											series: {
+												animation: false
+											}
 										},
 										exporting: HighchartsCommonExportingOptions,
 									},
@@ -1588,7 +1697,7 @@ angular.module('blueprintApp')
 										}
 									},
 									series: [],
-									loading: false,
+									loading: true,
 									//func: function(chart) {
 									//	// This is needed to reflow the chart
 									//	// to its final width
@@ -1614,21 +1723,6 @@ angular.module('blueprintApp')
 							//REGION_FEATURES.forEach(function(featureType) {
 							//	var featureColor = REGION_FEATURES_COLORS[featureType];
 							//	rangeData.regionLayout[featureType].forEach(function(featureRegion) {
-							//		var featureLabel;
-							//		
-							//		featureRegion.symbol.some(function(symbol) {
-							//			if(symbol.indexOf('ENSG')!==0 && symbol.indexOf('ENST')!==0 && symbol.indexOf('HGNC:')!==0) {
-							//				featureLabel = symbol;
-							//				return true;
-							//			}
-							//			return false;
-							//		});
-							//		
-							//		// Default case
-							//		if(featureLabel===undefined) {
-							//			featureLabel = featureRegion.symbol[0];
-							//		}
-							//		
 							//		featureRegion.coordinates.forEach(function(coords) {
 							//			var plotBand = {
 							//				borderColor: {
@@ -1647,7 +1741,7 @@ angular.module('blueprintApp')
 							//			switch(featureType) {
 							//				case REGION_FEATURE_GENE:
 							//					plotBand.label = {
-							//						text: featureLabel,
+							//						text: featureRegion.label,
 							//						fontSize: '8px',
 							//						rotation: 330
 							//					};
@@ -1662,6 +1756,7 @@ angular.module('blueprintApp')
 					
 					// Common attributes
 					chart.type = gData.type;
+					chart.regionFeature = regionFeature;
 					chart.allData = [];
 					chart.bpSideData = {
 						sampleToIndex: {},
@@ -1804,7 +1899,6 @@ angular.module('blueprintApp')
 												seriesGenerator: genBoxPlotSeries,
 												seriesDest: 'data',
 												series: {
-													animation: false,
 													name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
 													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
 												}
@@ -1819,7 +1913,6 @@ angular.module('blueprintApp')
 												series: {
 													name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
 													color: localScope.AVG_SERIES_COLORS[meanSeriesId].color,
-													animation: false,
 													shadow: false,
 													connectNulls: false,
 													marker: {
@@ -1827,7 +1920,6 @@ angular.module('blueprintApp')
 													},
 													tooltip: {
 														shared: true,
-														animation: false,
 														shadow: false,
 													},
 													turboThreshold: 0,
@@ -1900,7 +1992,6 @@ angular.module('blueprintApp')
 												seriesDest: 'data',
 												cell_type: cell_type,
 												series: {
-													animation: false,
 													name: analysis.cell_type.name,
 													color: analysis.cell_type.color
 												}
@@ -1916,7 +2007,6 @@ angular.module('blueprintApp')
 												series: {
 													name: analysis.cell_type.name,
 													color: analysis.cell_type.color,
-													animation: false,
 													shadow: false,
 													connectNulls: false,
 													marker: {
@@ -1924,7 +2014,6 @@ angular.module('blueprintApp')
 													},
 													tooltip: {
 														shared: true,
-														animation: false,
 														shadow: false,
 													},
 													turboThreshold: 0,
@@ -1980,10 +2069,11 @@ angular.module('blueprintApp')
 				//var xRange = [rangeData.range.start,rangeData.range.end];
 				
 				// Re-drawing charts
-				redrawCharts(rangeData.charts,true);
+				var stillLoading = resp.hits.total > total;
+				redrawCharts(rangeData.charts,true,stillLoading);
 				
 				// Is there any more data?
-				if(resp.hits.total > total) {
+				if(stillLoading) {
 					var percent = 100.0 * total / resp.hits.total;
 					
 					localScope.searchButtonText = "Loaded "+percent.toPrecision(2)+'%';
@@ -2390,6 +2480,10 @@ angular.module('blueprintApp')
 	};
 
 	var initTree = function(localScope){
+		if(localScope===undefined) {
+			return undefined;
+		}
+		
 		console.log("initializing tree");
 		
 		if(Array.isArray(localScope)) {
@@ -2410,14 +2504,14 @@ angular.module('blueprintApp')
 		}
 	};
 
-	var defaultSearchUri = 'http://www.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
-	var regionSearchUri = 'http://www.ensembl.org/Homo_sapiens/Location/View?r=';
-	var searchUris = {
+	var DEFAULT_SEARCH_URI = 'http://www.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
+	var REGION_SEARCH_URI = 'http://www.ensembl.org/Homo_sapiens/Location/View?r=';
+	var SEARCH_URIS = {
 		gene: 'http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core&g=',
 		pathway: 'http://www.reactome.org/content/detail/',
 		transcript: 'http://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core&t=',
 		reaction: 'http://www.reactome.org/content/detail/',
-		region: regionSearchUri,
+		region: REGION_SEARCH_URI,
 	};
 	
 	var updateChromosomes = function(localScope) {
@@ -2426,7 +2520,6 @@ angular.module('blueprintApp')
 		});
 		
 		if(tooMuch) {
-			window.alert("Some of the ranges is larger than "+CHR_SEGMENT_LIMIT+"bp");
 			return false;
 		}
 
@@ -2453,7 +2546,7 @@ angular.module('blueprintApp')
 			}
 			var rangeStr = range.chr+":"+range.start+"-"+range.end;
 			
-			regions += "<a href='"+regionSearchUri+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
+			regions += "<a href='"+REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
 			
 			// Preparing the charts!
 			var termNodes = angular.copy(localScope.termNodes);
@@ -2489,7 +2582,7 @@ angular.module('blueprintApp')
 		});
 		localScope.found = "Displaying information from ";
 		if(localScope.currentQueryType !== 'range') {
-			var uri = (localScope.currentQueryType in searchUris) ? searchUris[localScope.currentQueryType] : defaultSearchUri;
+			var uri = (localScope.currentQueryType in SEARCH_URIS) ? SEARCH_URIS[localScope.currentQueryType] : DEFAULT_SEARCH_URI;
 			localScope.found += localScope.currentQueryType+" <a href='"+uri+localScope.ensemblGeneId+"' target='_blank'>"+localScope.currentQuery+" ["+localScope.ensemblGeneId+"]</a>, ";
 		}
 		localScope.found += "region"+((localScope.rangeQuery.length > 1)?'s':'')+": "+regions;
@@ -2524,15 +2617,25 @@ angular.module('blueprintApp')
 			}
 		},function(err,resp){
 			if(typeof(resp.hits.hits) !== undefined){
-				localScope.ensemblGeneId = resp.hits.hits[0]._source.feature_cluster_id;
-				localScope.currentQueryType = resp.hits.hits[0]._source.feature;
-				resp.hits.hits[0]._source.coordinates.forEach(function(range) {
-					localScope.rangeQuery.push({ chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end });
-				});
-				if(updateChromosomes(localScope)) {
-					deferred.resolve(localScope);
+				if(resp.hits.hits.length > 0) {
+					localScope.ensemblGeneId = resp.hits.hits[0]._source.feature_cluster_id;
+					localScope.currentQueryType = resp.hits.hits[0]._source.feature;
+					resp.hits.hits[0]._source.coordinates.forEach(function(range) {
+						localScope.rangeQuery.push({ chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end });
+					});
+					if(updateChromosomes(localScope)) {
+						deferred.resolve(localScope);
+					} else {
+						openModal('Query rejected (too large)','Chromosomical range of query '+localScope.currentQuery+' is larger than '+CHR_SEGMENT_LIMIT+"bp",function() {
+							localScope.query='';
+							deferred.reject('Too large query '+localScope.currentQuery);
+						});
+					}
 				} else {
-					deferred.reject('Coordinates range has been rejected, as it is too big');
+					openModal('No results','Query '+localScope.currentQuery+' did not match any gene or pathway',function() {
+						localScope.query='';
+						deferred.reject('No results for '+localScope.currentQuery);
+					});
 				}
 			} else {
 				deferred.reject(err);
@@ -2980,7 +3083,10 @@ angular.module('blueprintApp')
 		if(acceptedUpdate) {
 			deferred.resolve(localScope);
 		} else {
-			deferred.reject('Coordinates range has been rejected, as it is too big');
+			openModal('Query rejected (too large)','Chromosomical range of query '+localScope.currentQuery+' is larger than '+CHR_SEGMENT_LIMIT+"bp",function() {
+				localScope.query='';
+				deferred.reject('Too large query '+localScope.currentQuery);
+			});
 		}
 		
 		return promise;
@@ -3005,16 +3111,48 @@ angular.module('blueprintApp')
 			var deferred = $q.defer();
 			var promise = deferred.promise;
 			promise = promise.then(preprocessQuery)
-				.then(launch(getGeneLayout))
-				.then(launch(getChartData))
+				.then(launch(getGeneLayout),function(err) {
+					openModal('Data error','Error while fetching gene layout');
+					console.error('Gene layout');
+					console.error(err);
+				})
+				.then(launch(getChartData), function(err) {
+					openModal('Data error','Error while fetching chart data');
+					console.error('Chart data');
+					console.error(err);
+				})
 				// Either the browser or the server gets too stressed with this concurrent query
 				//.then($q.all([launch(getWgbsData),launch(getRnaSeqGData),launch(getRnaSeqTData),launch(getChipSeqData),launch(getDnaseData)]))
-				.then(launch(getWgbsStatsData))
-				.then(launch(getRnaSeqGStatsData))
-				.then(launch(getRnaSeqTStatsData))
-				.then(launch(getChipSeqStatsData))
-				.then(launch(getDnaseStatsData))
-				.then(initTree)
+				.then(launch(getWgbsStatsData), function(err) {
+					openModal('Data error','Error while computing WGBS stats');
+					console.error('WGBS stats data');
+					console.error(err);
+				})
+				.then(launch(getRnaSeqGStatsData), function(err) {
+					openModal('Data error','Error while computing RNA-Seq (genes) stats');
+					console.error('RNA-Seq gene stats data');
+					console.error(err);
+				})
+				.then(launch(getRnaSeqTStatsData), function(err) {
+					openModal('Data error','Error while computing RNA-Seq (transcripts) stats');
+					console.error('RNA-Seq transcript stats data');
+					console.error(err);
+				})
+				.then(launch(getChipSeqStatsData), function(err) {
+					openModal('Data error','Error while computing ChIP-Seq stats');
+					console.error('ChIP-Seq stats data');
+					console.error(err);
+				})
+				.then(launch(getDnaseStatsData), function(err) {
+					openModal('Data error','Error while computing DNAse stats');
+					console.error('DNAse stats data');
+					console.error(err);
+				})
+				.then(initTree, function(err) {
+					openModal('Data error','Error while initializing stats tree');
+					console.error('Stats tree');
+					console.error(err);
+				})
 				.finally(function() {
 					$scope.queryInProgress = false;
 					$scope.searchButtonText = SEARCH_LABEL;
@@ -3154,12 +3292,14 @@ angular.module('blueprintApp')
 	};
 	
 	$scope.enterSearch = function(keyEvent) {
-		if(!$scope.suggestInProgress && keyEvent.which === 13 && $scope.query.length > 0) {
+		if(!$scope.suggestInProgress && keyEvent.which === 13) {
 			//if($scope.resultsSearch.length > 0) {
 			//	$scope.search($scope.resultsSearch[0]);
 			//} else {
+			if($scope.query.length > 0) {
 				$scope.search();
-			//}
+			}
+			keyEvent.preventDefault();
 		}
 	};
 	
@@ -3195,7 +3335,7 @@ angular.module('blueprintApp')
 	$scope.getDataDesc = function() {
 		return $interpolate($scope.dataDesc)($scope);
 	};
-
+	
 	function init($q) {
 		var deferred = $q.defer();
 		var promise = deferred.promise;

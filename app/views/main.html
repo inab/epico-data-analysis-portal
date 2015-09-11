@@ -1,3 +1,17 @@
+<script type="text/ng-template" id="messages.html">
+	<div class="modal-header">
+		<h3 class="modal-title" ng-bind="modalState">{{modalState}}</h3>
+	</div>
+	<div class="modal-body" ng-bind="modalMessage">{{modalMessage}}</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary" type="button" ng-click="okModal()">Ok</button>
+		<!--
+		<button class="btn btn-warning" type="button" ng-click="cancelModal()">Cancel</button>
+		-->
+	</div>
+</script>
+
+
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
 		    <nvd3 options="subtotals.options" data="subtotals.data"></nvd3>
@@ -36,8 +50,8 @@
           <div class="col-sm-6">
             <input ng-model="query" ng-change="suggest()" ng-keypress="enterSearch($event)" ng-disabled="queryInProgress" ng-readonly="queryInProgress || suggestInProgress" class="form-control" type="text" id="search" placeholder="Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" style="background:#f5f5f5">
             <!-- <p class="small">Chromosome regions should be shorter than 10Kb</p> -->
-	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'; search()" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a>, <a ng-click="query='pathway:Cell Cycle, Mitotic'; search()">pathway:Cell Cycle, Mitotic</a></p>
-		<div class="suggest-container">
+	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:1-248956422'; search()" style="cursor: pointer;">chr1:1-248956422</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a>, <a ng-click="query='pathway:Cell Cycle, Mitotic'; search()" style="cursor: pointer;">pathway:Cell Cycle, Mitotic</a></p>
+		<div class="suggest-container" style="visibility: {{(resultsSearch.length &gt; 0) ? 'visible':'hidden'}}">
 		  <div ng-repeat="suggest in resultsSearch" class="suggest-item">
 			  <i>({{suggest.feature}})</i> <a ng-click="$parent.query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.fullTerm}}</a>
 			  <br />
@@ -50,15 +64,12 @@
     </div>
   </div> 
 
+<p class="text-center" ng-bind-html="found"></p>
 <tabset style="margin-top:40px;" ng-if="graphData.length &gt; 0">
-	<tab ng-repeat="rangeData in graphData">
+	<tab ng-repeat="rangeData in graphData" >
 		<tab-heading>Region {{rangeData.range.chr}}:{{rangeData.range.start}}-{{rangeData.range.end}}</tab-heading>
-		<!--
-		<div class="col-sm-1 text-center" ng-cloak>
-			<img src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}" ng-cloak>
-		</div>
-		-->
-		<p class="text-center" ng-bind-html="found"></p>
+		<!-- This trick allows reflowing the charts which were drawn in background -->
+		{{doRefresh()}}<p class="text-center" ng-bind-html="rangeData.found"></p>
 		<div class="col-xs-12 col-sm-2 col-lg-1 terms-selector">
 				<div class="col-xs-1 col-sm-12 termItem" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES">
 					<span class="square" style="border-color: {{meanSeriesDesc.color}} ; background-color: {{ meanSeriesDesc.color}};"></span>
@@ -123,8 +134,15 @@
 			-->
 		</div>
 		
-		<div ng-repeat="ontology in rangeData.treedata" class="row">
-			<d3-tree data="ontology" label="name" style="display"></d3-tree>      
+		<div class="row">
+			<div class="col-sm-1 text-center" ng-cloak>
+				<img src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}" ng-cloak>
+			</div>
+			<div class="col-sm-11">
+				<div ng-repeat="ontology in rangeData.treedata">
+					<d3-tree data="ontology" label="name" style="display"></d3-tree>      
+				</div>
+			</div>
 		</div>
 	</tab>
 </tabset>

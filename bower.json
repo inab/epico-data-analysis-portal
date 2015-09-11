@@ -30,6 +30,13 @@
     },
     "highcharts-export-csv": {
       "main": "export-csv.js"
+    },
+    "highcharts-release": {
+      "main": [
+        "highcharts.src.js",
+        "highcharts-more.src.js",
+        "modules/exporting.src.js"
+      ]
     }
   },
   "devDependencies": {

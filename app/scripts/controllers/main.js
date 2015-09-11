@@ -2115,6 +2115,7 @@ angular.module('blueprintApp')
 			index: 'sample-tracking-data',
 			type: 'sdata.sample',
 			size: 100000,
+			body:{},
 		},function(err,resp){
 			if(typeof(resp.hits.hits) !== undefined) {
 				resp.hits.hits.forEach(function(d) {
@@ -2160,6 +2161,7 @@ angular.module('blueprintApp')
 			index: 'sample-tracking-data',
 			type: 'sdata.donor',
 			size: 100000,
+			body:{},
 		}).then(function(resp){
 			if(typeof(resp.hits.hits) !== undefined) {
 				var subtotalsData = [];
@@ -2224,6 +2226,7 @@ angular.module('blueprintApp')
 			index: 'sample-tracking-data',
 			type: 'sdata.specimen',
 			size: 100000,
+			body:{},
 		}).then(function(resp){
 			if(typeof(resp.hits.hits) !== undefined) {
 				resp.hits.hits.forEach(function(d) {

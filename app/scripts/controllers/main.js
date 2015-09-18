@@ -1366,16 +1366,29 @@ angular.module('blueprintApp')
 	function redrawCharts(charts,doGenerate,stillLoading) {
 		// Normalizing stillLoading to a boolean
 		stillLoading = !!stillLoading;
-		charts.forEach(function(chart) {
-			setTimeout(function() {
+		if(!!doGenerate || stillLoading) {
+			charts.forEach(function(chart) {
+				setTimeout(function() {
+					try {
+						chart.seriesAggregator(chart,doGenerate,stillLoading);
+						chart.options.loading = stillLoading;
+					} catch(e) {
+						console.log(e);
+					}
+				},0);
+			});
+		} else {
+			charts.forEach(function(chart) {
 				try {
 					chart.seriesAggregator(chart,doGenerate,stillLoading);
 					chart.options.loading = stillLoading;
 				} catch(e) {
 					console.log(e);
 				}
-			},0);
-		});
+			});
+			// To force a reflow / redraw
+			//$scope.$broadcast('highchartsng.reflow');
+		}
 	}
 	
 	var getGeneLayout = function(localScope,rangeData) {

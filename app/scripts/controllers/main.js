@@ -73,6 +73,16 @@ angular.module('blueprintApp')
 			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 		},
 		{
+			name: DNASE_GRAPH,
+			noData: 'regulatory regions',
+			title: 'Regulatory regions (DNAse)',
+			yAxisLabel: 'z-score',
+			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+		},
+	];
+	
+	var HISTONE_GRAPHS = [
+		{
 			name: CSEQ_NARROW_GRAPH,
 			noData: 'narrow histone peaks',
 			title: 'Narrow Histone Peaks',
@@ -88,14 +98,8 @@ angular.module('blueprintApp')
 			yAxisLabel: '-Log10(q-value)',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},
-		{
-			name: DNASE_GRAPH,
-			noData: 'regulatory regions',
-			title: 'Regulatory regions (DNAse)',
-			yAxisLabel: 'z-score',
-			type: GRAPH_TYPE_STEP_HIGHCHARTS,
-		},
 	];
+	
 	var DLAT_CONCEPT_M = 'dlat.m';
 	var PDNA_CONCEPT_M = 'pdna.m';
 	var EXP_CONCEPT_M = 'exp.m';
@@ -139,6 +143,14 @@ angular.module('blueprintApp')
 			chartId: EXP_T_GRAPH
 		},
 		{
+			seriesId: RREG_SERIES,
+			name: 'Mean chromatin accessibility',
+			chartId: DNASE_GRAPH
+		},
+	];
+	
+	var AVG_CS_SERIES = [
+		{
 			seriesId: PDNA_BROAD_SERIES,
 			name: 'Mean broad histone peaks',
 			chartId: CSEQ_BROAD_GRAPH
@@ -148,17 +160,7 @@ angular.module('blueprintApp')
 			name: 'Mean narrow histone peaks',
 			chartId: CSEQ_NARROW_GRAPH
 		},
-		{
-			seriesId: RREG_SERIES,
-			name: 'Mean chromatin accessibility',
-			chartId: DNASE_GRAPH
-		},
 	];
-	
-	var SeriesToChart = {};
-	AVG_SERIES.forEach(function(avgSeries) {
-		SeriesToChart[avgSeries.seriesId] = avgSeries.chartId;
-	});
 	
 	var CHR_SEGMENT_LIMIT = 2500000;	// A bit larger than largest gene
 	
@@ -595,6 +597,9 @@ angular.module('blueprintApp')
 				var iHis = localScope.experimentLabels.length;
 				histones.sort(function(a,b) { return a.histoneName.localeCompare(b.histoneName); });
 				
+				// Fixed part is replicated here
+				localScope.AVG_SERIES = angular.copy(AVG_SERIES);
+				
 				histones.forEach(function(histone) {
 					histone.histoneIndex = iHis;
 					
@@ -605,9 +610,27 @@ angular.module('blueprintApp')
 						localScope.experimentLabels.push(histone.histoneName+' (peaks)');
 						iHis++;
 					}
+					// And variable part, which depends on the histones
+					AVG_CS_SERIES.forEach(function(seriesDataOrig) {
+						var seriesData = angular.copy(seriesDataOrig);
+						seriesData.seriesId += ' ' + histone.histoneName;
+						seriesData.name += ' (' + histone.histoneName + ')';
+						seriesData.chartId += ' ' + histone.histoneName;
+						
+						localScope.AVG_SERIES.push(seriesData);
+					});
 				});
+				
+				// Saving the correspondences
+				var SeriesToChart = {};
+				localScope.AVG_SERIES.forEach(function(avgSeries) {
+					SeriesToChart[avgSeries.seriesId] = avgSeries.chartId;
+				});
+				localScope.SeriesToChart = SeriesToChart;
+				
 				localScope.numHistones = histones.length;
 				localScope.histoneMap = histoneMap;
+				localScope.histones = histones;
 				
 				deferred.resolve(localScope);
 			} else {
@@ -1181,7 +1204,13 @@ angular.module('blueprintApp')
 		}
 		
 		// Now, second pass!!
+		var isEmpty = true;
 		chart.allData.forEach(function(series,iSeries) {
+			// isEmpty detector
+			if(series.seriesValues.length > 0) {
+				isEmpty = false;
+			}
+			
 			var reDigest = !stillLoading || !('cell_type' in series);
 			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
 				var preparedValues = new Array(chart.options.xAxis.categories.length);
@@ -1199,10 +1228,21 @@ angular.module('blueprintApp')
 			chart.options.series[iSeries].visible = visibilityState;
 			chart.options.series[iSeries].showInLegend = visibilityState;
 		});
+		
+		// It is assigned only once
+		if(!stillLoading && chart.isEmpty === undefined) {
+			chart.isEmpty = isEmpty;
+		}
 	}
 	
 	function defaultSeriesAggregator(chart,doGenerate,stillLoading) {
+		var isEmpty = true;
 		chart.allData.forEach(function(series) {
+			// isEmpty detector
+			if(series.seriesValues.length > 0) {
+				isEmpty = false;
+			}
+			
 			var reDigest = !stillLoading || !('cell_type' in series);
 			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
 				series.seriesDigestedValues = series.seriesGenerator(series.seriesValues);
@@ -1222,6 +1262,10 @@ angular.module('blueprintApp')
 			}
 		});
 		
+		// It is assigned only once
+		if(!stillLoading && chart.isEmpty === undefined) {
+			chart.isEmpty = isEmpty;
+		}
 	}
 	
 	function dataSeriesComparator(a,b) {
@@ -1447,8 +1491,20 @@ angular.module('blueprintApp')
 				};
 				
 				// So, we can prepare the charts
-				GRAPHS.forEach(function(gData) {
+				var histoneInstance;
+				
+				var GraphPrepare = function(gData) {
 					var chart;
+					
+					var title = gData.title;
+					var noData = gData.noData;
+					var gName = gData.name;
+			
+					if(histoneInstance!==undefined) {
+						title += ' ' + histoneInstance.histoneName;
+						noData += ' ' + histoneInstance.histoneName;
+						gName += ' ' + histoneInstance.histoneName;
+					}
 					
 					switch(gData.type) {
 						case GRAPH_TYPE_STEP_NVD3:
@@ -1460,7 +1516,7 @@ angular.module('blueprintApp')
 										y: getYG,
 										useInteractiveGuideline: true,
 										interpolate: 'step',
-										noData: "Fetching "+gData.noData+" from "+rangeStr,
+										noData: "Fetching "+noData+" from "+rangeStr,
 										showLegend: false,
 										transitionDuration: 0,
 										xAxis: {
@@ -1472,7 +1528,7 @@ angular.module('blueprintApp')
 										}
 									},
 									title: {
-										text: gData.title
+										text: title
 									},
 								},
 								data: [],
@@ -1501,7 +1557,7 @@ angular.module('blueprintApp')
 										}
 									},
 									title: {
-										text: gData.title,
+										text: title,
 									},
 									toolTip: {
 										shared: true,
@@ -1521,7 +1577,7 @@ angular.module('blueprintApp')
 							chart = {
 								options: {
 									title: {
-										text: gData.title,
+										text: title,
 									},
 									toolTip: {
 										shared: true,
@@ -1571,7 +1627,7 @@ angular.module('blueprintApp')
 										exporting: HighchartsCommonExportingOptions,
 									},
 									title: {
-										text: gData.title
+										text: title
 									},
 									xAxis: {
 										title: {
@@ -1645,7 +1701,7 @@ angular.module('blueprintApp')
 										exporting: HighchartsCommonExportingOptions,
 									},
 									title: {
-										text: gData.title
+										text: title
 									},
 									xAxis: {
 										title: {
@@ -1726,10 +1782,18 @@ angular.module('blueprintApp')
 					chart.bpSideData = {
 						sampleToIndex: {},
 					};
-					chart.title = gData.title;
+					chart.title = title;
 
 					rangeData.charts.push(chart);
-					rangeData[gData.name] = chart;
+					
+					rangeData[gName] = chart;
+				};
+				
+				GRAPHS.forEach(GraphPrepare);
+				
+				localScope.histones.forEach(function(histone) {
+					histoneInstance = histone;
+					HISTONE_GRAPHS.forEach(GraphPrepare);
 				});
 				
 				deferred.resolve(localScope);
@@ -1788,12 +1852,6 @@ angular.module('blueprintApp')
 						var value;
 						var payload;
 						switch(meanSeriesId) {
-							case PDNA_NARROW_SERIES:
-								value = segment._source.log10_qvalue;
-								break;
-							case PDNA_BROAD_SERIES:
-								value = segment._source.log10_qvalue;
-								break;
 							case EXP_ANY_SERIES:
 								switch(segment._type) {
 									case EXPG_CONCEPT:
@@ -1817,10 +1875,17 @@ angular.module('blueprintApp')
 							case RREG_SERIES:
 								value = segment._source.z_score;
 								break;
+							default:
+								if(meanSeriesId.indexOf(PDNA_NARROW_SERIES)===0) {
+									value = segment._source.log10_qvalue;
+								} else if(meanSeriesId.indexOf(PDNA_BROAD_SERIES)===0) {
+									value = segment._source.log10_qvalue;
+								}
+								break;
 						}
 						
-						if(meanSeriesId in SeriesToChart) {
-							var chartId = SeriesToChart[meanSeriesId];
+						if(meanSeriesId in localScope.SeriesToChart) {
+							var chartId = localScope.SeriesToChart[meanSeriesId];
 							
 							if(chartId in rangeData) {
 								var graph = rangeData[chartId];
@@ -2928,7 +2993,6 @@ angular.module('blueprintApp')
 						localScope.termNodes = termNodes;
 						
 						// And now, the colors for the AVG_SERIES
-						localScope.AVG_SERIES = angular.copy(AVG_SERIES);
 						var AVG_SERIES_COLORS = {};
 						localScope.AVG_SERIES.forEach(function(meanSeriesDesc, i) {
 							meanSeriesDesc.color = cc(i+termNodes.length);
@@ -2950,6 +3014,10 @@ angular.module('blueprintApp')
 												meanSeries = PDNA_NARROW_SERIES;
 											} else {
 												meanSeries = PDNA_BROAD_SERIES;
+											}
+											// Separate meanSeries for each histone
+											if(experiment.histone !== undefined) {
+												meanSeries += ' ' + experiment.histone.histoneName;
 											}
 											break;
 										case EXP_CONCEPT_M:

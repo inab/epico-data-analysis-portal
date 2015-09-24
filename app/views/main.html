@@ -75,7 +75,7 @@
 	<tab ng-repeat="rangeData in graphData" >
 		<tab-heading>Region {{rangeData.range.chr}}:{{rangeData.range.start}}-{{rangeData.range.end}}</tab-heading>
 		<!-- This trick allows reflowing the charts which were drawn in background -->
-		{{doRefresh()}}<p class="text-center" ng-bind-html="rangeData.found"></p>
+		{{doRefresh(rangeData)}}<p class="text-center" ng-bind-html="rangeData.found"></p>
 		<div class="col-xs-12 col-sm-2 col-lg-1 terms-selector">
 				<div class="col-xs-1 col-sm-12 termItem" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES">
 					<span class="square" ng-style="{'border-color': meanSeriesDesc.color, 'background-color': meanSeriesDesc.color }"></span>

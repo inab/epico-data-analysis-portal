@@ -244,14 +244,6 @@ angular.module('blueprintApp')
 
 	$scope.unknownChromosome = { n: "(unknown)", f: "images/chr.svg" };
 	
-	$scope.doRefresh = function() {
-		setTimeout(function() {
-			$scope.$broadcast('highchartsng.reflow');
-		},10);
-		
-		return '';
-	};
-	
 	function openModal(state,message,callback,size) {
 		var modalInstance = $modal.open({
 			animation: false,
@@ -919,6 +911,21 @@ angular.module('blueprintApp')
 				} else {
 					return undefined;
 				}
+			} else {
+				return undefined;
+			}
+		};
+	};
+	
+	var rangeLaunch = function(theFunc,rangeData) {
+		var theArgs = arguments;
+		return function(localScope) {
+			if(localScope!==undefined) {
+				if(Array.isArray(localScope)) {
+					localScope = localScope[0];
+				}
+				
+				return theFunc(localScope,rangeData);
 			} else {
 				return undefined;
 			}
@@ -2606,7 +2613,7 @@ angular.module('blueprintApp')
 		return numNodes;
 	};
 
-	var initTree = function(localScope){
+	var initTree = function(localScope,rangeData){
 		if(localScope===undefined) {
 			return undefined;
 		}
@@ -2620,13 +2627,12 @@ angular.module('blueprintApp')
 		lastSearchMode = localScope.display;
 		if(lastSearchMode!=='none') {
 			var isDetailed = lastSearchMode==='detailed';
-			localScope.graphData.forEach(function(rangeData) {
-				var clonedTreeData = angular.copy(localScope.fetchedTreeData);
-				rangeData.treedata = [];
-				clonedTreeData.forEach(function(cloned) {
-					var numNodes = populateBasicTree(cloned,localScope,rangeData,isDetailed);
-					rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: localScope.experimentLabels});
-				});
+			
+			var clonedTreeData = angular.copy(localScope.fetchedTreeData);
+			rangeData.treedata = [];
+			clonedTreeData.forEach(function(cloned) {
+				var numNodes = populateBasicTree(cloned,localScope,rangeData,isDetailed);
+				rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: localScope.experimentLabels});
 			});
 		}
 	};
@@ -2682,6 +2688,7 @@ angular.module('blueprintApp')
 				termNodesHash[termNode.o_uri] = termNode;
 			});
 			var rangeData = {
+				toBeFetched: true,
 				range: range,
 				treedata: null,
 				termNodes: termNodes,
@@ -3275,7 +3282,7 @@ angular.module('blueprintApp')
 					console.error('DNAse stats data');
 					console.error(err);
 				})
-				.then(initTree, function(err) {
+				.then(launch(initTree), function(err) {
 					openModal('Data error','Error while initializing stats tree');
 					console.error('Stats tree');
 					console.error(err);
@@ -3287,6 +3294,72 @@ angular.module('blueprintApp')
 				 
 			deferred.resolve($scope);
 		}
+	};
+	
+	$scope.doRefresh = function(rangeData) {
+		setTimeout(function() {
+			$scope.$broadcast('highchartsng.reflow');
+		},10);
+		
+		if(rangeData.toBeFetched) {
+			rangeData.toBeFetched = false;
+			
+			//$scope.searchButtonText = SEARCHING_LABEL;
+                        //
+			//var deferred = $q.defer();
+			//var promise = deferred.promise;
+			//promise = promise
+			//	.then(rangeLaunch(getGeneLayout,rangeData),function(err) {
+			//		openModal('Data error','Error while fetching gene layout');
+			//		console.error('Gene layout');
+			//		console.error(err);
+			//	})
+			//	.then(rangeLaunch(getChartData,rangeData), function(err) {
+			//		openModal('Data error','Error while fetching chart data');
+			//		console.error('Chart data');
+			//		console.error(err);
+			//	})
+			//	// Either the browser or the server gets too stressed with this concurrent query
+			//	//.then($q.all([launch(getWgbsData),launch(getRnaSeqGData),launch(getRnaSeqTData),launch(getChipSeqData),launch(getDnaseData)]))
+			//	.then(rangeLaunch(getWgbsStatsData,rangeData), function(err) {
+			//		openModal('Data error','Error while computing WGBS stats');
+			//		console.error('WGBS stats data');
+			//		console.error(err);
+			//	})
+			//	.then(rangeLaunch(getRnaSeqGStatsData,rangeData), function(err) {
+			//		openModal('Data error','Error while computing RNA-Seq (genes) stats');
+			//		console.error('RNA-Seq gene stats data');
+			//		console.error(err);
+			//	})
+			//	.then(rangeLaunch(getRnaSeqTStatsData,rangeData), function(err) {
+			//		openModal('Data error','Error while computing RNA-Seq (transcripts) stats');
+			//		console.error('RNA-Seq transcript stats data');
+			//		console.error(err);
+			//	})
+			//	.then(rangeLaunch(getChipSeqStatsData,rangeData), function(err) {
+			//		openModal('Data error','Error while computing ChIP-Seq stats');
+			//		console.error('ChIP-Seq stats data');
+			//		console.error(err);
+			//	})
+			//	.then(rangeLaunch(getDnaseStatsData,rangeData), function(err) {
+			//		openModal('Data error','Error while computing DNAse stats');
+			//		console.error('DNAse stats data');
+			//		console.error(err);
+			//	})
+			//	.then(rangeLaunch(initTree,rangeData), function(err) {
+			//		openModal('Data error','Error while initializing stats tree');
+			//		console.error('Stats tree');
+			//		console.error(err);
+			//	})
+			//	.finally(function() {
+			//		$scope.queryInProgress = false;
+			//		$scope.searchButtonText = SEARCH_LABEL;
+			//	});
+			//	 
+			//deferred.resolve($scope);
+		}
+		
+		return '';
 	};
 	
 	$scope.suggest = function() {

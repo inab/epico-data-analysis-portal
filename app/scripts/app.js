@@ -18,7 +18,6 @@ angular.module('blueprintApp', [
     'blueprintApp.canvasjs',
     'blueprintApp.elasticsearch',
     'blueprintApp.controllers',
-    'nvd3',
     'highcharts-ng',
     'ngAnimate',
     'ngCookies',

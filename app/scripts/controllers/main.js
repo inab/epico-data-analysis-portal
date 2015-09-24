@@ -280,6 +280,14 @@ angular.module('blueprintApp')
 		return d.y;
 	}
 	
+	function getXArr(d) {
+		return d[0];
+	}
+	
+	function getYArr(d) {
+		return d[1];
+	}
+	
 	function getKey(d) {
 		return d.key;
 	}
@@ -288,39 +296,113 @@ angular.module('blueprintApp')
 		return d.y;
 	}
 	
-	$scope.subtotals = {
+	var subtotalsTemplate = {
+		library: LIBRARY_HIGHCHARTS,
 		options: {
-			chart: {
-				type: 'pieChart',
-				height: 475,
-				width: 400,
-				margin: {
-					top: 0,
-					right: 0,
-					bottom: 0,
-					left: 0
+			options: {
+				chart: {
+					
+					backgroundColor: null,
+					style: {
+						fontSize: '1em',
+					},
+					animation: false,
 				},
-				x: getKey,
-				y: getY,
-				//showLegend: false,
-				showLabels: true,
-				donut:true,
-				title: "Donors & Samples",
-				labelsOutside: true,
-				labelSunbeamLayout: true,
-				labelType: "value",
-				transitionDuration: 500,
-				labelThreshold: 0.01,
-				valueFormat: d3.format('d')
+				legend: {
+					enabled: true,
+					itemStyle: {
+						fontSize: '0.8em',
+						fontWeight: 'normal',
+					},
+				},
+				tooltip: {
+					animation: false,
+					style: {
+						fontSize: '0.8em',
+					},
+				},
+				plotOptions: {
+					series: {
+						animation: false,
+					},
+					pie: {
+						dataLabels: {
+							enabled: true,
+							format: '{y}',
+							distance: -20,
+							style: {
+								fontWeight: 'normal',
+								color: 'white',
+								textShadow: '0px 1px 2px black'
+							}
+						},
+						showInLegend: true,
+						//startAngle: -90,
+						//endAngle: 90,
+						//center: ['50%', '75%']
+						//center: ['50%', '50%']
+					}
+				},
 			},
-		},
-		data: [
-			{
-				key: "Loading",
-				y: 1
+			title: {
+				//text: 'Donors & Samples',
+				align: 'center',
+				//verticalAlign: 'top',
+				style: {
+					fontSize: '1.2em',
+				},
+				//y: 40
 			},
-		],
+			series: [
+				{
+					type: 'pie',
+					name: 'Stats',
+					innerSize: '50%',
+					data: [
+						['Loading', 1]
+					]
+				}
+			]
+		}
 	};
+	
+	var subtotals = angular.copy(subtotalsTemplate);
+	subtotals.options.title.text = 'Donors & Samples';
+	subtotals.options.options.tooltip.pointFormat = '<span style="color:{point.color}">\u25CF</span> {point.y}';
+	
+	$scope.subtotals = subtotals;
+	
+	// $scope.subtotals = {
+	// 	library: LIBRARY_NVD3,
+	// 	options: {
+	// 		chart: {
+	// 			type: 'pieChart',
+	// 			height: 475,
+	// 			width: 400,
+	// 			margin: {
+	// 				top: 0,
+	// 				right: 0,
+	// 				bottom: 0,
+	// 				left: 0
+	// 			},
+	// 			x: getXArr,
+	// 			y: getYArr,
+	// 			//showLegend: false,
+	// 			showLabels: true,
+	// 			donut:true,
+	// 			title: "Donors & Samples",
+	// 			labelsOutside: true,
+	// 			labelSunbeamLayout: true,
+	// 			labelType: "value",
+	// 			transitionDuration: 500,
+	// 			labelThreshold: 0.01,
+	// 			valueFormat: d3.format('d')
+	// 		},
+	// 	},
+	// 	data: [
+	// 		["Loading",1]
+	// 	],
+	// };
 	
 	//Format function for the tooltip values column
 	var valueFormatter = function(d,i) {
@@ -399,54 +481,62 @@ angular.module('blueprintApp')
 		return html;
 	};
 	
-	$scope.analysisSubtotals = {
-		options: {
-			chart: {
-				type: 'pieChart',
-				height: 475,
-				width: 400,
-				margin: {
-					top: 0,
-					right: 0,
-					bottom: 0,
-					left: 0
-				},
-				x: getKey,
-				y: getY,
-				showLabels: true,
-				donut:true,
-				title: "Analysis",
-				labelsOutside: true,
-				labelSunbeamLayout: true,
-				labelType: "value",
-				tooltip: {
-					contentGenerator: analysisPieTooltipGenerator,
-				},
-				//legend: {
-				//	margin: {
-				//		left: 3,
-				//	},
-				//	//key: function(d) { console.log(d) },
-				//},
-				transitionDuration: 500,
-				labelThreshold: 0.01,
-				valueFormat: d3.format('d')
-			},
-			//caption: {
-			//	enable: true,
-			//	text: 'Analysis',
-			//	css: {
-			//		textAlign: 'center'
-			//	}
-			//}
-		},
-		data: [
-			{
-				key: "Loading",
-				y: 1
-			},
-		]
-	};
+	// $scope.analysisSubtotals = {
+	// 	library: LIBRARY_NVD3,
+	// 	options: {
+	// 		chart: {
+	// 			type: 'pieChart',
+	// 			height: 475,
+	// 			width: 400,
+	// 			margin: {
+	// 				top: 0,
+	// 				right: 0,
+	// 				bottom: 0,
+	// 				left: 0
+	// 			},
+	// 			x: getXArr,
+	// 			y: getYArr,
+	// 			showLabels: true,
+	// 			donut:true,
+	// 			title: "Analysis",
+	// 			labelsOutside: true,
+	// 			labelSunbeamLayout: true,
+	// 			labelType: "value",
+	// 			tooltip: {
+	// 				contentGenerator: analysisPieTooltipGenerator,
+	// 			},
+	// 			//legend: {
+	// 			//	margin: {
+	// 			//		left: 3,
+	// 			//	},
+	// 			//	//key: function(d) { console.log(d) },
+	// 			//},
+	// 			transitionDuration: 500,
+	// 			labelThreshold: 0.01,
+	// 			valueFormat: d3.format('d')
+	// 		},
+	// 		//caption: {
+	// 		//	enable: true,
+	// 		//	text: 'Analysis',
+	// 		//	css: {
+	// 		//		textAlign: 'center'
+	// 		//	}
+	// 		//}
+	// 	},
+	// 	data: [
+	// 		{
+	// 			key: "Loading",
+	// 			y: 1
+	// 		},
+	// 	]
+	// };
+	
+	var analysisSubtotals = angular.copy(subtotalsTemplate);
+	analysisSubtotals.options.title.text = 'Analysis';
+	analysisSubtotals.options.options.tooltip.headerFormat = '';
+	analysisSubtotals.options.options.tooltip.pointFormat = '{point.desc}<br /><span style="color:{point.color}">\u25CF</span> {point.y}';
+	
+	$scope.analysisSubtotals = analysisSubtotals;
     
     // If we set this to 1, we separate broad from narrow peaks
     var CSpeakSplit;
@@ -538,22 +628,34 @@ angular.module('blueprintApp')
 					localScope.experiment2AnalysisHash[analysis.experiment_id].push(analysis);
 				});
 				
-				var analysisSubtotals = [
+				var analysisSubtotals = [];
+				
+				// This is very important!!!
+				switch(localScope.analysisSubtotals.library) {
+					case LIBRARY_NVD3:
+						localScope.analysisSubtotals.data = analysisSubtotals;
+						break;
+					case LIBRARY_HIGHCHARTS:
+						localScope.analysisSubtotals.options.series[0].data = analysisSubtotals;
+						break;
+				}
+				
+				analysisSubtotals.push(
 					{
-						key: 'Hyper-m',
+						name: 'Hyper-m',
 						desc: 'Hyper-methylated regions',
 						y: numDlatHyper
 					},
 					{
-						key: 'Hypo-m',
+						name: 'Hypo-m',
 						desc: 'Hypo-methylated regions',
 						y: numDlatHypo
-					},
-				];
+					}
+				);
 				
 				if(numDlatOther > 0) {
 					analysisSubtotals.push({
-						key: 'Other m regions',
+						name: 'Other m regions',
 						desc: 'Other methylated regions',
 						y: numDlatOther
 					});
@@ -561,27 +663,27 @@ angular.module('blueprintApp')
 				
 				analysisSubtotals.push(
 					{
-						key: 'CS broad',
+						name: 'CS broad',
 						desc: 'ChIP-Seq (broad peaks)',
 						y: numCSbroad
 					},
 					{
-						key: 'CS narrow',
+						name: 'CS narrow',
 						desc: 'ChIP-Seq (narrow peaks)',
 						y: numCSnarrow
 					},
 					{
-						key: 'Gene exp',
+						name: 'Gene exp',
 						desc: 'Gene expression',
 						y: numExpG
 					},
 					{
-						key: 'Trans exp',
+						name: 'Trans exp',
 						desc: 'Transcript expression',
 						y: numExpT
 					},
 					{
-						key: 'Chrom Acc',
+						name: 'Chrom Acc',
 						desc: 'Chromatin accessibility',
 						y: numRReg
 					}
@@ -589,13 +691,11 @@ angular.module('blueprintApp')
 				
 				if(numAnOther > 0) {
 					analysisSubtotals.push({
-						key: 'Other',
+						name: 'Other',
 						desc: 'Other',
 						y: numAnOther
 					});
 				}
-				
-				localScope.analysisSubtotals.data = analysisSubtotals;
 			//} else {
 			//	return deferred.reject(err);
 			}
@@ -1596,6 +1696,7 @@ angular.module('blueprintApp')
 									options: {
 										chart: {
 											type: 'boxplot',
+											backgroundColor: null,
 											events: {
 												// reflowing after load and redraw events led to blank drawings
 												addSeries: function() {
@@ -1607,7 +1708,9 @@ angular.module('blueprintApp')
 												}
 											},
 											animation: false,
-											zoomType: 'x'
+											zoomType: 'x',
+											panning: true,
+											panKey: 'shift'
 										},
 										legend: {
 											enabled: false,
@@ -1666,6 +1769,7 @@ angular.module('blueprintApp')
 									options: {
 										chart: {
 											type: 'line',
+											backgroundColor: null,
 											events: {
 												// reflowing after load and redraw events led to blank drawings
 												addSeries: function() {
@@ -1677,13 +1781,16 @@ angular.module('blueprintApp')
 												}
 											},
 											animation: false,
-											zoomType: 'x'
+											zoomType: 'x',
+											panning: true,
+											panKey: 'shift'
 										},
 										legend: {
 											enabled: false,
 										},
 										tooltip: {
 											animation: false,
+											shared: true,
 										},
 										plotOptions: {
 											series: {
@@ -2131,6 +2238,17 @@ angular.module('blueprintApp')
 			body:{},
 		},function(err,resp){
 			if(typeof(resp.hits.hits) !== undefined) {
+				var data;
+				
+				switch(localScope.subtotals.library) {
+					case LIBRARY_NVD3:
+						data = localScope.subtotals.data;
+						break;
+					case LIBRARY_HIGHCHARTS:
+						data = localScope.subtotals.options.series[0].data;
+						break;
+				}
+				
 				resp.hits.hits.forEach(function(d) {
 					var s = {};
 					s.analyzed_sample_type_other = d._source.analyzed_sample_type_other;
@@ -2149,11 +2267,7 @@ angular.module('blueprintApp')
 				
 				var numSamples = localScope.samples.length;
 				
-				localScope.subtotals.data.push({
-						key: 'Samples',
-						y: numSamples
-					}
-				);
+				data.push(['Samples', numSamples]);
 				
 				//console.log(localScope.samples);
 				deferred.resolve(localScope);
@@ -2179,6 +2293,16 @@ angular.module('blueprintApp')
 			if(typeof(resp.hits.hits) !== undefined) {
 				var subtotalsData = [];
 				
+				// Very important, so we are managing the same array
+				switch(localScope.subtotals.library) {
+					case LIBRARY_NVD3:
+						localScope.subtotals.data = subtotalsData;
+						break;
+					case LIBRARY_HIGHCHARTS:
+						localScope.subtotals.options.series[0].data = subtotalsData;
+						break;
+				}
+				
 				var numDonors = 0;
 				var numPooledDonors = 0;
 				var numCellularLines = 0;
@@ -2199,30 +2323,17 @@ angular.module('blueprintApp')
 					}
 					localScope.donors.push(d._source);
 				});
-				subtotalsData.push({
-						key: 'Donors',
-						y: numDonors
-					},
-					{
-						key: 'Cellular Lines',
-						y: numCellularLines
-					},
-					{
-						key: 'Pooled Donors',
-						y: numPooledDonors
-					}
+				subtotalsData.push(
+					['Donors', numDonors],
+					['Cellular Lines', numCellularLines],
+					['Pooled Donors', numPooledDonors]
 				);
 				localScope.numCellularLines = numCellularLines;
 				
 				if(numOther>0) {
-					subtotalsData.push({
-							key: 'Other kind of donors',
-							y: numOther
-						}
-					);
+					subtotalsData.push(['Other kind of donors', numOther]);
 				}
 				
-				localScope.subtotals.data = subtotalsData;
 				//console.log(localScope.donors);
 			}
 			

@@ -19,6 +19,8 @@ angular.module('blueprintApp')
 	
 	$scope.termTooltip = $sce.trustAsHtml("<b>Click</b>: switches term&apos;s results<br /><b>Ctrl+Click</b>: focus on term&apos;s results");
 	
+	$scope.chartSwitchTooltip  = $sce.trustAsHtml("<b>Click</b>: switches chart visibility<br /><b>Ctrl+Click</b>: hide all charts but this<br /><b>Shift+Click</b>: Switch mean series from chart");
+	
 	var DEFAULT_FLANKING_WINDOW_SIZE = 500;
 	
 	var METHYL_HYPER_GRAPH = 'methyl_hyper';
@@ -1234,7 +1236,13 @@ angular.module('blueprintApp')
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
-			var visibilityState = !('cell_type' in series) || (!stillLoading && !series.cell_type.termHidden);
+			var visibilityState;
+			if('cell_type' in series) {
+				visibilityState = !stillLoading && !series.cell_type.termHidden;
+			} else {
+				visibilityState = stillLoading || !chart.meanSeriesHidden;
+			}
+			
 			chart.options.series[iSeries].visible = visibilityState;
 			chart.options.series[iSeries].showInLegend = visibilityState;
 		});
@@ -1261,7 +1269,13 @@ angular.module('blueprintApp')
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
-			var visibilityState = !('cell_type' in series) || (!stillLoading && !series.cell_type.termHidden);
+			var visibilityState;
+			if('cell_type' in series) {
+				visibilityState = !stillLoading && !series.cell_type.termHidden;
+			} else {
+				visibilityState = stillLoading || !chart.meanSeriesHidden;
+			}
+			
 			if(chart.library!==LIBRARY_NVD3) {
 				series.series.visible = visibilityState;
 				series.series.showInLegend = visibilityState;
@@ -1350,6 +1364,10 @@ angular.module('blueprintApp')
 	}
 	
 	function redrawCharts(charts,doGenerate,stillLoading) {
+		if(!Array.isArray(charts)) {
+			charts = [ charts ];
+		}
+		
 		// Normalizing stillLoading to a boolean
 		stillLoading = !!stillLoading;
 		if(!!doGenerate || stillLoading) {
@@ -3454,6 +3472,46 @@ angular.module('blueprintApp')
 		}
 		
 		redrawCharts(rangeData.charts);
+	};
+	
+	$scope.switchChart = function(event,chart,rangeData) {
+		if(event.ctrlKey) {
+			rangeData.charts.forEach(function(chart) {
+				chart.isHidden = true;
+			});
+			chart.isHidden = false;
+		} else if(event.shiftKey) {
+			chart.meanSeriesHidden = !chart.meanSeriesHidden;
+			redrawCharts(chart);
+		} else {
+			chart.isHidden = !chart.isHidden;
+		}
+	};
+	
+	$scope.showAllCharts = function(event,rangeData) {
+		if(event.shiftKey) {
+			rangeData.charts.forEach(function(chart) {
+				chart.meanSeriesHidden = false;
+			});
+			redrawCharts(rangeData.charts);
+		} else {
+			rangeData.charts.forEach(function(chart) {
+				chart.isHidden = false;
+			});
+		}
+	};
+
+	$scope.hideAllCharts = function(event,rangeData) {
+		if(event.shiftKey) {
+			rangeData.charts.forEach(function(chart) {
+				chart.meanSeriesHidden = true;
+			});
+			redrawCharts(rangeData.charts);
+		} else {
+			rangeData.charts.forEach(function(chart) {
+				chart.isHidden = true;
+			});
+		}
 	};
 	
 	$scope.showAllSeries = function(rangeData) {

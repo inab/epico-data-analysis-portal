@@ -79,12 +79,23 @@
 		<tab-heading><i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching}"></i>{{rangeData.heading}}</tab-heading>
 		<!-- This trick allows reflowing the charts which were drawn in background -->
 		{{doReflow()}}<p class="text-center" ng-bind-html="rangeData.found"></p>
-		<div class="col-xs-12 col-sm-2 col-lg-1 terms-selector">
-				<div class="col-xs-1 col-sm-12 termItem" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES" ng-hide="$parent.rangeData[meanSeriesDesc.chartId].isEmpty">
-					<span class="square" ng-style="{'border-color': meanSeriesDesc.color, 'background-color': meanSeriesDesc.color }"></span>
-					<span class="term" style="color: initial;">{{meanSeriesDesc.name}}</span>
+		<div class="col-xs-12 col-sm-2 col-lg-1">
+			<div class="row terms-selector">
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData)">
+					<span class="square" style="border-color: #202020 ; background-color: white;"></span>
+					<span class="term">Hide all charts / mean series</span>
+				</div>
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllCharts($event,rangeData)">
+					<span class="square" style="border-color: #202020 ; background-color: #202020;"></span>
+					<span class="term">Show all charts / mean series</span>
 				</div>
 				<div class="col-xs-1 col-sm-12">&nbsp;</div>
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES" ng-click="switchChart($event,$parent.rangeData[meanSeriesDesc.chartId],rangeData)" ng-hide="$parent.rangeData[meanSeriesDesc.chartId].isEmpty" tooltip-html="$parent.$parent.chartSwitchTooltip">
+					<span class="square" ng-style="{'border-color': meanSeriesDesc.color, 'background-color': $parent.rangeData[meanSeriesDesc.chartId].isHidden ? 'white' : ($parent.rangeData[meanSeriesDesc.chartId].meanSeriesHidden ? '#E0E0E0': meanSeriesDesc.color) }"></span>
+					<span class="term" ng-style="{color: $parent.rangeData[meanSeriesDesc.chartId].isHidden ? 'gray': 'initial'}">{{meanSeriesDesc.name}}</span>
+				</div>
+			</div>
+			<div class="row terms-selector">
 				<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData)">
 					<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
 					<span class="term">Hide all cell types</span>
@@ -98,11 +109,12 @@
 					<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
 					<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
 				</div>
+			</div>
 		</div>
 		
 		<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
 			<div class="row" style="width:100%">
-				<div class="col-md-12 col-lg-6" ng-repeat="chart in rangeData.charts" ng-hide="chart.isEmpty">
+				<div class="col-md-12 col-lg-6" ng-repeat="chart in rangeData.charts" ng-hide="chart.isEmpty || chart.isHidden">
 					<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
 					<canvasjs class="datachart" ng-if="chart.library==='canvasjs'" config="chart.options"></canvasjs>
 					<chartjs class="datachart" ng-if="chart.library==='chartjs'" config="chart.options"></chartjs>

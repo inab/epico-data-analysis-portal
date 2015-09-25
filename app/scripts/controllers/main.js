@@ -3171,7 +3171,7 @@ angular.module('blueprintApp')
 					// Normalizing mitochondrial chromosome name
 					m[1] = 'MT';
 				}
-				localScope.rangeQuery.push({chr: m[1], start: m[2], end: m[3]});
+				localScope.rangeQuery.push({chr: m[1], start: parseInt(m[2]), end: parseInt(m[3])});
 				localScope.currentQueryType = 'range';
 				// localScope.rangeQuery.chr   = m[1];
 				// localScope.rangeQuery.start = m[2];

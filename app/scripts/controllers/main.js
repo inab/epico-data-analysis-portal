@@ -19,6 +19,8 @@ angular.module('blueprintApp')
 	
 	$scope.termTooltip = $sce.trustAsHtml("<b>Click</b>: switches term&apos;s results<br /><b>Ctrl+Click</b>: focus on term&apos;s results");
 	
+	var DEFAULT_FLANKING_WINDOW_SIZE = 500;
+	
 	var METHYL_HYPER_GRAPH = 'methyl_hyper';
 	var METHYL_HYPO_GRAPH = 'methyl_hypo';
 	var EXP_G_GRAPH = 'exp_g';
@@ -211,6 +213,8 @@ angular.module('blueprintApp')
     $scope.featureLabel = null;
     
 	$scope.graphData = [];
+	// The default flanking window size
+	$scope.flankingWindowSize = DEFAULT_FLANKING_WINDOW_SIZE;
     
     
     
@@ -642,8 +646,11 @@ angular.module('blueprintApp')
 		return deferred.promise;
 	};
      
-	var genShouldQuery = function(rangeQueryArr,prefix) {
+	var genShouldQuery = function(rangeData,prefix) {
 		// We transform it into an array, in case it is not yet
+		var flankingWindowSize = (rangeData.flankingWindowSize !== undefined) ? rangeData.flankingWindowSize : 0;
+		
+		var rangeQueryArr = rangeData.range;
 		if(!Array.isArray(rangeQueryArr)) {
 			rangeQueryArr = [ rangeQueryArr ];
 		}
@@ -656,12 +663,15 @@ angular.module('blueprintApp')
 			chromosome_end_name = prefix + '.' + chromosome_end_name;
 		}
 		var shouldQuery = rangeQueryArr.map(function(q) {
+			var qStart = q.start-flankingWindowSize;
+			var qEnd = q.end+flankingWindowSize;
+			
 			var termQuery = {};
 			termQuery[chromosome_name] = q.chr;
 			
 			var commonRange = {
-				gte: q.start,
-				lte: q.end
+				gte: qStart,
+				lte: qEnd
 			};
 			
 			var chromosome_start_range = {};
@@ -672,12 +682,12 @@ angular.module('blueprintApp')
 			
 			var chromosome_start_lte_range = {};
 			chromosome_start_lte_range[chromosome_start_name] = {
-				lte: q.end
+				lte: qEnd
 			};
 			
 			var chromosome_end_gte_range = {};
 			chromosome_end_gte_range[chromosome_end_name] = {
-				gte: q.start
+				gte: qStart
 			};
 			
 			return {
@@ -782,7 +792,7 @@ angular.module('blueprintApp')
 	
 	var getWgbsStatsData = function(localScope,rangeData) {
 		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData.range);
+		var shouldQuery = genShouldQuery(rangeData);
 		
 		rangeData.stats.bisulfiteSeq = [];
 		rangeData.stats.bisulfiteSeqHash = {};
@@ -834,7 +844,7 @@ angular.module('blueprintApp')
 	
 	var getRnaSeqGStatsData = function(localScope,rangeData) {
 		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData.range);
+		var shouldQuery = genShouldQuery(rangeData);
 		
 		rangeData.stats.rnaSeqG = [];
 		rangeData.stats.rnaSeqGHash = {};
@@ -886,7 +896,7 @@ angular.module('blueprintApp')
 
 	var getRnaSeqTStatsData = function(localScope,rangeData) {
 		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData.range);
+		var shouldQuery = genShouldQuery(rangeData);
 		
 		rangeData.stats.rnaSeqT = [];
 		rangeData.stats.rnaSeqTHash = {};
@@ -938,7 +948,7 @@ angular.module('blueprintApp')
 
 	var getDnaseStatsData = function(localScope,rangeData) {
 		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData.range);
+		var shouldQuery = genShouldQuery(rangeData);
 		
 		rangeData.stats.dnaseSeq = [];
 		rangeData.stats.dnaseSeqHash = {};
@@ -991,11 +1001,11 @@ angular.module('blueprintApp')
 		return deferred.promise;
 	};
 	
-	var chipSeqWindow = 500;
+	var chipSeqWindow = DEFAULT_FLANKING_WINDOW_SIZE;
 	
 	var getChipSeqStatsData = function(localScope,rangeData) {			
 		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData.range);
+		var shouldQuery = genShouldQuery(rangeData);
 		
 		rangeData.stats.chipSeq = [];
 		rangeData.stats.chipSeqHash = {};
@@ -1390,7 +1400,7 @@ angular.module('blueprintApp')
 		rangeData.regionLayout = null;
 			
 		var deferred = $q.defer();
-		var nestedShouldQuery = genShouldQuery(rangeData.range,'coordinates');
+		var nestedShouldQuery = genShouldQuery(rangeData,'coordinates');
 		
 		localScope.searchButtonText = FETCHING_LABEL;
 		es.search({
@@ -1422,6 +1432,14 @@ angular.module('blueprintApp')
 				rangeData.regionLayout = {};
 				var range = rangeData.range;
 				var rangeStr = range.chr+":"+range.start+"-"+range.end;
+				var rangeStrEx = rangeStr + '';
+				var range_start = rangeData.range.start;
+				var range_end = rangeData.range.end;
+				if(rangeData.flankingWindowSize!==undefined) {
+					rangeStrEx += " \u00B1 "+rangeData.flankingWindowSize+"bp";
+					range_start -= rangeData.flankingWindowSize;
+					range_end += rangeData.flankingWindowSize;
+				}
 				
 				// Now, we have the region layout and features
 				var regionFeature = {};
@@ -1459,7 +1477,12 @@ angular.module('blueprintApp')
 					});
 				});
 				if(found.length>0) {
-					found = "Region <a href='"+REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a> overlaps "+found;
+					var newFound = "Region <a href='"+REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
+					if(rangeData.flankingWindowSize!==undefined) {
+						newFound += " (&plusmn; "+rangeData.flankingWindowSize+"bp)";
+					}
+					found = newFound + " overlaps " + found;
+					
 				} else {
 					found = 'No gene or transcript in this region';
 				}
@@ -1520,7 +1543,7 @@ angular.module('blueprintApp')
 										showLegend: false,
 										transitionDuration: 0,
 										xAxis: {
-											axisLabel: 'Coordinates (at chromosome '+range.chr+')'
+											axisLabel: 'Coordinates (at '+rangeStrEx+')'
 										},
 										yAxis: {
 											axisLabel: gData.yAxisLabel,
@@ -1631,7 +1654,7 @@ angular.module('blueprintApp')
 									},
 									xAxis: {
 										title: {
-											text: 'Ensembl Ids (at '+rangeStr+')'
+											text: 'Ensembl Ids (at '+rangeStrEx+')'
 										},
 										categories: []
 									},
@@ -1705,10 +1728,10 @@ angular.module('blueprintApp')
 									},
 									xAxis: {
 										title: {
-											text: 'Coordinates (at '+rangeStr+')'
+											text: 'Coordinates (at '+rangeStrEx+')'
 										},
-										min: range.start,
-										max: range.end,
+										min: range_start,
+										max: range_end,
 										allowDecimals: false,
 										plotBands: plotBands
 									},
@@ -1807,9 +1830,14 @@ angular.module('blueprintApp')
 	
 	var getChartData = function(localScope,rangeData) {
 		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData.range);
+		var shouldQuery = genShouldQuery(rangeData);
 		var range_start = rangeData.range.start;
 		var range_end = rangeData.range.end;
+		
+		if(rangeData.flankingWindowSize!==undefined) {
+			range_start -= rangeData.flankingWindowSize;
+			range_end += rangeData.flankingWindowSize;
+		}
 		
 		var total = 0;
 		//var totalPoints = 0;
@@ -2559,9 +2587,21 @@ angular.module('blueprintApp')
 			return false;
 		}
 
+		// Curating the value
+		var flankingWindowSize;
+		
+		if(localScope.currentQueryType !== 'range') {
+			flankingWindowSize = parseInt(localScope.flankingWindowSize);
+			
+			// Avoiding objects which are not integers
+			if(!(flankingWindowSize > 0)) {
+				flankingWindowSize = undefined;
+			}
+		}
+		
 		// First, let's update the query string
 		var qString = ( localScope.currentQueryType !== 'range' ) ? localScope.currentQueryType + ':' + localScope.currentQuery : localScope.currentQuery;
-		$location.search({q: qString});
+		$location.search({q: qString,w: (flankingWindowSize!==undefined)?flankingWindowSize:0});
 		
 		var regions = '';
 		//localScope.chromosomes.forEach(function(d){
@@ -2569,6 +2609,7 @@ angular.module('blueprintApp')
 		//});
 		// Now, let's prepare the backbones!
 		localScope.graphData = [];
+		
 		localScope.rangeQuery.forEach(function(range,i) {
 			console.log('Updating chromosome data '+range.chr);
 			//localScope.chromosomes.forEach(function(d){
@@ -2609,6 +2650,11 @@ angular.module('blueprintApp')
 				gChro: localScope.unknownChromosome,
 			};
 			
+			// Only not taking into account flanking window size for explicit ranges
+			if(flankingWindowSize !== undefined) {
+				rangeData.flankingWindowSize = flankingWindowSize;
+			}
+			
 			localScope.chromosomes.some(function(d){
 				if(d.n == range.chr) {
 					rangeData.gChro = d;
@@ -2626,6 +2672,10 @@ angular.module('blueprintApp')
 			localScope.found += localScope.currentQueryType+" <a href='"+uri+localScope.ensemblGeneId+"' target='_blank'>"+featureLabel+" ["+localScope.ensemblGeneId+"]</a>, ";
 		}
 		localScope.found += "region"+((localScope.rangeQuery.length > 1)?'s':'')+": "+regions;
+		
+		if(flankingWindowSize !== undefined) {
+			localScope.found += " (&plusmn; "+flankingWindowSize+"bp)";
+		}
 		
 		return true;
 	};
@@ -3434,9 +3484,18 @@ angular.module('blueprintApp')
 				.then(getSamples)
 				.then(fetchCellTerms);
 		
+		var w = 0;
+		if('w' in $location.search()) {
+			w = parseInt($location.search().w);
+			if(!(w > 0)) {
+				w = 0;
+			}
+		}
+		
 		if('q' in $location.search()) {
 			var query = $location.search().q;
 			promise = promise.then(function(localScope) {
+				localScope.flankingWindowSize = w;
 				localScope.query = query;
 				localScope.search();
 			});
@@ -3451,8 +3510,17 @@ angular.module('blueprintApp')
 		});
 		$scope.$on('$locationChangeSuccess', function(event) {
 			//console.log("Lo vi!!!!!");
+			var w = 0;
+			if('w' in $location.search()) {
+				w = parseInt($location.search().w);
+				if(!(w > 0)) {
+					w = 0;
+				}
+			}
+			
 			if('q' in $location.search()) {
 				var query = $location.search().q;
+				$scope.flankingWindowSize = w;
 				$scope.query = query;
 				$scope.search();
 			}

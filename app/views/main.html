@@ -11,6 +11,10 @@
 	</div>
 </script>
 
+<div ng-class="{fetching: true, show:queryInProgress hidden: !queryInProgress}" ng-if="true===false" ng-cloak="">
+	<progressbar ng-class="{progress-striped: resultsFetched==maxResultsFetched; active: resultsFetched==maxResultsFetched;" value="resultsFetched" max="maxResultsFetched" type="info">{{searchButtonText}}</progressbar>
+<h2>Loading</h2>
+</div>	
 
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">

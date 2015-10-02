@@ -269,3 +269,15 @@ div.termItem span.circle , div.termItem span.square {
 	flex-shrink: 0;
 	flex-basis: initial;
 }
+
+.fetching {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height:100%;
+	width:100%;	
+	filter: alpha(opacity=20);
+	opacity: 0.2;
+	background: #000;
+	z-index: 1;
+}

@@ -217,9 +217,10 @@ angular.module('blueprintApp')
 	$scope.graphData = [];
 	// The default flanking window size
 	$scope.flankingWindowSize = DEFAULT_FLANKING_WINDOW_SIZE;
-    
-    
-    
+	
+	// This is for the progress window
+	$scope.resultsFetched = 0;
+	$scope.maxResultsFetched = 0;
     
     
     $scope.display = 'compact';
@@ -1860,7 +1861,9 @@ angular.module('blueprintApp')
 		var total = 0;
 		//var totalPoints = 0;
 		localScope.searchButtonText = FETCHING_LABEL;
-		
+		localScope.maxResultsFetched = 0;
+		localScope.resultsFetched = 0;
+
 		var scrolled = false;
 		es.search({
 			size: 10000,
@@ -1887,6 +1890,8 @@ angular.module('blueprintApp')
 			}
 		}, function getMoreChartDataUntilDone(err, resp) {
 			if(resp.hits!==undefined) {
+				localScope.maxResultsFetched = resp.hits.total;
+				
 				resp.hits.hits.forEach(function(segment) {
 					var analysis_id = segment._source.analysis_id;
 					if(analysis_id in localScope.analysesHash) {
@@ -2142,6 +2147,7 @@ angular.module('blueprintApp')
 				
 				// Now, updating the graphs
 				localScope.searchButtonText = PLOTTING_LABEL;
+				localScope.resultsFetched = total;
 				//var xRange = [rangeData.range.start,rangeData.range.end];
 				
 				// Re-drawing charts
@@ -3219,6 +3225,8 @@ angular.module('blueprintApp')
 	$scope.search = function(theSuggest){
 		if(!$scope.queryInProgress) {
 			$scope.queryInProgress = true;
+			$scope.resultsFetched = 0;
+			$scope.maxResultsFetched = 0;
 			$scope.found = "";
 			$scope.suggestedQuery = theSuggest;
 			$scope.resultsSearch = [];
@@ -3234,7 +3242,8 @@ angular.module('blueprintApp')
 			var deferred = $q.defer();
 			var promise = deferred.promise;
 			promise = promise.then(preprocessQuery)
-				.then(launch(getGeneLayout),function(err) {
+				.then(launch(getGeneLayout))
+				.catch(function(err) {
 					openModal('Data error','Error while fetching gene layout');
 					console.error('Gene layout');
 					console.error(err);
@@ -3256,6 +3265,8 @@ angular.module('blueprintApp')
 			rangeData.toBeFetched = false;
 			
 			$scope.queryInProgress = true;
+			$scope.resultsFetched = 0;
+			$scope.maxResultsFetched = 0;
 			$scope.searchButtonText = SEARCHING_LABEL;
                         
 			var deferred = $q.defer();

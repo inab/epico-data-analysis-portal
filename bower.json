@@ -1,33 +1,30 @@
 {
-  "name": "blueprint",
-  "version": "0.0.1",
+  "name": "blueprint-data-portal",
+  "version": "0.5",
   "description": "BLUEPRINT Data Portal",
   "dependencies": {
-    "angular": "~1.4.5",
-    "json3": "~3.3.1",
-    "es5-shim": "~3.1.0",
-    "d3": "~3.5.6",
-    "bootstrap-sass-official": "~3.2.0",
-    "angular-resource": "~1.4.5",
-    "angular-cookies": "~1.4.5",
-    "angular-sanitize": "~1.4.5",
-    "angular-animate": "~1.4.5",
-    "angular-touch": "~1.4.5",
-    "angular-route": "~1.4.5",
-    "angular-bootstrap": "~0.13.0",
-    "elasticsearch": "~4.0.2",
+    "angular": "~1.4.8",
+    "json3": "~3.3.2",
+    "es5-shim": "~4.3.1",
+    "d3": "~3.5.10",
+    "bootstrap-sass-official": "~3.3.6",
+    "angular-resource": "~1.4.8",
+    "angular-cookies": "~1.4.8",
+    "angular-sanitize": "~1.4.8",
+    "angular-animate": "~1.4.8",
+    "angular-touch": "~1.4.8",
+    "angular-route": "~1.4.8",
+    "angular-bootstrap": "~0.14.3",
+    "elasticsearch": "~10.0.1",
     "bower-canvasjs": "inab/bower-canvasjs#~1.7.0",
-    "highcharts-release": "~4.1.8",
-    "highcharts-ng": "~0.0.10",
-    "highcharts-export-csv": "highslide-software/export-csv#7baa0e1e6ec3a4852379e82e17adbb9a39e5efc4",
+    "highcharts-release": "~4.1.9.1",
+    "highcharts-ng": "~0.0.11",
+    "highcharts-export-csv": "highslide-software/export-csv#828f3020fde93fc6868d90963fa047edeaedc399",
     "roboto-fontface": "~0.4.3"
   },
   "overrides": {
     "elasticsearch": {
       "main": "elasticsearch.angular.js"
-    },
-    "highcharts-export-csv": {
-      "main": "export-csv.js"
     },
     "highcharts-release": {
       "main": [
@@ -38,8 +35,8 @@
     }
   },
   "devDependencies": {
-    "angular-mocks": "~1.4.5",
-    "angular-scenario": "~1.4.5"
+    "angular-mocks": "~1.4.8",
+    "angular-scenario": "~1.4.8"
   },
   "authors": [
     {

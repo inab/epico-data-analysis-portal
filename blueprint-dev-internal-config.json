@@ -1,5 +1,5 @@
 {
-	"esHost": "http://blueprint-dev.bioinfo.cnio.es/2015-08/es",
+	"esHost": "http://blueprint-dev.bioinfo.cnio.es/dev/es",
 	"debug": true,
 	"dataRelease": "Dev Version!",
 	"dataDesc": "This release includes data from {{termNodes.length}} cell types, including {{numCellularLines}} cell lines."

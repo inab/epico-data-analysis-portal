@@ -43,7 +43,7 @@ gem install compass
 
 In the scenario of installation by hand you have to assure Compass can be reached from the command-line. This is done with the next lines:
 
-```
+```bash
 PATH="$(gem env gemdir)/bin:${PATH}"
 export PATH
 ```
@@ -54,22 +54,22 @@ export PATH
 
 5) Clone this repository, and run `npm install`, so [Grunt] (http://gruntjs.com/), [Bower] (http://bower.io/) and other dependencies are installed:
 
-```
-git clone https://github.com/inab/blueprint.git blueprint-www
+```bash
+git clone https://github.com/inab/blueprint-data-portal.git blueprint-www
 cd blueprint-www
 npm install
 ```
 
 6) Add `node_modules/.bin` subdirectory to the `PATH` environment variable, so `bower` and `grunt` can be instantiated
 
-```
+```bash
 PATH="${PWD}/node_modules/.bin:${PATH}"
 export PATH
 ```
 
 7) Run `grunt build` in order to prepare and deploy the Dataportal site, which will be deployed at `dist` subdirectory. In order to avoid running `grunt` twice, be sure `dist` directory exists before the first run.
 
-```
+```bash
 mkdir -p dist
 grunt build
 ```

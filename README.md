@@ -25,7 +25,7 @@ The configuration parameters are:
 Installation
 -----------
 
-1) Download [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) and extract the content in a folder of the machine which will host it. As Elasticsearch needs LOTS of RAM, we must dedicate at least 24GB for the instance. The latest Java JVM and Elasticsearch versions, the better. In elastichsearc.yml you should set: a `cluster.name` (so the node has its own identity); explicit `http.port` and `transport.tcp.port` (to assure they are always the same); `http.compression` and `http.cors.enabled` to `true`, so it can be queried from everywhere and the results are sent compressed; and setup `script.disable_dynamic: true`
+1) Download [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) (versions from 1.7 branch were tested, versions from 2.x branches might not work) and extract the content in a folder of the machine which will host it. As Elasticsearch needs LOTS of RAM, we must dedicate at least 24GB for the instance. The latest Java JVM and Elasticsearch versions, the better. In elastichsearc.yml you should set: a `cluster.name` (so the node has its own identity); explicit `http.port` and `transport.tcp.port` (to assure they are always the same); `http.compression` and `http.cors.enabled` to `true`, so it can be queried from everywhere and the results are sent compressed; and setup `script.disable_dynamic: true`
 
 Then run
 

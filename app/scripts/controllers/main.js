@@ -10,7 +10,7 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3','$timeout','$modal','$interpolate',function($scope,$sce,$location,$q, es, portalConfig, d3, $timeout,$modal,$interpolate) {
+  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','d3','$timeout','$uibModal','$interpolate',function($scope,$sce,$location,$q, es, portalConfig, d3, $timeout,$modal,$interpolate) {
 	
 	var SEARCHING_LABEL = "Searching...";
 	var FETCHING_LABEL = "Fetching...";
@@ -193,7 +193,6 @@ angular.module('blueprintApp')
     }
 
     $scope.queryInProgress = false;
-    $scope.suggestInProgress = false;
     $scope.searchButtonText = SEARCH_LABEL;
     $scope.found = "";
     $scope.samplesOnt = [];
@@ -2716,14 +2715,35 @@ angular.module('blueprintApp')
 			body: {
 				query:{
 					filtered:{
-						query:{
-							match: {
-								symbol: localScope.currentQuery 
-							}
-						},
 						filter: {
-							terms: {
-								feature: queryTypes
+							bool: {
+								must: [
+									{
+										terms: {
+											feature: queryTypes
+										}
+									}
+									,
+									{
+										bool: {
+											should: [
+												{
+													term: {
+														feature_id: localScope.currentQuery
+													}
+												}
+												,
+												{
+													query: {
+														match: {
+															symbol: localScope.currentQuery 
+														}
+													}
+												}
+											]
+										}
+									}
+								]
 							}
 						}
 					}
@@ -2731,13 +2751,36 @@ angular.module('blueprintApp')
 			}
 		},function(err,resp){
 			if(typeof(resp.hits.hits) !== undefined){
-				if(resp.hits.hits.length > 0) {
-					localScope.ensemblGeneId = resp.hits.hits[0]._source.feature_cluster_id;
-					localScope.currentQueryType = resp.hits.hits[0]._source.feature;
+				var theTerm = localScope.currentQuery.toUpperCase();
+				var theMatch;
+				resp.hits.hits.some(function(match) {
+					var found = match._source.coordinates.some(function(coords) {
+						if(coords.feature_id.toUpperCase() === theTerm) {
+							return true;
+						}
+						
+						return false;
+					}) || match._source.symbol.some(function(symbol) {
+						if(symbol.toUpperCase() === theTerm) {
+							return true;
+						}
+						
+						return false;
+					});
 					
-					var featureLabel = localScope.featureLabel = chooseLabelFromSymbols(resp.hits.hits[0]._source.symbol);
+					if(found) {
+						theMatch=match;
+					}
+					
+					return found;
+				});
+				if(theMatch!==undefined) {
+					localScope.ensemblGeneId = theMatch._source.feature_cluster_id;
+					localScope.currentQueryType = theMatch._source.feature;
+					
+					var featureLabel = localScope.featureLabel = chooseLabelFromSymbols(theMatch._source.symbol);
 					var isReactome = ( localScope.currentQueryType === 'reaction' || localScope.currentQueryType === 'pathway');
-					resp.hits.hits[0]._source.coordinates.forEach(function(range) {
+					theMatch._source.coordinates.forEach(function(range) {
 						var theRange = { chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end};
 						
 						theRange.label = isReactome ? range.feature_id : featureLabel;
@@ -2752,7 +2795,15 @@ angular.module('blueprintApp')
 						});
 					}
 				} else {
-					openModal('No results','Query '+localScope.currentQuery+' did not match any gene or pathway',function() {
+					var queryTypesStr = undefined;
+					queryTypes.forEach(function(queryType) {
+						if(queryTypesStr!==undefined) {
+							queryTypesStr += ' or '+queryType;
+						} else {
+							queryTypesStr = queryType;
+						}
+					});
+					openModal('No results','Query '+localScope.currentQuery+' did not match any '+queryTypesStr,function() {
 						localScope.query='';
 						deferred.reject('No results for '+localScope.currentQuery);
 					});
@@ -3247,6 +3298,9 @@ angular.module('blueprintApp')
 					openModal('Data error','Error while fetching gene layout');
 					console.error('Gene layout');
 					console.error(err);
+				}).finally(function() {
+					$scope.queryInProgress = false;
+					$scope.searchButtonText = SEARCH_LABEL;
 				});
 			
 			deferred.resolve($scope);
@@ -3331,137 +3385,130 @@ angular.module('blueprintApp')
 		return '';
 	};
 	
-	$scope.suggest = function() {
-		if(!$scope.suggestInProgress) {
-			$scope.resultsSearch = [];
-			$scope.suggestedQuery = null;
-			
-			var query = $scope.query.trim().toLowerCase();
-			var queryType;
-			var colonPos = query.indexOf(':');
-			if(colonPos!==-1) {
-				queryType = query.substring(0,colonPos);
-				query = query.substring(colonPos+1);
-			}
-			
-			if(query.length >= 3 && (!queryType || (queryType in my_feature_ranking))) {
-				$scope.suggestInProgress = true;
-				var deferred = $q.defer();
-				var promise = deferred.promise;
-				promise.finally(function() {
-					$scope.suggestInProgress = false;
-				});
-				
-				//query = query.toLowerCase();
-				var theFilter = {
-					prefix: {
-						symbol: query
+	$scope.suggestSearch = function(typedQuery) {
+		var query = typedQuery.trim().toLowerCase();
+		var queryType;
+		var colonPos = query.indexOf(':');
+		if(colonPos!==-1) {
+			queryType = query.substring(0,colonPos);
+			query = query.substring(colonPos+1);
+		}
+		
+		if(query.length >= 3 && (!queryType || (queryType in my_feature_ranking))) {
+			//query = query.toLowerCase();
+			var theFilter = {
+				prefix: {
+					symbol: query
+				}
+			};
+			var sugLimit;
+			if(queryType) {
+				theFilter = {
+					bool: {
+						must: [
+							{
+								term: {
+									feature: queryType
+								}
+							},
+							theFilter
+						]
 					}
 				};
-				var sugLimit;
-				if(queryType) {
-					theFilter = {
-						bool: {
-							must: [
-								{
-									term: {
-										feature: queryType
-									}
-								},
-								theFilter
-							]
-						}
-					};
-					sugLimit = 20;
-				} else {
-					sugLimit = 4;
-				}
-				es.search({
-					index: 'external',
-					type: 'external.features',
-					size: 5000,
-					body: {
-						query:{
-							filtered: {
-								query: {
-									match_all: {}
-								},
-								filter: theFilter
-							}
-						},
-					}
-				},function(err,resp){
-					var resultsSearch = [];
-					
-					resp.hits.hits.forEach(function(sug,i) {
-						var theTerm;
-						var theSecondTerm;
-						var isFirst = 0;
-						
-						sug._source.symbol.forEach(function(term) {
-							var termpos = term.toLowerCase().indexOf(query);
-							if(termpos===0) {
-								if(theTerm===undefined || term.length < theTerm.length) {
-									theTerm = term;
-								}
-							} else if(termpos!==-1) {
-								if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
-									theSecondTerm = term;
-								}
-							}
-						});
-						
-						// A backup default
-						if(theTerm===undefined) {
-							if(theSecondTerm !== undefined) {
-								isFirst = 1;
-								theTerm = theSecondTerm;
-							} else {
-								isFirst = 2;
-								theTerm = sug._source.symbol[0];
-							}
-						}
-						var feature = sug._source.feature;
-						var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
-						resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug._source.symbol.join(", ")+')', id:sug._id, coordinates:sug._source.coordinates, feature:feature,featureScore:featureScore, feature_cluster_id:sug._source.feature_cluster_id, symbols: sug._source.symbol});
-					});
-					
-					resultsSearch.sort(function(a,b) {
-						var retval = a.featureScore - b.featureScore;
-						if(retval===0) {
-							retval = a.isFirst - b.isFirst;
-							if(retval===0) {
-								retval = a.term.length - b.term.length;
-								if(retval===0) {
-									retval = a.term.localeCompare(b.term);
-								}
-							}
-						}
-						
-						return retval;
-					});
-					
-					var curFeat = '';
-					var numFeat = 0;
-					resultsSearch.forEach(function(r) {
-						if(r.feature != curFeat) {
-							curFeat = r.feature;
-							numFeat = 0;
-						}
-						if(numFeat<sugLimit) {
-							$scope.resultsSearch.push(r);
-							numFeat++;
-						}
-					});
-					
-					deferred.resolve();
-				});
+				sugLimit = 20;
+			} else {
+				sugLimit = 4;
 			}
+			return es.search({
+				index: 'external',
+				type: 'external.features',
+				size: 5000,
+				body: {
+					query:{
+						filtered: {
+							query: {
+								match_all: {}
+							},
+							filter: theFilter
+						}
+					},
+				}
+			}).then(function(resp){
+				var resultsSearch = [];
+				
+				resp.hits.hits.forEach(function(sug,i) {
+					var theTerm;
+					var theSecondTerm;
+					var isFirst = 0;
+					
+					sug._source.symbol.forEach(function(term) {
+						var termpos = term.toLowerCase().indexOf(query);
+						if(termpos===0) {
+							if(theTerm===undefined || term.length < theTerm.length) {
+								theTerm = term;
+							}
+						} else if(termpos!==-1) {
+							if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
+								theSecondTerm = term;
+							}
+						}
+					});
+					
+					// A backup default
+					if(theTerm===undefined) {
+						if(theSecondTerm !== undefined) {
+							isFirst = 1;
+							theTerm = theSecondTerm;
+						} else {
+							isFirst = 2;
+							theTerm = sug._source.symbol[0];
+						}
+					}
+					var feature = sug._source.feature;
+					var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
+					resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug._source.symbol.join(", ")+')', id:sug._id, coordinates:sug._source.coordinates, feature:feature,featureScore:featureScore, feature_cluster_id:sug._source.feature_cluster_id, symbols: sug._source.symbol});
+				});
+				
+				resultsSearch.sort(function(a,b) {
+					var retval = a.featureScore - b.featureScore;
+					if(retval===0) {
+						retval = a.isFirst - b.isFirst;
+						if(retval===0) {
+							retval = a.term.length - b.term.length;
+							if(retval===0) {
+								retval = a.term.localeCompare(b.term);
+							}
+						}
+					}
+					
+					return retval;
+				});
+				
+				
+				var shownResultsSearch = [];
+				
+				var curFeat = '';
+				var numFeat = 0;
+				resultsSearch.forEach(function(r) {
+					if(r.feature != curFeat) {
+						curFeat = r.feature;
+						numFeat = 0;
+					}
+					if(numFeat<sugLimit) {
+						shownResultsSearch.push(r);
+						numFeat++;
+					}
+				});
+				
+				return shownResultsSearch;
+			});
+		} else {
+			return [];
 		}
 	};
 	
 	$scope.enterSearch = function(keyEvent) {
-		if(!$scope.suggestInProgress && keyEvent.which === 13) {
+		if(keyEvent.which === 13) {
 			//if($scope.resultsSearch.length > 0) {
 			//	$scope.search($scope.resultsSearch[0]);
 			//} else {

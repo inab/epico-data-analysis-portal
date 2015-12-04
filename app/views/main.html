@@ -1,3 +1,37 @@
+<script type="text/ng-template" id="suggestionTemplate.html">
+	<span>
+		<i>({{match.label.feature}})</i> <a style="cursor:pointer">{{match.label.fullTerm}}</a>
+	</span>
+</script>
+
+<script type="text/ng-template" id="suggestionPopupTemplate.html">
+	<div class="suggest-container dropdown-menu"
+		ng-style="{top: position().top+'px', left: position().left+'px'}"
+		style="display: block;"
+		ng-show="isOpen() && !moveInProgress"
+		aria-hidden="{{!isOpen()}}">
+		<div class="suggest-item" ng-repeat="match in matches track by $index" ng-class="{active: isActive($index) }"
+				ng-mouseenter="selectActive($index)" ng-click="selectMatch($index)" role="option" id="{{::match.id}}">
+				<span uib-typeahead-match index="$index" match="match" query="query" template-url="templateUrl"></span>
+		</div>
+	</div>
+</script>
+
+<script type="text/ng-template" id="suggestionPopupTemplateOrig.html">
+	<div class="suggest-container dropdown-menu"
+		ng-style="{top: position().top+'px', left: position().left+'px'}"
+		style="display: block;"
+		ng-show="isOpen() && !moveInProgress"
+		aria-hidden="{{!isOpen()}}">
+		<ul role="listbox">
+			<li ng-repeat="match in matches track by $index" ng-class="{active: isActive($index) }"
+				ng-mouseenter="selectActive($index)" ng-click="selectMatch($index)" role="option" id="{{::match.id}}">
+				<div uib-typeahead-match index="$index" match="match" query="query" template-url="templateUrl"></div>
+			</li>
+		</ul>
+	</div>
+</script>
+
 <script type="text/ng-template" id="messages.html">
 	<div class="modal-header">
 		<h3 class="modal-title" ng-bind="modalState">{{modalState}}</h3>
@@ -11,7 +45,7 @@
 	</div>
 </script>
 
-<div ng-class="{fetching: true, show:queryInProgress hidden: !queryInProgress}" ng-if="true===false" ng-cloak="">
+<div ng-class="{fetching: true, show:queryInProgress, hidden: !queryInProgress}" ng-if="true===false" ng-cloak="">
 	<progressbar ng-class="{progress-striped: resultsFetched==maxResultsFetched; active: resultsFetched==maxResultsFetched;" value="resultsFetched" max="maxResultsFetched" type="info">{{searchButtonText}}</progressbar>
 <h2>Loading</h2>
 </div>	
@@ -28,7 +62,7 @@
                 <p>The Blueprint project is providing in this release epigenomic analysis from {{samples.length}} samples to the scientific community. Their associated epigenomes are characterized by: gene and transcript expression (from RNA-Seq experiments), hyper and hypo methylated regions (derived from WGBS experiments), chromatin accessibility (DNAse-Seq), and {{numHistones}} Histone marks binding activity (ChIP-Seq)</p>
                 <p>Use this tool to explore the behaviour of your gene in the different cell types</p>
                 <p>
-                <a tooltip-placement="bottom" tooltip="{{getDataDesc()}}"><b>Data release - {{dataRelease}}</b></a>
+                <a tooltip-placement="bottom" uib-tooltip="{{getDataDesc()}}"><b>Data release - {{dataRelease}}</b></a>
                 </p>           
             </div>
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
@@ -61,15 +95,13 @@
 		</div>
 	</div>
           <div class="col-sm-6">
-            <input ng-model="query" ng-change="suggest()" ng-keypress="enterSearch($event)" ng-disabled="queryInProgress" ng-readonly="queryInProgress || suggestInProgress" class="form-control" type="text" id="search" placeholder="Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" style="background:#f5f5f5">
+		<input id="search" type="text" ng-model="query" ng-keypress="enterSearch($event)" ng-disabled="queryInProgress" placeholder="Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" uib-typeahead="suggest for suggest in suggestSearch($viewValue)" typeadhead-loading="loadingSuggestions" typeahead-no-results="noSuggestion" typeahead-popup-template-url="suggestionPopupTemplate.html" typeahead-min-length="3" typeahead-on-select="query=label.term;search($label)" typeahead-template-url="suggestionTemplate.html" class="form-control" style="background:#f5f5f5">
+		<i ng-show="loadingSuggestions" class="glyphicon glyphicon-refresh"></i>
+		<div ng-show="noSuggestion">
+			<i class="glyphicon glyphicon-remove"></i> No Results Found
+		</div>
             <!-- <p class="small">Chromosome regions should be shorter than 10Kb</p> -->
 	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:208856422-208956421'; search()" style="cursor: pointer;">chr1:208856422-208956421</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a>, <a ng-click="query='pathway:Cell Cycle, Mitotic'; search()" style="cursor: pointer;">Pathway <i>Cell Cycle, Mitotic</i></a></p>
-		<div class="suggest-container" ng-style="{visibility: (resultsSearch.length &gt; 0) ? 'visible':'hidden'}">
-		  <div ng-repeat="suggest in resultsSearch" class="suggest-item">
-			  <i>({{suggest.feature}})</i> <a ng-click="$parent.query=suggest.term; search(suggest)" style="cursor:pointer">{{suggest.fullTerm}}</a>
-			  <br />
-		  </div>
-		</div>
           </div>
           <div class="col-sm-3 text-center"><button ng-click="search()" ng-disabled="queryInProgress" type="button" class="btn btn-primary btn-lg" ng-bind-html="searchButtonText">Search</button></div>
         </div>
@@ -78,9 +110,9 @@
   </div> 
 
 <p class="text-center" ng-bind-html="found"></p>
-<tabset style="margin-top:40px;" ng-if="graphData.length &gt; 0">
-	<tab ng-repeat="rangeData in graphData" select="doRefresh(rangeData)">
-		<tab-heading><i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching}"></i>{{rangeData.heading}}</tab-heading>
+<uib-tabset style="margin-top:40px;" ng-if="graphData.length &gt; 0">
+	<uib-tab ng-repeat="rangeData in graphData" select="doRefresh(rangeData)">
+		<uib-tab-heading><i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching}"></i>{{rangeData.heading}}</uib-tab-heading>
 		<!-- This trick allows reflowing the charts which were drawn in background -->
 		{{doReflow()}}<p class="text-center" ng-bind-html="rangeData.found"></p>
 		<div class="col-xs-12 col-sm-2 col-lg-1">
@@ -94,7 +126,7 @@
 					<span class="term">Show all charts / mean series</span>
 				</div>
 				<div class="col-xs-1 col-sm-12">&nbsp;</div>
-				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES" ng-click="switchChart($event,$parent.rangeData[meanSeriesDesc.chartId],rangeData)" ng-hide="$parent.rangeData[meanSeriesDesc.chartId].isEmpty" tooltip-html="$parent.$parent.chartSwitchTooltip">
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES" ng-click="switchChart($event,$parent.rangeData[meanSeriesDesc.chartId],rangeData)" ng-hide="$parent.rangeData[meanSeriesDesc.chartId].isEmpty" uib-tooltip-html="$parent.$parent.chartSwitchTooltip">
 					<span class="square" ng-style="{'border-color': meanSeriesDesc.color, 'background-color': $parent.rangeData[meanSeriesDesc.chartId].isHidden ? 'white' : ($parent.rangeData[meanSeriesDesc.chartId].meanSeriesHidden ? '#E0E0E0': meanSeriesDesc.color) }"></span>
 					<span class="term" ng-style="{color: $parent.rangeData[meanSeriesDesc.chartId].isHidden ? 'gray': 'initial'}">{{meanSeriesDesc.name}}</span>
 				</div>
@@ -109,7 +141,7 @@
 					<span class="term">Show all cell types</span>
 				</div>
 				<div class="col-xs-1 col-sm-12">&nbsp;</div>
-				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.termNodes" ng-click="switchTermNode($event,termNode,$parent.rangeData)" ng-if="termNode.wasSeen" tooltip-html="$parent.$parent.termTooltip" tooltip-popup-delay="500">
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.termNodes" ng-click="switchTermNode($event,termNode,$parent.rangeData)" ng-if="termNode.wasSeen" uib-tooltip-html="$parent.$parent.termTooltip" tooltip-popup-delay="500">
 					<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
 					<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
 				</div>
@@ -169,6 +201,6 @@
 				</div>
 			</div>
 		</div>
-	</tab>
-</tabset>
+	</uib-tab>
+</uib-tabset>
 </div>

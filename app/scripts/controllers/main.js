@@ -2688,7 +2688,7 @@ angular.module('blueprintApp')
 			
 			localScope.graphData.push(rangeData);
 		});
-		localScope.found = "Query '"+localScope.currentQuery+"' displaying information from ";
+		localScope.found = "Query '"+localScope.currentQuery+" ("+localScope.currentQueryType+")' displaying information from ";
 		if(localScope.currentQueryType !== 'range') {
 			var uri = (localScope.currentQueryType in SEARCH_URIS) ? SEARCH_URIS[localScope.currentQueryType] : DEFAULT_SEARCH_URI;
 			var featureLabel = localScope.featureLabel !== null ? localScope.featureLabel : localScope.currentQuery;
@@ -2699,6 +2699,11 @@ angular.module('blueprintApp')
 		if(flankingWindowSize !== undefined) {
 			localScope.found += " (&plusmn; "+flankingWindowSize+"bp)";
 		}
+		
+		localScope.graphData.forEach(function(rangeData) {
+			// This is needed, as future development can integrate several queries in the tabs
+			rangeData.queryFound = localScope.found;
+		});
 		
 		return true;
 	};

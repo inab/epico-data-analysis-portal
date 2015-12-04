@@ -20,11 +20,16 @@ $icon-font-path: "../fonts/";
 }
 .img-center {margin:0 auto;}
 
+$blueprint-color: #0b1996;
+$blueprint-data-portal-font-family: 'Roboto', sans-serif;
+
 .btn-primary{
-  background:#0b1996!important;
-  border-color:#0b1996!important;
+  background: $blueprint-color !important;
+  border-color: $blueprint-color !important;
 }
-a{color:#0b1996!important;}
+a{
+	color: $blueprint-color !important;
+}
 
 /* Main Container */
 #main-container{
@@ -51,14 +56,14 @@ body{
   margin-top:10px;
   margin-bottom:10px;
   color:#FFF;
-  font-family: 'Roboto', sans-serif;
+  font-family: $blueprint-data-portal-font-family;
   font-size:30px;
   font-weight:300;
   -webkit-font-smoothing: antialiased;
 }
 .header a{
   color:#FFF!important;
-  font-family: 'Roboto', sans-serif;
+  font-family: $blueprint-data-portal-font-family;
   font-weight:300;
   -webkit-font-smoothing: antialiased;
 }
@@ -74,7 +79,7 @@ body{
 .info h2{
   color:#444;
   line-height:130%;
-  font-family: 'Roboto', sans-serif;
+  font-family: $blueprint-data-portal-font-family;
   font-weight:300;
   font-size:22px;
   font-style: italic;
@@ -153,7 +158,7 @@ path.link {
 
 
 .nvd3 text {
-	font-family: "Roboto", Helvetica !important;
+	font-family: $blueprint-data-portal-font-family;
 	fill: #222 !important;
 }
 
@@ -280,4 +285,14 @@ div.termItem span.circle , div.termItem span.square {
 	opacity: 0.2;
 	background: #000;
 	z-index: 1;
+}
+
+$blueprint-inactive-tab-color: aliceblue;
+
+.nav-tabs > li > a {
+	border-top-color: $blueprint-inactive-tab-color;
+	border-left-color: $blueprint-inactive-tab-color;
+	border-right-color: $blueprint-inactive-tab-color;
+	background-color: $blueprint-inactive-tab-color;
+	border-bottom-color: $nav-tabs-active-link-hover-border-color;
 }

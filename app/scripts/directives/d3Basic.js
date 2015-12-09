@@ -189,7 +189,6 @@
           var i;
           var diagonal = d3.svg.diagonal();
           var treew;
-          var matirxw;
           
           var treeDepth;
           var numNodes;

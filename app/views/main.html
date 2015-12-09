@@ -33,7 +33,13 @@
 <div ng-class="{fetching: true, show:queryInProgress, hidden: !queryInProgress}" ng-if="true===false" ng-cloak="">
 	<uib-progressbar ng-class="{progress-striped: resultsFetched==maxResultsFetched; active: resultsFetched==maxResultsFetched;" value="resultsFetched" max="maxResultsFetched" type="info">{{searchButtonText}}</uib-progressbar>
 <h2>Loading</h2>
-</div>	
+</div>
+
+<script type="text/ng-template" id="template/tabs/tab.html">
+	<li ng-class="{active: active, disabled: disabled}">
+		<a ng-click="select()" uib-tab-heading-transclude>{{heading}}</a>
+	</li>
+</script>
 
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
@@ -99,7 +105,7 @@
 -->
 <uib-tabset ng-if="graphData.length &gt; 0">
 	<uib-tab ng-repeat="rangeData in graphData" select="doRefresh(rangeData)">
-		<uib-tab-heading><i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching}"></i>{{rangeData.heading}}</uib-tab-heading>
+		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching}"></i><i ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="$event.stopPropagation();removeTabResult($index);"></i></uib-tab-heading>
 		<!-- This trick allows reflowing the charts which were drawn in background -->
 		{{doReflow()}}<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 		<div class="col-xs-12 col-sm-2 col-lg-1">

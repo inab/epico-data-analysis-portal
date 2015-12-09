@@ -535,6 +535,10 @@ angular.module('blueprintApp')
 		return $interpolate($scope.dataDesc)($scope);
 	};
 	
+	$scope.removeTabResult = function(index) {
+		$scope.graphData.splice(index, 1);
+	};
+	
 	function init($q,$scope) {
 		var deferred = $q.defer();
 		var promise = deferred.promise;

@@ -10,7 +10,7 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$sce','$location','$q','es','portalConfig','QueryService','ChartService','ConstantsService','d3','$timeout','$uibModal','$interpolate',function($scope,$sce,$location,$q, es, portalConfig, QueryService, ChartService, ConstantsService, d3, $timeout,$modal,$interpolate) {
+  .controller('MainCtrl', ['$scope','$sce','$location','$q','portalConfig','QueryService','ChartService','ConstantsService','$timeout','$uibModal','$interpolate',function($scope,$sce,$location,$q, portalConfig, QueryService, ChartService, ConstantsService, $timeout,$modal,$interpolate) {
 	
 	var SEARCHING_LABEL = "Searching...";
 	var SEARCH_LABEL = "Search";
@@ -222,133 +222,47 @@ angular.module('blueprintApp')
 		return true;
 	};
 	
-	var DEFAULT_QUERY_TYPES = ["gene","pathway","reaction"];
-	
-	var getRanges = function(localScope){
-		var deferred = $q.defer();
-		var queryTypes = localScope.currentQueryType!==undefined ? [localScope.currentQueryType] : DEFAULT_QUERY_TYPES;
-		es.search({
-			index: 'external',
-			type: 'external.features',
-			size: 1000,
-			body: {
-				query:{
-					filtered:{
-						filter: {
-							bool: {
-								must: [
-									{
-										terms: {
-											feature: queryTypes
-										}
-									},
-									{
-										bool: {
-											should: [
-												{
-													term: {
-														feature_id: localScope.currentQuery
-													}
-												},
-												{
-													query: {
-														match: {
-															symbol: localScope.currentQuery 
-														}
-													}
-												}
-											]
-										}
-									}
-								]
-							}
-						}
-					}
-				}
-			}
-		},function(err,resp){
-			if(typeof(resp.hits.hits) !== undefined){
-				var theTerm = localScope.currentQuery.toUpperCase();
-				var theMatch;
-				resp.hits.hits.some(function(match) {
-					var found = match._source.coordinates.some(function(coords) {
-						if(coords.feature_id.toUpperCase() === theTerm) {
-							return true;
-						}
-						
-						return false;
-					}) || match._source.symbol.some(function(symbol) {
-						if(symbol.toUpperCase() === theTerm) {
-							return true;
-						}
-						
-						return false;
-					});
-					
-					if(found) {
-						theMatch=match;
-					}
-					
-					return found;
-				});
-				if(theMatch!==undefined) {
-					localScope.ensemblGeneId = theMatch._source.feature_cluster_id;
-					localScope.currentQueryType = theMatch._source.feature;
-					
-					var featureLabel = localScope.featureLabel = ChartService.chooseLabelFromSymbols(theMatch._source.symbol);
-					var isReactome = ( localScope.currentQueryType === 'reaction' || localScope.currentQueryType === 'pathway');
-					theMatch._source.coordinates.forEach(function(range) {
-						var theRange = { chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end};
-						
-						theRange.label = isReactome ? range.feature_id : featureLabel;
-						localScope.rangeQuery.push(theRange);
-					});
-					if(updateChromosomes(localScope)) {
-						deferred.resolve(localScope);
-					} else {
-						openModal('Query rejected (too large)','Chromosomical range of query '+localScope.currentQuery+' is larger than '+ConstantsService.CHR_SEGMENT_LIMIT+"bp",function() {
-							localScope.query='';
-							deferred.reject('Too large query '+localScope.currentQuery);
-						});
-					}
-				} else {
-					var queryTypesStr;
-					queryTypes.forEach(function(queryType) {
-						if(queryTypesStr!==undefined) {
-							queryTypesStr += ' or '+queryType;
-						} else {
-							queryTypesStr = queryType;
-						}
-					});
-					openModal('No results','Query '+localScope.currentQuery+' did not match any '+queryTypesStr,function() {
-						localScope.query='';
-						deferred.reject('No results for '+localScope.currentQuery);
-					});
-				}
-			} else {
-				deferred.reject(err);
-			}
-		});
-		return deferred.promise;
-	};
-
 	var topFeatures = {
 		'gene': null,
 		'reaction': null,
 		'pathway': null
 	};
 
-	var my_feature_ranking = {
-		gene: 1,
-		pathway: 2,
-		transcript: 3,
-		exon: 4,
-		reaction: 5,
-		CDS: 6,
-		UTR: 7,
-		start_codon: 8,
-		stop_codon: 9,
-		Selenocysteine: 10
+	$scope.processRangeMatch = function processRangeMatch(localScope,queryTypes,deferred,theMatch) {
+		if(theMatch!==undefined) {
+			localScope.ensemblGeneId = theMatch._source.feature_cluster_id;
+			localScope.currentQueryType = theMatch._source.feature;
+			
+			var featureLabel = localScope.featureLabel = ChartService.chooseLabelFromSymbols(theMatch._source.symbol);
+			var isReactome = ( localScope.currentQueryType === 'reaction' || localScope.currentQueryType === 'pathway');
+			theMatch._source.coordinates.forEach(function(range) {
+				var theRange = { chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end};
+				
+				theRange.label = isReactome ? range.feature_id : featureLabel;
+				localScope.rangeQuery.push(theRange);
+			});
+			if(updateChromosomes(localScope)) {
+				deferred.resolve(localScope);
+			} else {
+				openModal('Query rejected (too large)','Chromosomical range of query '+localScope.currentQuery+' is larger than '+ConstantsService.CHR_SEGMENT_LIMIT+"bp",function() {
+					localScope.query='';
+					deferred.reject('Too large query '+localScope.currentQuery);
+				});
+			}
+		} else {
+			var queryTypesStr;
+			queryTypes.forEach(function(queryType) {
+				if(queryTypesStr!==undefined) {
+					queryTypesStr += ' or '+queryType;
+				} else {
+					queryTypesStr = queryType;
+				}
+			});
+			openModal('No results','Query '+localScope.currentQuery+' did not match any '+queryTypesStr,function() {
+				localScope.query='';
+				deferred.reject('No results for '+localScope.currentQuery);
+			});
+		}
 	};
 	
 	var preprocessQuery = function(localScope) {
@@ -380,7 +294,7 @@ angular.module('blueprintApp')
 			var m;
 			if(colonPos!==-1) {
 				var possibleQueryType = q.substring(0,colonPos);
-				if(possibleQueryType in my_feature_ranking) {
+				if(possibleQueryType in QueryService.my_feature_ranking) {
 					queryType = possibleQueryType;
 					q = q.substring(colonPos+1);
 				} else {
@@ -404,7 +318,7 @@ angular.module('blueprintApp')
 				acceptedUpdate = updateChromosomes(localScope);
 			} else {
 				localScope.currentQueryType = queryType;
-				promise = promise.then(getRanges);
+				promise = promise.then(QueryService.getRanges);
 			}
 		}
 		
@@ -534,127 +448,7 @@ angular.module('blueprintApp')
 		return '';
 	};
 	
-	$scope.suggestSearch = function(typedQuery) {
-		var query = typedQuery.trim().toLowerCase();
-		var queryType;
-		var colonPos = query.indexOf(':');
-		if(colonPos!==-1) {
-			queryType = query.substring(0,colonPos);
-			query = query.substring(colonPos+1);
-		}
-		
-		if(query.length >= 3 && (!queryType || (queryType in my_feature_ranking))) {
-			//query = query.toLowerCase();
-			var theFilter = {
-				prefix: {
-					symbol: query
-				}
-			};
-			var sugLimit;
-			if(queryType) {
-				theFilter = {
-					bool: {
-						must: [
-							{
-								term: {
-									feature: queryType
-								}
-							},
-							theFilter
-						]
-					}
-				};
-				sugLimit = 20;
-			} else {
-				sugLimit = 4;
-			}
-			return es.search({
-				index: 'external',
-				type: 'external.features',
-				size: 5000,
-				body: {
-					query:{
-						filtered: {
-							query: {
-								match_all: {}
-							},
-							filter: theFilter
-						}
-					},
-				}
-			}).then(function(resp){
-				var resultsSearch = [];
-				
-				resp.hits.hits.forEach(function(sug,i) {
-					var theTerm;
-					var theSecondTerm;
-					var isFirst = 0;
-					
-					sug._source.symbol.forEach(function(term) {
-						var termpos = term.toLowerCase().indexOf(query);
-						if(termpos===0) {
-							if(theTerm===undefined || term.length < theTerm.length) {
-								theTerm = term;
-							}
-						} else if(termpos!==-1) {
-							if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
-								theSecondTerm = term;
-							}
-						}
-					});
-					
-					// A backup default
-					if(theTerm===undefined) {
-						if(theSecondTerm !== undefined) {
-							isFirst = 1;
-							theTerm = theSecondTerm;
-						} else {
-							isFirst = 2;
-							theTerm = sug._source.symbol[0];
-						}
-					}
-					var feature = sug._source.feature;
-					var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
-					resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug._source.symbol.join(", ")+')', id:sug._id, coordinates:sug._source.coordinates, feature:feature,featureScore:featureScore, feature_cluster_id:sug._source.feature_cluster_id, symbols: sug._source.symbol});
-				});
-				
-				resultsSearch.sort(function(a,b) {
-					var retval = a.featureScore - b.featureScore;
-					if(retval===0) {
-						retval = a.isFirst - b.isFirst;
-						if(retval===0) {
-							retval = a.term.length - b.term.length;
-							if(retval===0) {
-								retval = a.term.localeCompare(b.term);
-							}
-						}
-					}
-					
-					return retval;
-				});
-				
-				
-				var shownResultsSearch = [];
-				
-				var curFeat = '';
-				var numFeat = 0;
-				resultsSearch.forEach(function(r) {
-					if(r.feature != curFeat) {
-						curFeat = r.feature;
-						numFeat = 0;
-					}
-					if(numFeat<sugLimit) {
-						shownResultsSearch.push(r);
-						numFeat++;
-					}
-				});
-				
-				return shownResultsSearch;
-			});
-		} else {
-			return [];
-		}
-	};
+	$scope.suggestSearch = QueryService.suggestSearch;
 	
 	$scope.enterSearch = function(keyEvent) {
 		if(keyEvent.which === 13) {

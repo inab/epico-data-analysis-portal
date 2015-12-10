@@ -296,3 +296,16 @@ $blueprint-inactive-tab-color: aliceblue;
 	background-color: $blueprint-inactive-tab-color;
 	border-bottom-color: $nav-tabs-active-link-hover-border-color;
 }
+
+.blink {
+	animation: blinker 1s  linear infinite alternate;
+}
+
+@keyframes blinker {
+	from { opacity: 1; }
+	to { opacity: 0; }
+}
+
+.hover_red:hover {
+	color: red;
+}

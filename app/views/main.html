@@ -105,7 +105,7 @@
 -->
 <uib-tabset ng-if="graphData.length &gt; 0">
 	<uib-tab ng-repeat="rangeData in graphData" select="doRefresh(rangeData)">
-		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching}"></i><i ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="$event.stopPropagation();removeTabResult($index);"></i></uib-tab-heading>
+		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching, 'blink': rangeData.fetching}"></i><i class="hover_red" ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="$event.stopPropagation();removeTabResult($index);"></i></uib-tab-heading>
 		<!-- This trick allows reflowing the charts which were drawn in background -->
 		{{doReflow()}}<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 		<div class="col-xs-12 col-sm-2 col-lg-1">

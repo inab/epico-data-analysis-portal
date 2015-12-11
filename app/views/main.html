@@ -41,6 +41,18 @@
 	</li>
 </script>
 
+<script type="text/ng-template" id="tooltip/term.html">
+	<span><b>Click</b>: switches term&apos;s results<br /><b>Ctrl+Click</b>: focus on term&apos;s results</span>
+</script>
+
+<script type="text/ng-template" id="tooltip/closeTab.html">
+	<span><b>Click</b>: close this tab<br /><b>Shift+Click</b>: close this tab and modify the query</span>
+</script>
+
+<script type="text/ng-template" id="tooltip/chartSwitch.html">
+	<span><b>Click</b>: switches chart visibility<br /><b>Ctrl+Click</b>: hide all charts but this<br /><b>Shift+Click</b>: Switch mean series from chart</span>
+</script>
+
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
 		<div class="row">
@@ -105,7 +117,7 @@
 -->
 <uib-tabset ng-if="graphData.length &gt; 0">
 	<uib-tab ng-repeat="rangeData in graphData" select="doRefresh(rangeData)">
-		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching, 'blink': rangeData.fetching}"></i><i class="hover_red" ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="$event.stopPropagation();removeTabResult($index);"></i></uib-tab-heading>
+		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching, 'blink': rangeData.fetching}"></i><i class="hover_red" ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
 		<!-- This trick allows reflowing the charts which were drawn in background -->
 		{{doReflow()}}<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 		<div class="col-xs-12 col-sm-2 col-lg-1">
@@ -119,7 +131,7 @@
 					<span class="term">Show all charts / mean series</span>
 				</div>
 				<div class="col-xs-1 col-sm-12">&nbsp;</div>
-				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES" ng-click="switchChart($event,$parent.rangeData[meanSeriesDesc.chartId],rangeData)" ng-hide="$parent.rangeData[meanSeriesDesc.chartId].isEmpty" uib-tooltip-html="$parent.$parent.chartSwitchTooltip">
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES" ng-click="switchChart($event,$parent.rangeData[meanSeriesDesc.chartId],rangeData)" ng-hide="$parent.rangeData[meanSeriesDesc.chartId].isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'">
 					<span class="square" ng-style="{'border-color': meanSeriesDesc.color, 'background-color': $parent.rangeData[meanSeriesDesc.chartId].isHidden ? 'white' : ($parent.rangeData[meanSeriesDesc.chartId].meanSeriesHidden ? '#E0E0E0': meanSeriesDesc.color) }"></span>
 					<span class="term" ng-style="{color: $parent.rangeData[meanSeriesDesc.chartId].isHidden ? 'gray': 'initial'}">{{meanSeriesDesc.name}}</span>
 				</div>
@@ -134,7 +146,7 @@
 					<span class="term">Show all cell types</span>
 				</div>
 				<div class="col-xs-1 col-sm-12">&nbsp;</div>
-				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.termNodes" ng-click="switchTermNode($event,termNode,$parent.rangeData)" ng-if="termNode.wasSeen" uib-tooltip-html="$parent.$parent.termTooltip" tooltip-popup-delay="500">
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.termNodes" ng-click="switchTermNode($event,termNode,$parent.rangeData)" ng-if="termNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-popup-delay="500">
 					<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
 					<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
 				</div>

@@ -47,5 +47,9 @@ factory('ConstantsService',function() {
 		DEFAULT_SEARCH_URI: DEFAULT_SEARCH_URI,
 		REGION_SEARCH_URI: REGION_SEARCH_URI,
 		SEARCH_URIS: SEARCH_URIS,
+		
+		isReactome: function(queryType) {
+			return ( queryType === 'reaction' || queryType === 'pathway');
+		}
 	};
 });

@@ -490,7 +490,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		// Now, we have the region layout and features
 		var regionFeature = {};
 		var found = '';
-		var isReactome = ( localScope.currentQueryType === 'reaction' || localScope.currentQueryType === 'pathway');
+		var isReactome = ConstantsService.isReactome(range.currentQuery.queryType);
 		results.forEach(function(feature) {
 			var featureRegion = feature._source;
 			var dest = featureRegion.feature;

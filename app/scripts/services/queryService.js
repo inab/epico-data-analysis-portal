@@ -1105,7 +1105,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			return localScope;
 		}
 		rangeData.regionLayout = null;
-			
+		
 		var deferred = $q.defer();
 		var nestedShouldQuery = genShouldQuery(rangeData,'coordinates');
 		
@@ -1504,83 +1504,109 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	
 	var DEFAULT_QUERY_TYPES = ["gene","pathway","reaction"];
 	
-	function getRanges(localScope) {
-		var deferred = $q.defer();
-		var queryTypes = localScope.currentQueryType!==undefined ? [localScope.currentQueryType] : DEFAULT_QUERY_TYPES;
-		es.search({
-			index: ConstantsService.EXTERNAL_DATA_INDEX,
-			type: ConstantsService.EXTERNAL_FEATURES_CONCEPT,
-			size: 1000,
-			body: {
-				query:{
-					filtered:{
-						filter: {
-							bool: {
-								must: [
-									{
-										terms: {
-											feature: queryTypes
-										}
-									},
-									{
+	function scheduleGetRanges(currentQueries,parentProcessRangeMatchNoResults,parentPromise) {
+		currentQueries.forEach(function(currentQuery) {
+			if(!currentQuery.gotRanges) {
+				parentPromise = parentPromise.then(function(localScope) {
+					var deferred = $q.defer();
+					var promise = deferred.promise;
+					
+					var queryTypes = currentQuery.queryType!==undefined ? [currentQuery.queryType] : DEFAULT_QUERY_TYPES;
+					var query = currentQuery.query;
+					es.search({
+						index: ConstantsService.EXTERNAL_DATA_INDEX,
+						type: ConstantsService.EXTERNAL_FEATURES_CONCEPT,
+						size: 1000,
+						body: {
+							query:{
+								filtered:{
+									filter: {
 										bool: {
-											should: [
+											must: [
 												{
-													term: {
-														feature_id: localScope.currentQuery
+													terms: {
+														feature: queryTypes
 													}
 												},
 												{
-													query: {
-														match: {
-															symbol: localScope.currentQuery 
-														}
+													bool: {
+														should: [
+															{
+																term: {
+																	feature_id: query
+																}
+															},
+															{
+																query: {
+																	match: {
+																		symbol: query 
+																	}
+																}
+															}
+														]
 													}
 												}
 											]
 										}
 									}
-								]
+								}
 							}
 						}
-					}
-				}
-			}
-		},function(err,resp){
-			if(typeof(resp.hits.hits) !== undefined){
-				var theTerm = localScope.currentQuery.toUpperCase();
-				var theMatch;
-				resp.hits.hits.some(function(match) {
-					var found = match._source.coordinates.some(function(coords) {
-						if(coords.feature_id.toUpperCase() === theTerm) {
-							return true;
+					},function(err,resp){
+						if(typeof(resp.hits.hits) !== undefined){
+							var theTerm = query.toUpperCase();
+							var theMatch;
+							resp.hits.hits.some(function(match) {
+								var found = match._source.coordinates.some(function(coords) {
+									if(coords.feature_id.toUpperCase() === theTerm) {
+										return true;
+									}
+									
+									return false;
+								}) || match._source.symbol.some(function(symbol) {
+									if(symbol.toUpperCase() === theTerm) {
+										return true;
+									}
+									
+									return false;
+								});
+								
+								if(found) {
+									theMatch=match;
+								}
+								
+								return found;
+							});
+							
+							if(theMatch!==undefined) {
+								currentQuery.gotRanges = true;
+								currentQuery.queryType = theMatch._source.feature;
+								currentQuery.queryTypeStr = theMatch._source.feature;
+								currentQuery.ensemblGeneId = theMatch._source.feature_cluster_id;
+								
+								var featureLabel = currentQuery.featureLabel = ChartService.chooseLabelFromSymbols(theMatch._source.symbol);
+								var isReactome = ConstantsService.isReactome(currentQuery.queryType);
+								theMatch._source.coordinates.forEach(function(range) {
+									var theRange = { feature_id: range.feature_id, currentQuery: currentQuery, chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end};
+									
+									theRange.label = isReactome ? range.feature_id : featureLabel;
+									
+									localScope.rangeQuery.push(theRange);
+								});
+								deferred.resolve(localScope);
+							} else {
+								parentProcessRangeMatchNoResults(localScope,currentQuery,queryTypes,deferred);
+							}
+						} else {
+							deferred.reject(err);
 						}
-						
-						return false;
-					}) || match._source.symbol.some(function(symbol) {
-						if(symbol.toUpperCase() === theTerm) {
-							return true;
-						}
-						
-						return false;
 					});
-					
-					if(found) {
-						theMatch=match;
-					}
-					
-					return found;
+					return promise;
 				});
-				if(localScope.processRangeMatch) {
-					localScope.processRangeMatch(localScope,queryTypes,deferred,theMatch);
-				} else {
-					deferred.reject('Missing callback for range queries processing');
-				}
-			} else {
-				deferred.reject(err);
 			}
 		});
-		return deferred.promise;
+		
+		return parentPromise;
 	}
 	
 	var my_feature_ranking = {
@@ -1741,7 +1767,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		getChipSeqStatsData: getChipSeqStatsData,
 		// Misc methods
 		suggestSearch: suggestSearch,
-		getRanges: getRanges,
+		scheduleGetRanges: scheduleGetRanges,
 		my_feature_ranking: my_feature_ranking,
 	};
 }]);

@@ -15,6 +15,13 @@ angular.module('blueprintApp')
 	var SEARCHING_LABEL = "Searching...";
 	var SEARCH_LABEL = "Search";
 	
+	var RANGE_QUERY = 'range';
+	var UNION_ADDITIVITY = ' + ';
+	var DIFF_ADDITIVITY = ' - ';
+	
+	var UNION_ADDITIVITY_PATTERN = / *\+ +/;
+	var DIFF_ADDITIVITY_PATTERN = / *\- +/;
+	
 	$scope.termTooltip = $sce.trustAsHtml("<b>Click</b>: switches term&apos;s results<br /><b>Ctrl+Click</b>: focus on term&apos;s results");
 	
 	$scope.chartSwitchTooltip  = $sce.trustAsHtml("<b>Click</b>: switches chart visibility<br /><b>Ctrl+Click</b>: hide all charts but this<br /><b>Shift+Click</b>: Switch mean series from chart");
@@ -48,10 +55,8 @@ angular.module('blueprintApp')
     $scope.histoneMap = {};
     
     $scope.rangeQuery = [];
-    $scope.ensemblGeneId = null;
-    $scope.currentQuery = null;
-    $scope.currentQueryType = null;
-    $scope.featureLabel = null;
+    $scope.currentQueries = [];
+    $scope.currentQueryStr = null;
     
 	$scope.graphData = [];
 	// The default flanking window size
@@ -115,112 +120,190 @@ angular.module('blueprintApp')
 	ChartService.initializeSubtotalsCharts($scope);
 
 	
-	var updateChromosomes = function(localScope) {
+	function updateChromosomes(localScope) {
+		var deferred = $q.defer();
+		var promise = deferred.promise;
+		
+		var blamedQuery;
 		var tooMuch = localScope.rangeQuery.some(function(range) {
-			return ((range.start>=range.end) || (range.end - range.start) > ConstantsService.CHR_SEGMENT_LIMIT);
+			tooMuch = ((range.start>=range.end) || (range.end - range.start) > ConstantsService.CHR_SEGMENT_LIMIT);
+			if(tooMuch) {
+				blamedQuery = range.currentQuery;
+			}
+			return tooMuch;
 		});
 		
 		if(tooMuch) {
-			return false;
-		}
-
-		// Curating the value
-		var flankingWindowSize;
-		
-		if(localScope.currentQueryType !== 'range') {
-			flankingWindowSize = parseInt(localScope.flankingWindowSize);
-			
-			// Avoiding objects which are not integers
-			if(!(flankingWindowSize > 0)) {
-				flankingWindowSize = undefined;
-			}
-		}
-		
-		// First, let's update the query string
-		var qString = ( localScope.currentQueryType !== 'range' ) ? localScope.currentQueryType + ':' + localScope.currentQuery : localScope.currentQuery;
-		$location.search({q: qString,w: (flankingWindowSize!==undefined)?flankingWindowSize:0});
-		
-		var regions = '';
-		//localScope.chromosomes.forEach(function(d){
-		//	d.c = "chr";
-		//});
-		// Now, let's prepare the backbones!
-		localScope.graphData = [];
-		
-		localScope.rangeQuery.forEach(function(range,i) {
-			console.log('Updating chromosome data '+range.chr);
-			//localScope.chromosomes.forEach(function(d){
-			//	if(d.n == range.chr) {
-			//		d.c = "chr_active";
-			//	}
-			//});
-			
-			if(i>0) {
-				regions += ' ; ';
-			}
-			var rangeStr = range.chr+":"+range.start+"-"+range.end;
-			
-			regions += "<a href='"+ConstantsService.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
-			
-			// Preparing the charts!
-			var termNodes = angular.copy(localScope.termNodes);
-			var termNodesHash = {};
-			termNodes.forEach(function(termNode) {
-				termNodesHash[termNode.o_uri] = termNode;
+			openModal('Query rejected (too large)','Chromosomical range of (sub)query '+blamedQuery.query+' is larger than '+ConstantsService.CHR_SEGMENT_LIMIT+"bp",function() {
+				localScope.query='';
+				deferred.reject('Too large query '+blamedQuery.query);
 			});
-			var rangeData = {
-				toBeFetched: true,
-				fetching: false,
-				heading: (range.label !== undefined) ? range.label : ('Region ' + range.chr + ':' + range.start + '-' + range.end),
-				range: range,
-				treedata: null,
-				termNodes: termNodes,
-				termNodesHash: termNodesHash,
-				charts: [],
-				stats: {
-					bisulfiteSeq: [],
-					rnaSeqG: [],
-					rnaSeqT: [],
-					chipSeq: [],
-					dnaseSeq: [],
-				},
-				gChro: localScope.unknownChromosome,
-			};
-			
-			// Only not taking into account flanking window size for explicit ranges
-			if(flankingWindowSize !== undefined) {
-				rangeData.flankingWindowSize = flankingWindowSize;
-			}
-			
-			localScope.chromosomes.some(function(d){
-				if(d.n == range.chr) {
-					rangeData.gChro = d;
-					return true;
+		} else {
+			// First, let's update the query string
+			var qString='';
+			localScope.currentQueries.forEach(function(currentQuery,i) {
+				if(i>0 || currentQuery.additivity === DIFF_ADDITIVITY) {
+					qString += currentQuery.additivity;
 				}
-				return false;
+				
+				// Curating the value
+				var flankingWindowSize;
+				
+				if(currentQuery.queryType !== RANGE_QUERY && currentQuery.flankingWindowSize !== undefined) {
+					flankingWindowSize = parseInt(currentQuery.flankingWindowSize);
+					
+					// Avoiding objects which are not integers
+					if(!(flankingWindowSize > 0)) {
+						flankingWindowSize = undefined;
+					}
+				}
+				
+				qString += ( currentQuery.queryType !== RANGE_QUERY ) ? currentQuery.queryType + ':' + currentQuery.query : currentQuery.query;
+				if(flankingWindowSize!==undefined) {
+					qString += ':'+flankingWindowSize;
+				}
+			});
+			$location.search({q: qString});
+			
+			// Now, let's remove the ranges which overlap
+			var overlappers = {};
+			localScope.rangeQuery.forEach(function(range,i) {
+				console.log("Over "+i);
+				console.log(overlappers);
+				console.log(range);
+				var raQuery = range.currentQuery;
+				if(raQuery.additivity !== DIFF_ADDITIVITY) {
+					if(range.feature_id!==undefined) {
+						var featureId = range.feature_id;
+						// Removing subversions
+						var dotLast = featureId.lastIndexOf('.');
+						if(dotLast!==-1) {
+							featureId = featureId.substr(0,dotLast);
+						}
+						if(featureId in overlappers) {
+							var ovQuery = overlappers[featureId].currentQuery;
+							if(
+								(ovQuery.flankingWindowSize===undefined && raQuery.flankingWindowSize===undefined) ||
+								(ovQuery.flankingWindowSize!==undefined && raQuery.flankingWindowSize===undefined) ||
+								(ovQuery.flankingWindowSize!==undefined && raQuery.flankingWindowSize!==undefined && ovQuery.flankingWindowSize>=raQuery.flankingWindowSize)
+							) {
+								range.isDisabled = true;
+							} else {
+								overlappers[featureId].isDisabled = true;
+								overlappers[featureId] = range;
+							}
+						} else {
+							overlappers[featureId] = range;
+						}
+					}
+				} else {
+					range.isDisabled = true;
+					if(range.feature_id!==undefined) {
+						var featureId = range.feature_id;
+						// Removing subversions
+						var dotLast = featureId.lastIndexOf('.');
+						if(dotLast!==-1) {
+							featureId = featureId.substr(0,dotLast);
+						}
+						if(featureId in overlappers) {
+							overlappers[featureId].isDisabled = true;
+							delete overlappers[featureId];
+						}
+					}
+				}
 			});
 			
-			localScope.graphData.push(rangeData);
-		});
-		localScope.found = "Query '"+localScope.currentQuery+" ("+localScope.currentQueryType+")' displaying information from ";
-		if(localScope.currentQueryType !== 'range') {
-			var uri = (localScope.currentQueryType in ConstantsService.SEARCH_URIS) ? ConstantsService.SEARCH_URIS[localScope.currentQueryType] : ConstantsService.DEFAULT_SEARCH_URI;
-			var featureLabel = localScope.featureLabel !== null ? localScope.featureLabel : localScope.currentQuery;
-			localScope.found += localScope.currentQueryType+" <a href='"+uri+localScope.ensemblGeneId+"' target='_blank'>"+featureLabel+" ["+localScope.ensemblGeneId+"]</a>, ";
+			var regions = '';
+			//localScope.chromosomes.forEach(function(d){
+			//	d.c = "chr";
+			//});
+			// Now, let's prepare the backbones!
+			localScope.graphData = [];
+			
+			localScope.rangeQuery.forEach(function(range,i) {
+				if(!range.isDisabled) {
+					console.log('Updating chromosome data '+range.chr);
+					//localScope.chromosomes.forEach(function(d){
+					//	if(d.n == range.chr) {
+					//		d.c = "chr_active";
+					//	}
+					//});
+					
+					if(i>0) {
+						regions += ' ; ';
+					}
+					var rangeStr = range.chr+":"+range.start+"-"+range.end;
+					
+					regions += "<a href='"+ConstantsService.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
+					
+					// Preparing the charts!
+					var termNodes = angular.copy(localScope.termNodes);
+					var termNodesHash = {};
+					termNodes.forEach(function(termNode) {
+						termNodesHash[termNode.o_uri] = termNode;
+					});
+					var rangeData = {
+						toBeFetched: true,
+						fetching: false,
+						heading: (range.label !== undefined) ? range.label : ('Region ' + range.chr + ':' + range.start + '-' + range.end),
+						range: range,
+						treedata: null,
+						termNodes: termNodes,
+						termNodesHash: termNodesHash,
+						charts: [],
+						stats: {
+							bisulfiteSeq: [],
+							rnaSeqG: [],
+							rnaSeqT: [],
+							chipSeq: [],
+							dnaseSeq: [],
+						},
+						gChro: localScope.unknownChromosome,
+					};
+					
+					// Only not taking into account flanking window size for explicit ranges
+					if(range.currentQuery.flankingWindowSize !== undefined) {
+						rangeData.flankingWindowSize = range.currentQuery.flankingWindowSize;
+					}
+					
+					localScope.chromosomes.some(function(d){
+						if(d.n == range.chr) {
+							rangeData.gChro = d;
+							return true;
+						}
+						return false;
+					});
+					
+					localScope.graphData.push(rangeData);
+				}
+			});
+			localScope.found = "Query '"+qString+"' displaying information from ";
+			localScope.currentQueries.forEach(function(currentQuery) {
+				if(currentQuery.additivity !== DIFF_ADDITIVITY) {
+					if(currentQuery.queryType !== RANGE_QUERY) {
+						var uri = (currentQuery.queryType in ConstantsService.SEARCH_URIS) ? ConstantsService.SEARCH_URIS[currentQuery.queryType] : ConstantsService.DEFAULT_SEARCH_URI;
+						var featureLabel = currentQuery.featureLabel !== undefined ? currentQuery.featureLabel : currentQuery.query;
+						localScope.found += currentQuery.queryTypeStr+" <a href='"+uri+currentQuery.ensemblGeneId+"' target='_blank'>"+featureLabel+" ["+currentQuery.ensemblGeneId+"]</a>";
+					}
+					
+					if(currentQuery.flankingWindowSize !== undefined) {
+						localScope.found += " (&plusmn; "+currentQuery.flankingWindowSize+"bp)";
+					}
+					localScope.found += ', ';
+				}
+			});
+			localScope.found += "region"+((localScope.rangeQuery.length > 1)?'s':'')+": "+regions;
+			
+			localScope.graphData.forEach(function(rangeData) {
+				// This is needed, as future development can integrate several queries in the tabs
+				rangeData.queryFound = localScope.found;
+			});
+			
+			deferred.resolve(localScope);
 		}
-		localScope.found += "region"+((localScope.rangeQuery.length > 1)?'s':'')+": "+regions;
 		
-		if(flankingWindowSize !== undefined) {
-			localScope.found += " (&plusmn; "+flankingWindowSize+"bp)";
-		}
-		
-		localScope.graphData.forEach(function(rangeData) {
-			// This is needed, as future development can integrate several queries in the tabs
-			rangeData.queryFound = localScope.found;
-		});
-		
-		return true;
-	};
+		return promise;
+	}
 	
 	var topFeatures = {
 		'gene': null,
@@ -228,108 +311,129 @@ angular.module('blueprintApp')
 		'pathway': null
 	};
 
-	$scope.processRangeMatch = function processRangeMatch(localScope,queryTypes,deferred,theMatch) {
-		if(theMatch!==undefined) {
-			localScope.ensemblGeneId = theMatch._source.feature_cluster_id;
-			localScope.currentQueryType = theMatch._source.feature;
-			
-			var featureLabel = localScope.featureLabel = ChartService.chooseLabelFromSymbols(theMatch._source.symbol);
-			var isReactome = ( localScope.currentQueryType === 'reaction' || localScope.currentQueryType === 'pathway');
-			theMatch._source.coordinates.forEach(function(range) {
-				var theRange = { chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end};
-				
-				theRange.label = isReactome ? range.feature_id : featureLabel;
-				localScope.rangeQuery.push(theRange);
-			});
-			if(updateChromosomes(localScope)) {
-				deferred.resolve(localScope);
+	function processRangeMatchNoResults(localScope,origQuery,queryTypes,deferred) {
+		var queryTypesStr;
+		queryTypes.forEach(function(queryType) {
+			if(queryTypesStr!==undefined) {
+				queryTypesStr += ' or '+queryType;
 			} else {
-				openModal('Query rejected (too large)','Chromosomical range of query '+localScope.currentQuery+' is larger than '+ConstantsService.CHR_SEGMENT_LIMIT+"bp",function() {
-					localScope.query='';
-					deferred.reject('Too large query '+localScope.currentQuery);
-				});
+				queryTypesStr = queryType;
 			}
-		} else {
-			var queryTypesStr;
-			queryTypes.forEach(function(queryType) {
-				if(queryTypesStr!==undefined) {
-					queryTypesStr += ' or '+queryType;
-				} else {
-					queryTypesStr = queryType;
-				}
-			});
-			openModal('No results','Query '+localScope.currentQuery+' did not match any '+queryTypesStr,function() {
-				localScope.query='';
-				deferred.reject('No results for '+localScope.currentQuery);
-			});
-		}
-	};
+		});
+		openModal('No results','Query '+origQuery.query+' did not match any '+queryTypesStr,function() {
+			localScope.query='';
+			deferred.reject('No results for '+origQuery.query);
+		});
+	}
 	
 	var preprocessQuery = function(localScope) {
 		console.log('Running preprocessQuery');
 		var deferred = $q.defer();
 		var promise = deferred.promise;
-		var acceptedUpdate=true;
 		
-		if(localScope.suggestedQuery) {
-			localScope.ensemblGeneId = localScope.suggestedQuery.feature_cluster_id;
-			localScope.currentQuery = localScope.suggestedQuery.term;
-			localScope.currentQueryType = localScope.suggestedQuery.feature;
-			if(!(localScope.suggestedQuery.feature in topFeatures)) {
-				localScope.currentQueryType += ' from gene,';
-			}
-			var featureLabel = ChartService.chooseLabelFromSymbols(localScope.suggestedQuery.symbols);
-			var isReactome = ( localScope.currentQueryType === 'reaction' || localScope.currentQueryType === 'pathway');
-			localScope.suggestedQuery.coordinates.forEach(function(range) {
-				var theRange = { chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end };
-				
-				theRange.label = isReactome ? range.feature_id : featureLabel;
-				localScope.rangeQuery.push(theRange);
+		localScope.currentQueries = [];
+		if(localScope.suggestedQuery.length > 0) {
+			localScope.suggestedQuery.forEach(function(suggestedQuery) {
+				var currentQuery = {
+					query: suggestedQuery.term,
+					queryType: suggestedQuery.feature,
+					queryTypeStr: suggestedQuery.feature,
+					ensemblGeneId: suggestedQuery.feature_cluster_id,
+					gotRanges: true,
+					flankingWindowSize: parseInt((suggestedQuery.flankingWindowSize!==undefined) ? suggestedQuery.flankingWindowSize : localScope.flankingWindowSize),
+					additivity: (suggestedQuery.additivity!==undefined) ? suggestedQuery.additivity : UNION_ADDITIVITY
+				};
+				localScope.currentQueries.push(currentQuery);
+				if(!(suggestedQuery.feature in topFeatures)) {
+					currentQuery.queryTypeStr += ' from gene,';
+				}
+				var featureLabel = ChartService.chooseLabelFromSymbols(suggestedQuery.symbols);
+				var isReactome = ConstantsService.isReactome(currentQuery.queryType);
+				suggestedQuery.coordinates.forEach(function(range) {
+					var theRange = { chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end, currentQuery: currentQuery };
+					
+					theRange.label = isReactome ? range.feature_id : featureLabel;
+					localScope.rangeQuery.push(theRange);
+				});
 			});
-			acceptedUpdate = updateChromosomes(localScope);
 		} else {
 			var q = localScope.query.trim();
-			var queryType;
-			var colonPos = q.indexOf(':');
-			var m;
-			if(colonPos!==-1) {
-				var possibleQueryType = q.substring(0,colonPos);
-				if(possibleQueryType in QueryService.my_feature_ranking) {
-					queryType = possibleQueryType;
-					q = q.substring(colonPos+1);
-				} else {
-					m = q.match('^(?:chr)?([^:-]+):([1-9][0-9]*)-([1-9][0-9]*)$');
-				}
-			}
+			localScope.currentQueryStr = q;
 			
-			//range query
-			localScope.currentQuery = q;
-			if(m) {
-				if(m[1] === 'M') {
-					// Normalizing mitochondrial chromosome name
-					m[1] = 'MT';
-				}
-				localScope.rangeQuery.push({chr: m[1], start: parseInt(m[2]), end: parseInt(m[3])});
-				localScope.currentQueryType = 'range';
-				// localScope.rangeQuery.chr   = m[1];
-				// localScope.rangeQuery.start = m[2];
-				// localScope.rangeQuery.end   = m[3];
-				// localScope.found = "Displaying information from region: chr"+localScope.rangeQuery[0].chr+":"+localScope.rangeQuery[0].start+"-"+localScope.rangeQuery[0].end;
-				acceptedUpdate = updateChromosomes(localScope);
-			} else {
-				localScope.currentQueryType = queryType;
-				promise = promise.then(QueryService.getRanges);
+			var addi_splitted = q.split(UNION_ADDITIVITY_PATTERN);
+			
+			var doSchedule;
+			addi_splitted.forEach(function(token) {
+				var diff_splitted = token.split(DIFF_ADDITIVITY_PATTERN);
+				
+				diff_splitted.forEach(function(query,iQuery) {
+					var q = query.trim();
+					if(q.length > 0) {
+						var queryType;
+						var flankingWindowSize;
+						var colonPos = q.indexOf(':');
+						var m;
+						if(colonPos!==-1) {
+							var possibleQueryType = q.substring(0,colonPos);
+							if(possibleQueryType in QueryService.my_feature_ranking) {
+								queryType = possibleQueryType;
+								q = q.substring(colonPos+1);
+								
+								// Extracting the flanking window size
+								var rightColonPos = q.lastIndexOf(':');
+								if(rightColonPos!==-1) {
+									flankingWindowSize = q.substring(rightColonPos+1);
+									q = q.substring(0,rightColonPos);
+									flankingWindowSize = parseInt(flankingWindowSize);
+								}
+							} else {
+								m = q.match('^(?:chr)?([^:-]+):([1-9][0-9]*)-([1-9][0-9]*)$');
+							}
+						}
+						
+						//range query
+						var currentQuery = {
+							query: q,
+							additivity: (iQuery===0) ? UNION_ADDITIVITY : DIFF_ADDITIVITY
+						};
+						if(flankingWindowSize!==undefined) {
+							currentQuery.flankingWindowSize = flankingWindowSize;
+						}
+						localScope.currentQueries.push(currentQuery);
+						if(m) {
+							if(m[1] === 'M') {
+								// Normalizing mitochondrial chromosome name
+								m[1] = 'MT';
+							}
+							currentQuery.queryType = RANGE_QUERY;
+							currentQuery.queryTypeStr = RANGE_QUERY;
+							currentQuery.gotRanges = true;
+							localScope.rangeQuery.push({
+								chr: m[1],
+								start: parseInt(m[2]),
+								end: parseInt(m[3]),
+								currentQuery: currentQuery
+							});
+							// localScope.rangeQuery.chr   = m[1];
+							// localScope.rangeQuery.start = m[2];
+							// localScope.rangeQuery.end   = m[3];
+							// localScope.found = "Displaying information from region: chr"+localScope.rangeQuery[0].chr+":"+localScope.rangeQuery[0].start+"-"+localScope.rangeQuery[0].end;
+						} else {
+							currentQuery.queryType = queryType;
+							currentQuery.queryTypeStr = queryType;
+							currentQuery.gotRanges = false;
+							
+							doSchedule = true;
+						}
+					}
+				});
+			});
+			if(doSchedule) {
+				promise = QueryService.scheduleGetRanges(localScope.currentQueries,processRangeMatchNoResults,promise);
 			}
 		}
 		
-		if(acceptedUpdate) {
-			deferred.resolve(localScope);
-		} else {
-			openModal('Query rejected (too large)','Chromosomical range of query '+localScope.currentQuery+' is larger than '+ConstantsService.CHR_SEGMENT_LIMIT+"bp",function() {
-				localScope.query='';
-				deferred.reject('Too large query '+localScope.currentQuery);
-			});
-		}
+		deferred.resolve(localScope);
 		
 		return promise;
 	};
@@ -339,23 +443,24 @@ angular.module('blueprintApp')
 	$scope.search = function(theSuggest){
 		if(!$scope.queryInProgress) {
 			$scope.queryInProgress = true;
+			$scope.searchButtonText = SEARCHING_LABEL;
+			
 			$scope.resultsFetched = 0;
 			$scope.maxResultsFetched = 0;
 			$scope.found = "";
-			$scope.suggestedQuery = theSuggest;
+			$scope.suggestedQuery = [];
+			if(theSuggest!==undefined) {
+				$scope.suggestedQuery.push(theSuggest);
+			}
 			$scope.resultsSearch = [];
 			
 			$scope.rangeQuery = [];
-			$scope.ensemblGeneId = null;
-			$scope.currentQuery = null;
-			$scope.currentQueryType = null;
-			$scope.featureLabel = null;
+			$scope.currentQueryStr = null;
 			
-			$scope.searchButtonText = SEARCHING_LABEL;
-
 			var deferred = $q.defer();
 			var promise = deferred.promise;
 			promise = promise.then(preprocessQuery)
+				.then(updateChromosomes)
 				.then(QueryService.launch(QueryService.getGeneLayout))
 				.catch(function(err) {
 					openModal('Data error','Error while fetching gene layout');
@@ -399,7 +504,7 @@ angular.module('blueprintApp')
 				//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
 				.then(QueryService.rangeLaunch(QueryService.getWgbsStatsData,rangeData), function(err) {
 					if(typeof err === "string") {
-						openModal(err,'There is no data stored for '+$scope.currentQuery);
+						openModal(err,'There is no data stored for '+$scope.currentQueryStr);
 					} else {
 						openModal('Data error','Error while fetching chart data');
 						console.error('Chart data');
@@ -547,7 +652,7 @@ angular.module('blueprintApp')
 				.then(QueryService.getSamples)
 				.then(QueryService.fetchCellTerms);
 		
-		var w = 0;
+		var w;
 		if('w' in $location.search()) {
 			w = parseInt($location.search().w);
 			if(!(w > 0)) {
@@ -558,7 +663,9 @@ angular.module('blueprintApp')
 		if('q' in $location.search()) {
 			var query = $location.search().q;
 			promise = promise.then(function(localScope) {
-				localScope.flankingWindowSize = w;
+				if(w!==undefined) {
+					localScope.flankingWindowSize = w;
+				}
 				localScope.query = query;
 				localScope.search();
 			});
@@ -573,7 +680,7 @@ angular.module('blueprintApp')
 		});
 		$scope.$on('$locationChangeSuccess', function(event) {
 			//console.log("Lo vi!!!!!");
-			var w = 0;
+			var w;
 			if('w' in $location.search()) {
 				w = parseInt($location.search().w);
 				if(!(w > 0)) {
@@ -583,7 +690,9 @@ angular.module('blueprintApp')
 			
 			if('q' in $location.search()) {
 				var query = $location.search().q;
-				$scope.flankingWindowSize = w;
+				if(w!==undefined) {
+					$scope.flankingWindowSize = w;
+				}
 				$scope.query = query;
 				$scope.search();
 			}

@@ -33,6 +33,7 @@ module.exports = function (grunt) {
   
   var useminPrepare;
   var buildTasks;
+  var buildTasksFast;
   if(dataportalConfig.debug) {
 	useminPrepare = {
 	      html: '<%= yeoman.app %>/index.html',
@@ -69,6 +70,24 @@ module.exports = function (grunt) {
 	    'usemin',
 	    //'htmlmin'
 	  ];
+	buildTasksFast = [
+	    'clean:dist',
+	    //'bower-update',
+	    'wiredep',
+	    'template',
+	    'useminPrepare',
+	    'concurrent:dist',
+	    'autoprefixer',
+	    'concat',
+	    'ngAnnotate',
+	    'copy:dist',
+	    'cdnify',
+	    //'cssmin',
+	    //'uglify',
+	    'filerev',
+	    'usemin',
+	    //'htmlmin'
+	  ];
   } else {
 	useminPrepare = {
 	      html: '<%= yeoman.app %>/index.html',
@@ -88,6 +107,24 @@ module.exports = function (grunt) {
 	buildTasks = [
 	    'clean:dist',
 	    'bower-update',
+	    'wiredep',
+	    'template',
+	    'useminPrepare',
+	    'concurrent:dist',
+	    'autoprefixer',
+	    'concat',
+	    'ngAnnotate',
+	    'copy:dist',
+	    'cdnify',
+	    'cssmin',
+	    'uglify',
+	    'filerev',
+	    'usemin',
+	    'htmlmin'
+	  ];
+	buildTasksFast = [
+	    'clean:dist',
+	    //'bower-update',
 	    'wiredep',
 	    'template',
 	    'useminPrepare',
@@ -524,6 +561,7 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('build', buildTasks);
+  grunt.registerTask('build:fast', buildTasksFast);
 
   grunt.registerTask('default', [
     'newer:jshint',

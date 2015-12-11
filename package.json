@@ -50,6 +50,7 @@
   },
   "scripts": {
     "test": "grunt test",
+    "build:fast": "grunt build:fast",
     "build": "grunt build"
   }
 }

@@ -687,6 +687,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 								},
 								tooltip: {
 									animation: false,
+									backgroundColor: '#FFFFFF'
 								},
 								plotOptions: {
 									series: {
@@ -761,6 +762,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 								tooltip: {
 									animation: false,
 									shared: true,
+									backgroundColor: '#FFFFFF'
 								},
 								plotOptions: {
 									series: {
@@ -1073,7 +1075,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 												shared: true,
 												shadow: false,
 											},
-											turboThreshold: 0,
+											turboThreshold: 1000,
 											step: 'left',
 										}
 									};

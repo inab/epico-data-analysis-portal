@@ -3,9 +3,9 @@
   "version": "0.5.0",
   "description": "BLUEPRINT Data Portal",
   "dependencies": {
-    "angular": "~1.4.8",
+    "es6-shim": "~0.33.13",
     "json3": "~3.3.2",
-    "es5-shim": "~4.3.1",
+    "angular": "~1.4.8",
     "d3": "~3.5.10",
     "bootstrap-sass-official": "~3.3.6",
     "angular-resource": "~1.4.8",

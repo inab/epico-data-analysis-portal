@@ -1188,7 +1188,11 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				]
 			}
 		}, function getMoreChartDataUntilDone(err, resp) {
-			if(resp.hits!==undefined) {
+			if(resp===undefined) {
+				console.log("DEBUG: Total "+total);
+				console.log(err);
+			}
+			if(resp===undefined && resp.hits!==undefined) {
 				localScope.maxResultsFetched = resp.hits.total;
 				
 				ChartService.processChartData(localScope,rangeData,range_start,range_end,resp.hits.hits);

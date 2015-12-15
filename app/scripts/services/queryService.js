@@ -23,7 +23,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		localScope.donors = [];
 		localScope.specimens = [];
 		localScope.samples = [];
-		localScope.samplesOnt = [];
 		localScope.labs = [];
 		localScope.experimentsMap = {};
 		
@@ -80,7 +79,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 							s.markers = d._source.markers;
 							s.experiments = [];
 							
-							localScope.samplesOnt.push(s.ontology);
 							localScope.samples.push(s);
 							samplesMap[s.sample_id] = s;
 							numSamples++;
@@ -335,7 +333,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		// Let's calculate the unique terms
 		var theUris=[];
 		var theUrisHash = {};
-		localScope.samplesOnt.forEach(function(d) {
+		localScope.samples.forEach(function(s) {
+			var d = s.ontology;
 			if(!(d in theUrisHash)) {
 				theUris.push(d);
 				theUrisHash[d]=1;
@@ -893,10 +892,11 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			var isDetailed = lastSearchMode==='detailed';
 			
 			var clonedTreeData = angular.copy(localScope.fetchedTreeData);
+			var clonedExperimentLabels = angular.copy(localScope.experimentLabels);
 			rangeData.treedata = [];
 			clonedTreeData.forEach(function(cloned) {
 				var numNodes = populateBasicTree(cloned,localScope,rangeData,isDetailed);
-				rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: localScope.experimentLabels});
+				rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: clonedExperimentLabels);
 			});
 		}
 	}

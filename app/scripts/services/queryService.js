@@ -15,15 +15,20 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	
 	var chipSeqWindow = ConstantsService.DEFAULT_FLANKING_WINDOW_SIZE;
 	
-	function getDonors(localScope) {
-		if(localScope.donors.length!==0) {
+	function getSampleTrackingData(localScope) {
+		if(localScope.donors!==undefined && localScope.donors.length!==0) {
 			return localScope;
 		}
 		
 		localScope.donors = [];
+		localScope.specimens = [];
+		localScope.samples = [];
+		localScope.samplesOnt = [];
+		localScope.labs = [];
+		localScope.experimentsMap = {};
+		
 		return es.search({
 			index: ConstantsService.SAMPLE_TRACKING_DATA_INDEX,
-			type: ConstantsService.DONOR_CONCEPT,
 			size: 100000,
 			body:{},
 		}).then(function(resp){
@@ -31,31 +36,104 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				var subtotalsData = [];
 				
 				ChartService.assignSeriesDataToChart(localScope.subtotals,subtotalsData);
+
+				var histones = [];
+				var histoneMap = {};
+				
+				var samplesMap = {};
 				
 				var numDonors = 0;
 				var numPooledDonors = 0;
 				var numCellularLines = 0;
+				var numSamples = 0;
 				var numOther = 0;
 				resp.hits.hits.forEach(function(d) {
-					switch(d._source.donor_kind) {
-						case 'd':
-							numDonors++;
+					switch(d._type) {
+						case ConstantsService.DONOR_CONCEPT:
+							switch(d._source.donor_kind) {
+								case 'd':
+									numDonors++;
+									break;
+								case 'p':
+									numPooledDonors++;
+									break;
+								case 'c':
+									numCellularLines++;
+									break;
+								default:
+									numOther++;
+							}
+							localScope.donors.push(d._source);
+							
 							break;
-						case 'p':
-							numPooledDonors++;
+							
+						case ConstantsService.SPECIMEN_CONCEPT:
+							localScope.specimens.push(d._source);
+						
 							break;
-						case 'c':
-							numCellularLines++;
+							
+						case ConstantsService.SAMPLE_CONCEPT:
+							var s = {};
+							s.analyzed_sample_type_other = d._source.analyzed_sample_type_other;
+							s.sample_id = d._source.sample_id;
+							s.ontology = d._source.purified_cell_type;
+							s.markers = d._source.markers;
+							s.experiments = [];
+							
+							localScope.samplesOnt.push(s.ontology);
+							localScope.samples.push(s);
+							samplesMap[s.sample_id] = s;
+							numSamples++;
+							
 							break;
+						
 						default:
-							numOther++;
+							if(d._source.experiment_id!==undefined && d._source.experiment_type!==undefined) {
+								var lab_experiment = {};
+								lab_experiment._type	= d._type;
+								lab_experiment.sample_id = d._source.analyzed_sample_id;
+								lab_experiment.experiment_id = d._source.experiment_id;
+								lab_experiment.experiment_type = d._source.experiment_type;
+								lab_experiment.features = d._source.features;
+								if(lab_experiment.experiment_type.indexOf('Histone ')===0) {
+									var histoneName = lab_experiment.features.CHIP_ANTIBODY.value;
+									var normalizedHistoneName = histoneName.replace(/[.]/g,'_');
+									
+									// Registering new histones
+									if(!(normalizedHistoneName in histoneMap)) {
+										var histone = {
+											histoneName: histoneName,
+											normalizedHistoneName: normalizedHistoneName,
+											histoneIndex: -1,
+											lab_experiments: []
+										};
+										histoneMap[normalizedHistoneName] = histone;
+										histones.push(histone);
+									}
+									histoneMap[normalizedHistoneName].lab_experiments.push(lab_experiment);
+									lab_experiment.histone = histoneMap[normalizedHistoneName];
+								}
+								lab_experiment.analyses = [];
+								
+								// Linking everything
+								//lab_experiment.analyses = (lab_experiment.experiment_id in localScope.experiment2AnalysisHash) ? localScope.experiment2AnalysisHash[lab_experiment.experiment_id] : [];
+								//lab_experiment.analyses.forEach(function(analysis) {
+								//	analysis.lab_experiment = lab_experiment;
+								//});
+								localScope.labs.push(lab_experiment);
+								localScope.experimentsMap[lab_experiment.experiment_id] = lab_experiment;
+							}
+							
+							break;
 					}
-					localScope.donors.push(d._source);
 				});
+				
+				// Initial pie chart data
 				subtotalsData.push(
 					['Donors', numDonors],
 					['Cellular Lines', numCellularLines],
-					['Pooled Donors', numPooledDonors]
+					['Pooled Donors', numPooledDonors],
+					['Samples', numSamples]
 				);
 				localScope.numCellularLines = numCellularLines;
 				
@@ -64,147 +142,13 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				}
 				
 				//console.log(localScope.donors);
-			}
-			
-			return localScope;
-		});
-	}
-	
-	function getSpecimens(localScope) {
-		if(localScope.specimens.length!==0) {
-			return localScope;
-		}
-		
-		return es.search({
-			index: ConstantsService.SAMPLE_TRACKING_DATA_INDEX,
-			type: ConstantsService.SPECIMEN_CONCEPT,
-			size: 100000,
-			body:{},
-		}).then(function(resp){
-			if(typeof(resp.hits.hits) !== undefined) {
-				resp.hits.hits.forEach(function(d) {
-					localScope.specimens.push(d._source);
-				});
-				//console.log(localScope.specimens);
-			}
-			
-			return localScope;
-		});
-	}
-	
-	function getSamples(localScope) {
-		if(localScope.samples.length!==0) {
-			return localScope;
-		}
-		
-		localScope.samples = [];
-		localScope.samplesOnt = [];
-		var deferred = $q.defer();
-		es.search({
-			index: ConstantsService.SAMPLE_TRACKING_DATA_INDEX,
-			type: ConstantsService.SAMPLE_CONCEPT,
-			size: 100000,
-			body:{},
-		},function(err,resp){
-			if(typeof(resp.hits.hits) !== undefined) {
-				var data = ChartService.getChartSeriesData(localScope.subtotals);
 				
-				resp.hits.hits.forEach(function(d) {
-					var s = {};
-					s.analyzed_sample_type_other = d._source.analyzed_sample_type_other;
-					s.sample_id = d._source.sample_id;
-					s.ontology = d._source.purified_cell_type;
-					s.markers = d._source.markers;
-					s.experiments = [];
-					localScope.labs.forEach(function(d){
-						if(d.sample_id == s.sample_id){
-							s.experiments.push(d);
-						}
-					});
-					localScope.samplesOnt.push(s.ontology);
-					localScope.samples.push(s);
-				});
 				
-				var numSamples = localScope.samples.length;
-				
-				data.push(['Samples', numSamples]);
-				
-				//console.log(localScope.samples);
-				deferred.resolve(localScope);
-			} else {
-				return deferred.reject(err);
-			}
-		});
-		return deferred.promise;
-	}
-
-	function getLabs(localScope) {
-		// As it should get an array of local scopes, which should be the same, let's use the first one
-		if(Array.isArray(localScope)) {
-			localScope = localScope[0];
-		}
-		
-		if(localScope.labs!==undefined && localScope.labs.length!==0) {
-			return localScope;
-		}
-		
-		localScope.labs = [];
-		
-		var deferred = $q.defer();
-		es.search({
-			size:100000,
-			index: ConstantsService.SAMPLE_TRACKING_DATA_INDEX,
-			body:{
-				query: {
-					filtered: {
-						filter: {
-							bool: {
-								must: [
-									{exists : { field : 'experiment_id' }},
-									{exists : { field : 'experiment_type' }}
-								]	
-							}
-						}
+				// Linking everything
+				localScope.labs.forEach(function(lab_experiment) {
+					if(lab_experiment.sample_id in samplesMap) {
+						samplesMap[lab_experiment.sample_id].experiments.push(lab_experiment);
 					}
-				}
-		
-			}
-		},function(err,resp){
-			if(typeof(resp.hits.hits) !== 'undefined'){
-				var histones = [];
-				var histoneMap = {};
-				localScope.labs = resp.hits.hits.map(function(d) {
-					var lab_experiment = {};
-					lab_experiment._type	= d._type;
-					lab_experiment.sample_id = d._source.analyzed_sample_id;
-					lab_experiment.experiment_id = d._source.experiment_id;
-					lab_experiment.experiment_type = d._source.experiment_type;
-					lab_experiment.features = d._source.features;
-					if(lab_experiment.experiment_type.indexOf('Histone ')===0) {
-						var histoneName = lab_experiment.features.CHIP_ANTIBODY.value;
-						var normalizedHistoneName = histoneName.replace(/[.]/g,'_');
-						
-						// Registering new histones
-						if(!(normalizedHistoneName in histoneMap)) {
-							var histone = {
-								histoneName: histoneName,
-								normalizedHistoneName: normalizedHistoneName,
-								histoneIndex: -1,
-								lab_experiments: []
-							};
-							histoneMap[normalizedHistoneName] = histone;
-							histones.push(histone);
-						}
-						histoneMap[normalizedHistoneName].lab_experiments.push(lab_experiment);
-						lab_experiment.histone = histoneMap[normalizedHistoneName];
-					}
-					
-					// Linking everything
-					lab_experiment.analyses = (lab_experiment.experiment_id in localScope.experiment2AnalysisHash) ? localScope.experiment2AnalysisHash[lab_experiment.experiment_id] : [];
-					lab_experiment.analyses.forEach(function(analysis) {
-						analysis.lab_experiment = lab_experiment;
-					});
-					return lab_experiment;
 				});
 				
 				// Sorting histones by name
@@ -214,25 +158,20 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				localScope.histones = histones;
 				
 				ChartService.initializeAvgSeries(localScope,histones,CSpeakSplit);
-				
-				deferred.resolve(localScope);
-			} else {
-				return deferred.reject(err);
 			}
-		
+			
+			return localScope;
 		});
-		
-		return deferred.promise;
 	}
 	
-	function getAnalyses(localScope) {
+	function getAnalysisMetadata(localScope) {
 		if(localScope.analyses!==undefined && localScope.analyses.length !== 0) {
 			return localScope;
 		}
 		
 		localScope.analyses = [];
 		localScope.analysesHash = {};
-		localScope.experiment2AnalysisHash = {};
+		
 		return es.search({
 			size: 10000000,
 			index: ConstantsService.METADATA_DATA_INDEX,
@@ -306,10 +245,14 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					}
 					localScope.analyses.push(analysis);
 					localScope.analysesHash[analysis.analysis_id] = analysis;
-					if(!(analysis.experiment_id in localScope.experiment2AnalysisHash)) {
-						localScope.experiment2AnalysisHash[analysis.experiment_id] = [];
+					
+					// Linking everything
+					if(analysis.experiment_id in localScope.experimentsMap) {
+						var lab_experiment = localScope.experimentsMap[analysis.experiment_id];
+						
+						lab_experiment.analyses.push(analysis);
+						analysis.lab_experiment = lab_experiment;
 					}
-					localScope.experiment2AnalysisHash[analysis.experiment_id].push(analysis);
 				});
 				
 				var analysisSubtotals = [];
@@ -372,6 +315,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						y: numAnOther
 					});
 				}
+				
 			//} else {
 			//	return deferred.reject(err);
 			}
@@ -1188,53 +1132,58 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				]
 			}
 		}, function getMoreChartDataUntilDone(err, resp) {
-			if(resp===undefined) {
-				console.log("DEBUG: Total "+total);
-				console.log(err);
-			}
-			if(resp===undefined && resp.hits!==undefined) {
-				localScope.maxResultsFetched = resp.hits.total;
-				
-				ChartService.processChartData(localScope,rangeData,range_start,range_end,resp.hits.hits);
-				total += resp.hits.hits.length;
-				
-				// Now, updating the graphs
-				localScope.searchButtonText = PLOTTING_LABEL;
-				localScope.resultsFetched = total;
-				//var xRange = [rangeData.range.start,rangeData.range.end];
-				
-				// Re-drawing charts
-				var stillLoading = resp.hits.total > total;
-				ChartService.redrawCharts(rangeData,true,stillLoading);
-				
-				// Is there any more data?
-				if(stillLoading) {
-					var percent = 100.0 * total / resp.hits.total;
+			if(resp!==undefined) {
+				if(resp.hits!==undefined) {
+					localScope.maxResultsFetched = resp.hits.total;
 					
-					localScope.searchButtonText = "Loaded "+percent.toPrecision(2)+'%';
+					ChartService.processChartData(localScope,rangeData,range_start,range_end,resp.hits.hits);
+					total += resp.hits.hits.length;
 					
-					//console.log("Hay "+total+' de '+resp.hits.total);
-					scrolled = true;
-					es.scroll({
-						index: ConstantsService.PRIMARY_DATA_INDEX,
-						scrollId: resp._scroll_id,
-						scroll: '60s'
-					}, getMoreChartDataUntilDone);
-				} else {
-					if(scrolled) {
-						es.clearScroll({scrollId: resp._scroll_id});
-					}
+					// Now, updating the graphs
+					localScope.searchButtonText = PLOTTING_LABEL;
+					localScope.resultsFetched = total;
+					//var xRange = [rangeData.range.start,rangeData.range.end];
 					
-					//console.log("Total: "+total+"; points: "+totalPoints);
+					// Re-drawing charts
+					var stillLoading = resp.hits.total > total;
+					ChartService.redrawCharts(rangeData,true,stillLoading);
 					
-					//console.log('All data ('+total+') was fetched');
-					if(resp.hits.total > 0) {
-						deferred.resolve(localScope);
+					// Is there any more data?
+					if(stillLoading) {
+						var percent = 100.0 * total / resp.hits.total;
+						
+						localScope.searchButtonText = "Loaded "+percent.toPrecision(2)+'%';
+						
+						//console.log("Hay "+total+' de '+resp.hits.total);
+						scrolled = true;
+						es.scroll({
+							index: ConstantsService.PRIMARY_DATA_INDEX,
+							scrollId: resp._scroll_id,
+							scroll: '60s'
+						}, getMoreChartDataUntilDone);
 					} else {
-						deferred.reject('No data returned');
+						if(scrolled) {
+							es.clearScroll({scrollId: resp._scroll_id});
+						}
+						
+						//console.log("Total: "+total+"; points: "+totalPoints);
+						
+						//console.log('All data ('+total+') was fetched');
+						if(resp.hits.total > 0) {
+							deferred.resolve(localScope);
+						} else {
+							deferred.reject('No data returned');
+						}
 					}
+				} else {
+					deferred.reject(resp);
 				}
 			} else {
+				console.log("DEBUG Total "+total);
+				console.log(resp);
+				console.log("DEBUG Total err "+total);
+				console.log(err);
+				
 				deferred.reject(err);
 			}
 		});
@@ -1749,11 +1698,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	}
 	
 	return {
-		getDonors: getDonors,
-		getSpecimens: getSpecimens,
-		getSamples: getSamples,
-		getLabs: getLabs,
-		getAnalyses: getAnalyses,
+		getSampleTrackingData: getSampleTrackingData,
+		getAnalysisMetadata: getAnalysisMetadata,
+		
 		fetchCellTerms: fetchCellTerms,
 		initTree: initTree,
 		// The range query core

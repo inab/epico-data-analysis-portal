@@ -67,7 +67,7 @@ angular.module('blueprintApp')
     $scope.queryInProgress = false;
     $scope.searchButtonText = SEARCH_LABEL;
     $scope.found = "";
-    $scope.experimentLabels = [];
+    
     $scope.numHistones = 8;	// Default value
     $scope.numCellularLines = 7;	// Default value
     $scope.histoneMap = {};

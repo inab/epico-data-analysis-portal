@@ -136,7 +136,30 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		},
 	];
 	
-	var experimentLabels = ['Bisulfite-Seq','DNase-Seq','Gene Exp (RNA-Seq)','Transcript Exp (RNA-Seq)'];
+	var experimentLabels = [
+		{
+			label: 'Bisulfite-Seq (covered %)',
+			experiment_type: ConstantsService.EXPERIMENT_TYPE_DNA_METHYLATION,
+			feature: 'bisulfiteSeqHash',
+			doPercentFixup: true
+		},
+		{
+			label: 'DNase-Seq (covered %)',
+			experiment_type: ConstantsService.EXPERIMENT_TYPE_CHROMATIN_ACCESSIBILITY,
+			feature: 'dnaseSeqHash',
+			doPercentFixup: true
+		},
+		{
+			label: 'Gene Exp (RNA-Seq)',
+			experiment_type: ConstantsService.EXPERIMENT_TYPE_MRNA_SEQ,
+			feature: 'rnaSeqGHash'
+		},
+		{
+			label: 'Transcript Exp (RNA-Seq)',
+			experiment_type: ConstantsService.EXPERIMENT_TYPE_MRNA_SEQ,
+			feature: 'rnaSeqTHash'
+		}
+	];
 	
 	var REGION_FEATURE_GENE = 'gene';
 	var REGION_FEATURE_TRANSCRIPT = 'transcript';
@@ -1209,11 +1232,10 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		return data;
 	}
 	
-	function initializeAvgSeries(localScope,histones,CSpeakSplit) {
+	function initializeAvgSeries(localScope,histones) {
 		// Now, map the histones and generate the labels
 		localScope.experimentLabels = angular.copy(experimentLabels);
 		var iHis = localScope.experimentLabels.length;
-		histones.sort(function(a,b) { return a.histoneName.localeCompare(b.histoneName); });
 		
 		// Fixed part is replicated here
 		localScope.AVG_SERIES = angular.copy(AVG_SERIES);
@@ -1221,13 +1243,21 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		histones.forEach(function(histone) {
 			histone.histoneIndex = iHis;
 			
-			iHis++;
-			localScope.experimentLabels.push(histone.histoneName+' (broad peaks)');
-			if(CSpeakSplit) {
-				// It uses two slots
-				localScope.experimentLabels.push(histone.histoneName+' (peaks)');
-				iHis++;
-			}
+			// These are for the tree
+			// It uses two slots
+			localScope.experimentLabels.push({
+				label: histone.histoneName+' (broad peaks)',
+				experiment_type: histone.histoneName,
+				feature: 'broad'
+			});
+			localScope.experimentLabels.push({
+				label: histone.histoneName+' (peaks)',
+				experiment_type: histone.histoneName,
+				feature: 'notBroad'
+			});
+			iHis+=2;
+			
+			// These are for the charts
 			// And variable part, which depends on the histones
 			AVG_CS_SERIES.forEach(function(seriesDataOrig) {
 				var seriesData = angular.copy(seriesDataOrig);

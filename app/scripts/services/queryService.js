@@ -10,9 +10,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	var FETCHING_LABEL = "Fetching...";
 	var PLOTTING_LABEL = "Plotting...";
 	
-	// If we set this to 1, we separate broad from narrow peaks
-	var CSpeakSplit;
-	
 	var chipSeqWindow = ConstantsService.DEFAULT_FLANKING_WINDOW_SIZE;
 	
 	function getSampleTrackingData(localScope) {
@@ -155,7 +152,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				localScope.histoneMap = histoneMap;
 				localScope.histones = histones;
 				
-				ChartService.initializeAvgSeries(localScope,histones,CSpeakSplit);
+				ChartService.initializeAvgSeries(localScope,histones);
 			}
 			
 			return localScope;
@@ -617,6 +614,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						// At last, linking analysis to their corresponding cell types and the mean series
 						localScope.samples.forEach(function(sample) {
 							var term = termNodesHash[sample.ontology];
+							sample.cell_type = term;
 							sample.experiments.forEach(function(experiment) {
 								experiment.analyses.forEach(function(analysis) {
 									analysis.cell_type = term;
@@ -684,7 +682,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		return {notBroad:value, broad:valueB}; 
 	}
 	
-	function populateBasicTree(o,localScope,rangeData,isDetailed) {
+	function populateBasicTree(o,samples,clonedExperimentLabels,experimentLabelsHash,rangeData,isDetailed) {
 		var numNodes = 1;
 		// First, the children
 		if(o.children) {
@@ -708,7 +706,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			
 			// Then, populate them!
 			o.children.forEach(function(child) {
-				numNodes += populateBasicTree(child,localScope,rangeData,isDetailed);
+				numNodes += populateBasicTree(child,samples,clonedExperimentLabels,experimentLabelsHash,rangeData,isDetailed);
 			});
 		} else {
 			o.children = [];
@@ -721,44 +719,58 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			
 			var aggregated_statistics = [];
 			var childrens = [];
-			localScope.experimentLabels.forEach(function() {
+			var percentFixupIndexes = [];
+			clonedExperimentLabels.forEach(function(experimentLabel,iExp) {
 				aggregated_statistics.push(0.0);
 				childrens.push(0);
+				if(experimentLabel.doPercentFixup) {
+					percentFixupIndexes.push(iExp);
+				}
 			});
-			localScope.samples.forEach(function(s) {
-				if(s.ontology == o.o_uri) {
+			samples.forEach(function(s) {
+				if(s.ontology === o.o_uri) {
+				//if(s.ontology === o.o_uri || (s.cell_type.parents && s.cell_type.parents.some(function(op) { return op === o.o_uri; }))) {
 					o.analyzed = true;
-					var statistics = localScope.experimentLabels.map(function() {
+					var statistics = clonedExperimentLabels.map(function() {
 						return 0.0;
 					});
 					s.experiments.forEach(function(lab_experiment){
 						//console.log(d);
 						var theStat = 0.0;
+						var experimentLabel;
+						var experimentIndex;
+						var experimentStats;
+						if(lab_experiment.experiment_type in experimentLabelsHash) {
+							experimentLabel = experimentLabelsHash[lab_experiment.experiment_type];
+							experimentIndex = experimentLabel[0].pos;
+							experimentStats = stats[experimentLabel[0].feature];
+						}
 						switch(lab_experiment.experiment_type) {
-							case 'DNA Methylation':
+							case ConstantsService.EXPERIMENT_TYPE_DNA_METHYLATION:
 								var methExp = 0;
 								lab_experiment.analyses.forEach(function(analysis) {
 									var v = analysis.analysis_id;
-									if(v in stats.bisulfiteSeqHash) {
-										var a = stats.bisulfiteSeqHash[v];
+									if(v in experimentStats) {
+										var a = experimentStats[v];
 										theStat += a.stats_meth_level.avg;
 										methExp++;
 									}
 								});
 								if(methExp > 0.0){
 									theStat = theStat/methExp;
-									childrens[0]++;
+									childrens[experimentIndex]++;
+									experimentLabel[0].visible = true;
 								} else {
 									theStat = NaN;
 								}
-								statistics[0] = theStat;
+								statistics[experimentIndex] = theStat;
 								break;
-							case 'Chromatin Accessibility':
+							case ConstantsService.EXPERIMENT_TYPE_CHROMATIN_ACCESSIBILITY:
 								var dnaseSeqExp = 0;
 								lab_experiment.analyses.forEach(function(analysis) {
 									var v = analysis.analysis_id;
-									if(v in stats.dnaseSeqHash) {
-										var a = stats.dnaseSeqHash[v];
+									if(v in experimentStats) {
+										var a = experimentStats[v];
 										theStat += a.peak_size.value;
 										dnaseSeqExp++;
 									}
@@ -766,49 +778,41 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 								if(dnaseSeqExp > 0) {
 									var region = range.end - range.start + 1;
 									theStat = theStat/region;
-									childrens[1]++;
+									childrens[experimentIndex]++;
+									experimentLabel[0].visible = true;
 								} else {
 									theStat = NaN;
 								}
-								statistics[1] = theStat;
+								statistics[experimentIndex] = theStat;
 								break;
-							case 'mRNA-seq':
-								// Expression at Gene and Transcript levels
-								var rnaSeqExpG = 0;
-								var rnaSeqExpT = 0;
-								var theStatT = 0.0;
-								
-								lab_experiment.analyses.forEach(function(analysis) {
-									var v = analysis.analysis_id;
-									if(v in stats.rnaSeqGHash) {
-										var a = stats.rnaSeqGHash[v];
-										theStat += a.stats_normalized_read_count.avg;
-										rnaSeqExpG++;
+							case ConstantsService.EXPERIMENT_TYPE_MRNA_SEQ:
+								experimentLabel.forEach(function(expLabel) {
+									// Expression at Gene or Transcript levels
+									var rnaSeqExp = 0;
+									var expIndex = expLabel.pos;
+									var expStats = stats[expLabel.feature];
+									theStat = 0.0;
+									
+									lab_experiment.analyses.forEach(function(analysis) {
+										var v = analysis.analysis_id;
+										if(v in expStats) {
+											var a = expStats[v];
+											theStat += a.stats_normalized_read_count.avg;
+											rnaSeqExp++;
+										}
+									});
+									if(rnaSeqExp > 0) {
+										theStat = theStat/rnaSeqExp;
+										childrens[expIndex]++;
+										expLabel.visible = true;
+									} else {
+										theStat = NaN;
 									}
-									if(v in stats.rnaSeqTHash) {
-										var b = stats.rnaSeqTHash[v];
-										theStatT += b.stats_normalized_read_count.avg;
-										rnaSeqExpT++;
-									}
+									statistics[expIndex] = theStat;
 								});
-								if(rnaSeqExpG > 0) {
-									theStat = theStat/rnaSeqExpG;
-									childrens[2]++;
-								} else {
-									theStat = NaN;
-								}
-								statistics[2] = theStat;
-								
-								if(rnaSeqExpT > 0) {
-									theStatT = theStatT/rnaSeqExpT;
-									childrens[3]++;
-								} else {
-									theStatT = NaN;
-								}
-								statistics[3] = theStatT;
 								break;
 							default:
-								if(lab_experiment.experiment_type.indexOf('Histone ')===0) {
+								if(lab_experiment.experiment_type.indexOf(ConstantsService.EXPERIMENT_TYPE_HISTONE_MARK)===0) {
 									if(lab_experiment.histone!==undefined) {
 										var histone = lab_experiment.histone;
 										var expIdx = histone.histoneIndex;
@@ -818,17 +822,17 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 										statistics[expIdx] = histoneStats.broad;
 										if(statistics[expIdx]>0) {
 											childrens[expIdx]++;
+											clonedExperimentLabels[expIdx].visible = true;
 										//} else {
 										//	statistics[expIdx] = NaN;
 										}
 											
-										if(CSpeakSplit) {
-											statistics[expIdx+1] = histoneStats.notBroad;
-											if(statistics[expIdx+1]>0) {
-												childrens[expIdx+1]++;
-											//} else {
-											//	statistics[expIdx+1] = NaN;
-											}
+										statistics[expIdx+1] = histoneStats.notBroad;
+										if(statistics[expIdx+1]>0) {
+											childrens[expIdx+1]++;
+											clonedExperimentLabels[expIdx+1].visible = true;
+										//} else {
+										//	statistics[expIdx+1] = NaN;
 										}
 									} else {
 										console.log("Unmapped histone "+lab_experiment.experiment_type);
@@ -841,13 +845,11 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					});
 					
 					// Translating to the right units
-					if(!isNaN(statistics[0]) && statistics[0]!==-1) {
-						statistics[0] *= 100.0;
-					}
-					
-					if(!isNaN(statistics[1]) && statistics[1]!==-1) {
-						statistics[1] *= 100.0;
-					}
+					percentFixupIndexes.forEach(function(statsI) {
+						if(!isNaN(statistics[statsI]) && statistics[statsI]!==-1) {
+							statistics[statsI] *= 100.0;
+						}
+					});
 					
 					statistics.forEach(function(stat,i) {
 						if(!isNaN(stat) && stat!==-1) {
@@ -893,10 +895,21 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			
 			var clonedTreeData = angular.copy(localScope.fetchedTreeData);
 			var clonedExperimentLabels = angular.copy(localScope.experimentLabels);
+			
+			var experimentLabelsHash = {};
+			clonedExperimentLabels.forEach(function(expLabel,iExpLabel) {
+				expLabel.pos = iExpLabel;
+				if(!(expLabel.experiment_type in experimentLabelsHash)) {
+					experimentLabelsHash[expLabel.experiment_type] = [ expLabel ];
+				} else {
+					experimentLabelsHash[expLabel.experiment_type].push(expLabel);
+				}
+			});
+			
 			rangeData.treedata = [];
 			clonedTreeData.forEach(function(cloned) {
-				var numNodes = populateBasicTree(cloned,localScope,rangeData,isDetailed);
-				rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: clonedExperimentLabels);
+				var numNodes = populateBasicTree(cloned,localScope.samples,clonedExperimentLabels,experimentLabelsHash,rangeData,isDetailed);
+				rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: clonedExperimentLabels});
 			});
 		}
 	}
@@ -1195,7 +1208,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData);
 		
-		rangeData.stats.bisulfiteSeq = [];
+		//rangeData.stats.bisulfiteSeq = [];
 		rangeData.stats.bisulfiteSeqHash = {};
 		es.search({
 			size:10000000,
@@ -1231,7 +1244,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		},function(err,resp) {
 			if(typeof(resp.aggregations) !== undefined){  
 				resp.aggregations.analyses.buckets.forEach(function(d) {
-					rangeData.stats.bisulfiteSeq.push(d);
+					//rangeData.stats.bisulfiteSeq.push(d);
 					rangeData.stats.bisulfiteSeqHash[d.key] = d;
 				});
 				deferred.resolve(localScope);
@@ -1247,7 +1260,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData);
 		
-		rangeData.stats.rnaSeqG = [];
+		//rangeData.stats.rnaSeqG = [];
 		rangeData.stats.rnaSeqGHash = {};
 		es.search({
 			size:10000000,	
@@ -1283,7 +1296,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		},function(err,resp) {
 			if(typeof(resp.aggregations) !== undefined){	
 				resp.aggregations.analyses.buckets.forEach(function(d) {
-					rangeData.stats.rnaSeqG.push(d);
+					//rangeData.stats.rnaSeqG.push(d);
 					rangeData.stats.rnaSeqGHash[d.key] = d;
 				});
 				deferred.resolve(localScope);
@@ -1299,7 +1312,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData);
 		
-		rangeData.stats.rnaSeqT = [];
+		//rangeData.stats.rnaSeqT = [];
 		rangeData.stats.rnaSeqTHash = {};
 		es.search({
 			size:10000000,	
@@ -1335,7 +1348,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		},function(err,resp) {
 			if(typeof(resp.aggregations) !== undefined){	
 				resp.aggregations.analyses.buckets.forEach(function(d) {
-					rangeData.stats.rnaSeqT.push(d);
+					//rangeData.stats.rnaSeqT.push(d);
 					rangeData.stats.rnaSeqTHash[d.key] = d;
 				});
 				deferred.resolve(localScope);
@@ -1351,7 +1364,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData);
 		
-		rangeData.stats.dnaseSeq = [];
+		//rangeData.stats.dnaseSeq = [];
 		rangeData.stats.dnaseSeqHash = {};
 		es.search({
 			size:10000000,	
@@ -1390,7 +1403,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		},function(err,resp) {
 			if(typeof(resp.aggregations) !== undefined){	
 				resp.aggregations.analyses.buckets.forEach(function(d) {
-					rangeData.stats.dnaseSeq.push(d);
+					//rangeData.stats.dnaseSeq.push(d);
 					rangeData.stats.dnaseSeqHash[d.key] = d;
 				});
 				deferred.resolve(localScope);

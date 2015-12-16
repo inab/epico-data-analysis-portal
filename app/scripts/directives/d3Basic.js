@@ -192,6 +192,8 @@
           
           var treeDepth;
           var numNodes;
+          
+          var experimentsDescs;
 
           // on window resize, re-render d3 canvas
           window.onresize = function() {
@@ -296,37 +298,40 @@
 				wrap(d3.select(this), treew+sepFromTree-de.y-svgMargin-30);
 			});
 
-            // Display node data
+		// Display node data
+		
+		
+		//console.log(nodeEnter);
+		//nodeData.forEach(function(v,i){
+		//});
+		nodeEnter.each(function(de) {
+			if(de.expData) {
+				var thisnode = d3.select(this);
+				var nodeData = de.expData; 
+				
+				var trueI = 0;
+				nodeData.forEach(function(v,i) {
+					var experimentDesc = experimentsDescs[i];
+					if(experimentDesc.visible) {
+						var theText = (!isNaN(v) && isFinite(v) && v !== -1)?(v==0?'0':(v<0.01?v.toExponential(1):v.toPrecision(3))):"--";
+						var theX = treew+sepFromTree-de.y-(svgMargin/2)+expDataWidth*trueI;
 
-           
-            //console.log(nodeEnter);
-            //nodeData.forEach(function(v,i){
-            //});
-            nodeEnter.each(function(de){
-                  
-                if (de.expData) {
+						thisnode.append("svg:text")
+							.attr("x", theX)
+							.attr("y",0)
+							// .attr("y",-15)
+							.attr("dy", ".35em")
+							.attr("text-anchor", "start")
+							.text(theText)
+							.style("fill", "rgb(0,0,0)");
+						
+						trueI++;
+					}
+				});
 
-
-                var thisnode = d3.select(this);
-                var nodeData = de.expData; 
-                
-                nodeData.forEach(function(v,i){
-			var theText = (!isNaN(v) && isFinite(v) && v !== -1)?(v==0?'0':(v<0.01?v.toExponential(1):v.toPrecision(3))):"--";
-			var theX = treew+sepFromTree-de.y-(svgMargin/2)+expDataWidth*i;
-
-                    thisnode.append("svg:text")
-                    .attr("x", theX)
-                    .attr("y",0)
-                    // .attr("y",-15)
-                    .attr("dy", ".35em")
-                    .attr("text-anchor", "start")
-                    .text(theText)
-                    .style("fill", "rgb(0,0,0)"); 
-                    });
-
-              }
-            });  
-              // console.timeEnd("Jarl");
+			}
+		});
+		// console.timeEnd("Jarl");
             
 
 
@@ -397,7 +402,13 @@
             //Draw headers
             if(data){
 		// setup variables
-		var experiments = data.experiments;
+		experimentsDescs = data.experiments;
+		var experimentTypes = [];
+		experimentsDescs.forEach(function(experimentDesc) {
+			if(experimentDesc.visible) {
+				experimentTypes.push(experimentDesc.label);
+			}
+		});
 		root = data.root;
 		treeDepth = data.depth;
 		numNodes = data.numNodes;
@@ -406,7 +417,7 @@
 		
 		//treew = width*0.27;
 		treew = treeDepth*(expRadius*2)/3;
-		width = treew+sepFromTree+expDataWidth*experiments.length;
+		width = treew+sepFromTree+expDataWidth*experimentTypes.length;
 		if(width < d3.select(iElement[0])[0][0].offsetWidth) {
 			width = d3.select(iElement[0])[0][0].offsetWidth;
 		}
@@ -416,7 +427,7 @@
 		//height = (scope.style === 'detailed')?6000:1840;
               
 		var gExp = svg.selectAll("g.experiment")
-			.data(experiments)
+			.data(experimentTypes)
 			.enter()
 			.append("svg:g")
 			.classed({experiment:true})
@@ -449,7 +460,7 @@
 		// gExp = undefined;
 		
 		/*	
-              experiments.forEach(function(d,i){
+              experimentTypes.forEach(function(d,i){
                   svg.append("svg:g")
                     .attr("transform", "translate(" + (treew+sepFromTree+i*expDataWidth ) + "," + 100 + ")") 
                     .append("svg:foreignObject")

@@ -13,6 +13,7 @@ BASEPATH="$(dirname "${BASEZ}")"
 case "$(uname -n)" in
 	montblanc)
 		BLUEPRINT_DATAPORTAL_CONFIG="${BASEPATH}"/blueprint-dev-internal-montblanc-config.json
+		deployDir="${HOME}"/public_html/blueprint
 		;;
 	*)
 		BLUEPRINT_DATAPORTAL_CONFIG="${BASEPATH}"/blueprint-dev-internal-config.json
@@ -32,3 +33,9 @@ if [ $# -gt 0 ] ; then
 fi
 
 grunt "$command"
+retval=$?
+if [ $retval -eq 0 ] ; then
+	if [ -n "$deployDir" ] ; then
+		mkdir -p "$deployDir" && cp -dpr dist/* "${deployDir}"
+	fi
+fi

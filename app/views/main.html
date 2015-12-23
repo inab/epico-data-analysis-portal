@@ -131,9 +131,9 @@
 					<span class="term">Show all charts / mean series</span>
 				</div>
 				<div class="col-xs-1 col-sm-12">&nbsp;</div>
-				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="meanSeriesDesc in $parent.AVG_SERIES" ng-click="switchChart($event,$parent.rangeData[meanSeriesDesc.chartId],rangeData)" ng-hide="$parent.rangeData[meanSeriesDesc.chartId].isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'">
-					<span class="square" ng-style="{'border-color': meanSeriesDesc.color, 'background-color': $parent.rangeData[meanSeriesDesc.chartId].isHidden ? 'white' : ($parent.rangeData[meanSeriesDesc.chartId].meanSeriesHidden ? '#E0E0E0': meanSeriesDesc.color) }"></span>
-					<span class="term" ng-style="{color: $parent.rangeData[meanSeriesDesc.chartId].isHidden ? 'gray': 'initial'}">{{meanSeriesDesc.name}}</span>
+				<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.charts" ng-click="switchChart($event,chart,$parent.rangeData)" ng-hide="chart.isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'">
+					<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
+					<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 				</div>
 			</div>
 			<div class="row terms-selector">

@@ -31,6 +31,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 			name: METHYL_GRAPH,
 			noData: 'methylated regions',
 			title: 'Methylated regions',
+			ceiling: 1.0,
 			floor: 0.0,
 			yAxisLabel: 'Methylation level',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
@@ -39,6 +40,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 			name: METHYL_HYPER_GRAPH,
 			noData: 'hyper-methylated regions',
 			title: 'Hyper-methylated regions',
+			ceiling: 1.0,
 			floor: 0.0,
 			yAxisLabel: 'Methylation level',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
@@ -48,6 +50,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 			name: METHYL_HYPO_GRAPH,
 			noData: 'hypo-methylated regions',
 			title: 'Hypo-methylated regions',
+			ceiling: 1.0,
 			floor: 0.0,
 			yAxisLabel: 'Methylation level',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
@@ -887,6 +890,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 			chart.allData = [];
 			chart.bpSideData = {
 				sampleToIndex: {},
+				meanSeries: null
 			};
 			chart.title = title;
 			// Is this graph initially hidden?
@@ -968,6 +972,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 								meanSeriesValues = [];
 								var meanSeries;
 								
+								graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[meanSeriesId];
 								switch(graph.type) {
 									case GRAPH_TYPE_STEP_CHARTJS:
 										meanSeries = {
@@ -975,8 +980,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesGenerator: genMeanSeries,
 											seriesDest: 'data',
 											series: {
-												label: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
-												strokeColor: localScope.AVG_SERIES_COLORS[meanSeriesId].color
+												label: graph.bpSideData.meanSeries.name,
+												strokeColor: graph.bpSideData.meanSeries.color
 											}
 										};
 										graph.options.data.datasets.push(meanSeries.series);
@@ -988,8 +993,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesDest: 'dataPoints',
 											series: {
 												type: "stepLine",
-												name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
-												color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
+												name: graph.bpSideData.meanSeries.name,
+												color: graph.bpSideData.meanSeries.color
 											}
 										};
 										graph.options.data.push(meanSeries.series);
@@ -1000,8 +1005,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesGenerator: genBoxPlotSeries,
 											seriesDest: 'data',
 											series: {
-												name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
-												color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
+												name: graph.bpSideData.meanSeries.name,
+												color: graph.bpSideData.meanSeries.color
 											}
 										};
 										graph.options.series.push(meanSeries.series);
@@ -1012,8 +1017,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesGenerator: genMeanSeriesHighcharts,
 											seriesDest: 'data',
 											series: {
-												name: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
-												color: localScope.AVG_SERIES_COLORS[meanSeriesId].color,
+												name: graph.bpSideData.meanSeries.name,
+												color: graph.bpSideData.meanSeries.color,
 												shadow: false,
 												connectNulls: false,
 												marker: {
@@ -1036,8 +1041,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesDest: 'values',
 											series: {
 												type: 'area',
-												key: localScope.AVG_SERIES_COLORS[meanSeriesId].name,
-												color: localScope.AVG_SERIES_COLORS[meanSeriesId].color
+												key: graph.bpSideData.meanSeries.name,
+												color: graph.bpSideData.meanSeries.color
 											}
 										};
 										graph.data.push(meanSeries.series);

@@ -53,6 +53,9 @@ factory('ConstantsService',function() {
 		REGION_SEARCH_URI: REGION_SEARCH_URI,
 		SEARCH_URIS: SEARCH_URIS,
 		
+		VIEW_GENERAL: 'General',
+		VIEW_DISEASES: 'Diseases',
+		
 		isReactome: function(queryType) {
 			return ( queryType === 'reaction' || queryType === 'pathway');
 		}

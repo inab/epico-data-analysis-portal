@@ -1473,6 +1473,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 			charts: [],
 			stats: {},
 			gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
+			viewClass: ConstantsService.VIEW_GENERAL,
 		};
 		
 		// Only not taking into account flanking window size for explicit ranges

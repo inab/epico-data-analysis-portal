@@ -929,7 +929,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 
 			rangeData.charts.push(chart);
 			
-			rangeData[gName] = chart;
+			rangeData.chartMaps.general[gName] = chart;
 		};
 		
 		GRAPHS.forEach(GraphPrepare);
@@ -991,8 +991,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 					
 					// We do this for every chart where the series appears
 					chartIds.forEach(function(chartId) {
-						if(chartId in rangeData) {
-							var graph = rangeData[chartId];
+						if(chartId in rangeData.chartMaps.general) {
+							var graph = rangeData.chartMaps.general[chartId];
 							
 							var meanSeriesValues;
 							if(meanSeriesId in graph.bpSideData.sampleToIndex) {
@@ -1471,7 +1471,17 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 			termNodes: termNodes,
 			termNodesHash: termNodesHash,
 			charts: [],
+			chartMaps: {
+				general: {},
+			},
 			stats: {},
+			fetchedData: {
+				byCellType: {
+					hash: {},
+					orderedKeys: [],
+				},
+				all: [],
+			},
 			gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
 			viewClass: ConstantsService.VIEW_GENERAL,
 		};
@@ -1484,8 +1494,93 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		localScope.graphData.push(rangeData);
 	}
 	
+	function storeFetchedData(localScope,rangeData,range_start,range_end,results) {
+		results.forEach(function(segment) {
+			var analysis_id = segment._source.analysis_id;
+			// We are storing only what we can process / understand
+			if(analysis_id in localScope.analysesHash) {
+				var analysis = localScope.analysesHash[analysis_id];
+				var meanCellTypeSeriesId = analysis.meanSeries;
+				
+				var diseaseSeriesId = analysis.lab_experiment.sample.specimen.donor_disease;
+				// This is really only needed by series shared by several charts
+				var cellTypeSeriesId = analysis.cell_type.o_uri+'_'+meanCellTypeSeriesId;
+				
+				var value;
+				var payload;
+				switch(meanCellTypeSeriesId) {
+					case EXP_ANY_SERIES:
+						switch(segment._type) {
+							case ConstantsService.EXPG_CONCEPT:
+								value = segment._source.FPKM;
+								meanCellTypeSeriesId = EXPG_SERIES;
+								payload = segment._source.gene_stable_id;
+								break;
+							case ConstantsService.EXPT_CONCEPT:
+								value = segment._source.FPKM;
+								meanCellTypeSeriesId = EXPT_SERIES;
+								payload = segment._source.transcript_stable_id;
+								break;
+						}
+						break;
+					case DLAT_HYPER_SERIES:
+						value = segment._source.meth_level;
+						break;
+					case DLAT_HYPO_SERIES:
+						value = segment._source.meth_level;
+						break;
+					case RREG_SERIES:
+						value = segment._source.z_score;
+						break;
+					default:
+						if(meanCellTypeSeriesId.indexOf(PDNA_NARROW_SERIES)===0) {
+							value = segment._source.log10_qvalue;
+						} else if(meanCellTypeSeriesId.indexOf(PDNA_BROAD_SERIES)===0) {
+							value = segment._source.log10_qvalue;
+						}
+						break;
+				}
+				
+				// Clipping to the viewed region
+				var chromosome_start = segment._source.chromosome_start;
+				var chromosome_end = segment._source.chromosome_end;
+				
+				if(chromosome_start < range_start) {
+					chromosome_start = range_start;
+				}
+				if(chromosome_end > range_end) {
+					chromosome_end = range_end;
+				}
+				
+				var sDataS = [chromosome_start,chromosome_end,value,payload];
+				var data = {
+					cellTypeSeriesId: cellTypeSeriesId,
+					meanCellTypeSeriesId: meanCellTypeSeriesId,
+					diseaseSeriesId: diseaseSeriesId,
+					analysis: analysis,
+					chromosome_start: segment._source.chromosome_start,
+					chromosome_end: segment._source.chromosome_end,
+					sDataS: sDataS
+				};
+				
+				// By default, store all
+				rangeData.fetchedData.all.push(data);
+				var cellDataArray;
+				if(analysis.cell_type.o_uri in rangeData.fetchedData.byCellType.hash) {
+					cellDataArray = rangeData.fetchedData.byCellType.hash[analysis.cell_type.o_uri];
+				} else {
+					cellDataArray = [];
+					rangeData.fetchedData.byCellType.hash[analysis.cell_type.o_uri] = cellDataArray;
+					rangeData.fetchedData.byCellType.orderedKeys.push(analysis.cell_type.o_uri);
+				}
+				cellDataArray.push(data);
+			}
+		});
+	}
+	
 	return {
 		doChartLayout: doChartLayout,
+		storeFetchedData: storeFetchedData,
 		processChartData: processChartData,
 		redrawCharts: redrawCharts,
 		assignColorMap: assignColorMap,

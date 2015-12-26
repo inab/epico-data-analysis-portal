@@ -37,6 +37,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				var histoneMap = {};
 				
 				var samplesMap = {};
+				var specimensMap = {};
+				var donorsMap = {};
 				
 				var numDonors = 0;
 				var numPooledDonors = 0;
@@ -46,7 +48,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				resp.hits.hits.forEach(function(d) {
 					switch(d._type) {
 						case ConstantsService.DONOR_CONCEPT:
-							switch(d._source.donor_kind) {
+							var donor = d._source;
+							switch(donor.donor_kind) {
 								case 'd':
 									numDonors++;
 									break;
@@ -59,22 +62,27 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 								default:
 									numOther++;
 							}
-							localScope.donors.push(d._source);
+							localScope.donors.push(donor);
+							donorsMap[donor.donor_id] = donor;
 							
 							break;
 							
 						case ConstantsService.SPECIMEN_CONCEPT:
-							localScope.specimens.push(d._source);
+							var specimen = d._source;
+							localScope.specimens.push(specimen);
+							specimensMap[specimen.specimen_id] = specimen;
 						
 							break;
 							
 						case ConstantsService.SAMPLE_CONCEPT:
-							var s = {};
-							s.analyzed_sample_type_other = d._source.analyzed_sample_type_other;
-							s.sample_id = d._source.sample_id;
-							s.ontology = d._source.purified_cell_type;
-							s.markers = d._source.markers;
-							s.experiments = [];
+							var s = {
+								analyzed_sample_type_other: d._source.analyzed_sample_type_other,
+								sample_id: d._source.sample_id,
+								specimen_id: d._source.specimen_id,
+								ontology: d._source.purified_cell_type,
+								markers: d._source.markers,
+								experiments: [],
+							};
 							
 							localScope.samples.push(s);
 							samplesMap[s.sample_id] = s;
@@ -140,9 +148,22 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				
 				
 				// Linking everything
+				localScope.specimens.forEach(function(specimen) {
+					if(specimen.donor_id in donorsMap) {
+						specimen.donor = donorsMap[specimen.donor_id];
+					}
+				});
+				
+				localScope.samples.forEach(function(sample) {
+					if(sample.specimen_id in specimensMap) {
+						sample.specimen = specimensMap[sample.specimen_id];
+					}
+				});
+				
 				localScope.labs.forEach(function(lab_experiment) {
 					if(lab_experiment.sample_id in samplesMap) {
 						samplesMap[lab_experiment.sample_id].experiments.push(lab_experiment);
+						lab_experiment.sample = samplesMap[lab_experiment.sample_id];
 					}
 				});
 				

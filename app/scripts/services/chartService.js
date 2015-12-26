@@ -183,6 +183,35 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 	REGION_FEATURES_COLORS[REGION_FEATURE_GENE] = '#ffffcc';
 	REGION_FEATURES_COLORS[REGION_FEATURE_TRANSCRIPT] = 'orange';
 	
+	var ChromosomesHash = {
+		'1': {n:1,c:"chr",f:"images/GRCh38_chromosome_1.svg"},
+		'2': {n:2,c:"chr",f:"images/GRCh38_chromosome_2.svg"},
+		'3': {n:3,c:"chr",f:"images/GRCh38_chromosome_3.svg"},
+		'4': {n:4,c:"chr",f:"images/GRCh38_chromosome_4.svg"},
+		'5': {n:5,c:"chr",f:"images/GRCh38_chromosome_5.svg"},
+		'6': {n:6,c:"chr",f:"images/GRCh38_chromosome_6.svg"},
+		'7': {n:7,c:"chr",f:"images/GRCh38_chromosome_7.svg"},
+		'8': {n:8,c:"chr",f:"images/GRCh38_chromosome_8.svg"},
+		'9': {n:9,c:"chr",f:"images/GRCh38_chromosome_9.svg"},
+		'10': {n:10,c:"chr",f:"images/GRCh38_chromosome_10.svg"},
+		'11': {n:11,c:"chr",f:"images/GRCh38_chromosome_11.svg"},
+		'12': {n:12,c:"chr",f:"images/GRCh38_chromosome_12.svg"},
+		'13': {n:13,c:"chr",f:"images/GRCh38_chromosome_13.svg"},
+		'14': {n:14,c:"chr",f:"images/GRCh38_chromosome_14.svg"},
+		'15': {n:15,c:"chr",f:"images/GRCh38_chromosome_15.svg"},
+		'16': {n:16,c:"chr",f:"images/GRCh38_chromosome_16.svg"},
+		'17': {n:17,c:"chr",f:"images/GRCh38_chromosome_17.svg"},
+		'18': {n:18,c:"chr",f:"images/GRCh38_chromosome_18.svg"},
+		'19': {n:19,c:"chr",f:"images/GRCh38_chromosome_19.svg"},
+		'20': {n:20,c:"chr",f:"images/GRCh38_chromosome_20.svg"},
+		'21': {n:21,c:"chr",f:"images/GRCh38_chromosome_21.svg"},
+		'22': {n:22,c:"chr",f:"images/GRCh38_chromosome_22.svg"},
+		'X': {n:"X",c:"chr",f:"images/GRCh38_chromosome_X.svg"},
+		'Y': {n:"Y",c:"chr",f:"images/GRCh38_chromosome_Y.svg"},
+		'MT': {n:"MT",c:"chr",f:"images/GRCh38_chromosome_MT.svg"}
+	};
+	var UnknownChromosome = { n: "(unknown)", f: "images/chr.svg" };
+	
 	function getXG(d) {
 		return d.x;
 	}
@@ -1425,6 +1454,35 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		$scope.analysisSubtotals = analysisSubtotals;
 	}
 	
+	function storeRange(localScope,range) {
+		// Preparing the charts!
+		var termNodes = angular.copy(localScope.termNodes);
+		var termNodesHash = {};
+		termNodes.forEach(function(termNode) {
+			termNodesHash[termNode.o_uri] = termNode;
+		});
+		
+		var rangeData = {
+			toBeFetched: true,
+			fetching: false,
+			heading: (range.label !== undefined) ? range.label : ('Region ' + range.chr + ':' + range.start + '-' + range.end),
+			range: range,
+			treedata: null,
+			termNodes: termNodes,
+			termNodesHash: termNodesHash,
+			charts: [],
+			stats: {},
+			gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
+		};
+		
+		// Only not taking into account flanking window size for explicit ranges
+		if(range.currentQuery.flankingWindowSize !== undefined) {
+			rangeData.flankingWindowSize = range.currentQuery.flankingWindowSize;
+		}
+		
+		localScope.graphData.push(rangeData);
+	}
+	
 	return {
 		doChartLayout: doChartLayout,
 		processChartData: processChartData,
@@ -1437,5 +1495,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		linkMeanSeriesToAnalysis: linkMeanSeriesToAnalysis,
 		chooseLabelFromSymbols: chooseLabelFromSymbols,
 		REGION_FEATURES: REGION_FEATURES,
+		storeRange: storeRange,
 	};
 }]);

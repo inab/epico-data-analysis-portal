@@ -600,9 +600,14 @@ angular.module('blueprintApp')
 					console.error('Initialization error SampleTrackingData');
 					console.error(err);
 				})
-				.then(QueryService.fetchCellTerms, function(err) {
+				.then(QueryService.fetchDiseaseTerms, function(err) {
 					openModal('Initialization error','Error while fetching analysis metadata');
 					console.error('Initialization error AnalysisMetadata');
+					console.error(err);
+				})
+				.then(QueryService.fetchCellTerms, function(err) {
+					openModal('Initialization error','Error while fetching disease terms metadata');
+					console.error('Initialization error DiseaseTerms');
 					console.error(err);
 				})
 				.catch(function(err) {

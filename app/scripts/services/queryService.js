@@ -340,6 +340,79 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		});
 	}
 	
+	function fetchDiseaseTerms(localScope) {
+		if(localScope.fetchedDiseaseTerms!==undefined) {
+			return localScope;
+		}
+		
+		var deferred = $q.defer();
+        
+		// Let's calculate the unique terms
+		var theUris=[];
+		var theUrisHash = {};
+		localScope.specimens.forEach(function(specimen) {
+			var d = specimen.donor_disease;
+			if(!(d in theUrisHash)) {
+				theUris.push(d);
+				theUrisHash[d]=1;
+			}
+		});
+		
+		es.search({
+			index: ConstantsService.METADATA_MODEL_INDEX,
+			type: ConstantsService.CVTERM_CONCEPT,
+			size: 10000,
+			body: {
+				query: {
+					filtered: {
+						query: {
+							match_all: {}
+						},
+						filter: {
+							and: {
+								filters: [{
+									//term: {
+									//	ont: 'cv:CellOntology'
+									//}
+									terms: {
+										ont: ['cv:PATO','cv:EFO','cv:NCIMetathesaurus']
+									}
+								},{
+									terms: {
+										alt_id: theUris
+									}
+								}]
+							}
+						}
+					}
+				},
+				fields: ['term','term_uri','name','ont']
+			}
+		}, function(err,resp) {
+			if(resp.hits.total > 0) {
+				var fetchedDiseaseTermsHash = {};
+				localScope.fetchedDiseaseTerms = resp.hits.hits.map(function(v) {
+					var n = v.fields;
+					var diseaseNode = {
+						name: n.name[0],
+						o: n.term[0],
+						o_uri: n.term_uri[0],
+						ont: n.ont[0],
+					};
+					
+					fetchedDiseaseTermsHash[diseaseNode.o_uri] = diseaseNode;
+					
+					return diseaseNode;
+				});
+				
+				localScope.fetchedDiseaseTermsHash = fetchedDiseaseTermsHash;
+			} else {
+				return deferred.reject(err);
+			}
+		});
+		return deferred.promise;
+	}
+	
 	function fetchCellTerms(localScope) {
 		if(localScope.fetchedTreeData!==undefined) {
 			return localScope;
@@ -1736,6 +1809,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		getAnalysisMetadata: getAnalysisMetadata,
 		
 		fetchCellTerms: fetchCellTerms,
+		fetchDiseaseTerms: fetchDiseaseTerms,
 		initTree: initTree,
 		// The range query core
 		genShouldQuery: genShouldQuery,

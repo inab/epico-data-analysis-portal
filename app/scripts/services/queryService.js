@@ -12,6 +12,20 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	
 	var chipSeqWindow = ConstantsService.DEFAULT_FLANKING_WINDOW_SIZE;
 	
+	// This is here to fix a problem parsing the donor_disease field when the database was created
+	var Disease2Ont = {
+		'Acute lymphocytic leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023449',
+		'Acute Myeloid Leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023467',
+		'Acute promyelocytic leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023487',
+		'Chronic lymphocytic leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023434',
+		'Germinal Center B-Cell-Like Diffuse Large B-Cell Lymphoma': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C1333295',
+		'Mantle cell lymphoma': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0334634',
+		'Multiple myeloma': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0026764',
+		'None': 'http://purl.obolibrary.org/obo/PATO_0000461',
+		'Sporadic Burkitt lymphoma': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C1336077',
+		'T-cell acute leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023449',
+	};
+	
 	function getSampleTrackingData(localScope) {
 		if(localScope.donors!==undefined && localScope.donors.length!==0) {
 			return localScope;
@@ -69,6 +83,14 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 							
 						case ConstantsService.SPECIMEN_CONCEPT:
 							var specimen = d._source;
+							// Fixing this problem
+							if(specimen.donor_disease===null) {
+								if(specimen.donor_disease_text in Disease2Ont) {
+									specimen.donor_disease = Disease2Ont[specimen.donor_disease_text];
+								} else {
+									console.log('Unknown disease: '+specimen.donor_disease_text);
+								}
+							}
 							localScope.specimens.push(specimen);
 							specimensMap[specimen.specimen_id] = specimen;
 						

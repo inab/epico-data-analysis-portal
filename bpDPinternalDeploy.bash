@@ -13,7 +13,7 @@ BASEPATH="$(dirname "${BASEZ}")"
 case "$(uname -n)" in
 	montblanc)
 		BLUEPRINT_DATAPORTAL_CONFIG="${BASEPATH}"/blueprint-dev-internal-montblanc-config.json
-		deployDir="${HOME}"/public_html/blueprint
+		deployDir="${HOME}"/public_html/blueprint-internal
 		;;
 	*)
 		BLUEPRINT_DATAPORTAL_CONFIG="${BASEPATH}"/blueprint-dev-internal-config.json

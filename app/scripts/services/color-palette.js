@@ -131,6 +131,39 @@ ColorPalette.prototype.getColor = function(iColor) {
 	return this.palette[iColor].toRgb().toHex();
 };
 
+/**
+ * It returns the next unused colour from the programmatic palette
+ * @return	{String}	The colour, in RGB format
+ */
+ColorPalette.prototype.getNextColor = function() {
+	return this.getColor(this.highColorMark+1);
+};
+
+/**
+ * It returns the next unused numColors colours from the programmatic palette
+ * @param	{Number}	numColors	The next numColors to get
+ * @return	{Array}	An array with the next numColors colours from the programmatic palette, in RGB format
+ */
+ColorPalette.prototype.getNextColors = function(numColors) {
+	var colorArray = [];
+	
+	if(numColors > 0) {
+		// First, assure the colors are in place
+		var newHighColorMark = this.highColorMark + numColors;
+		this.calculateColors(newHighColorMark + 1);
+
+		// Now, return the array, translated to RGB strings
+		for(var iCol = this.highColorMark+1; iCol <= newHighColorMark; iCol++) {
+			colorArray.push(this.palette[iCol].toRgb().toHex());
+		}
+		
+		// Setting the highmark
+		this.highColorMark = newHighColorMark;
+	}
+	
+	return colorArray;
+};
+
 angular.
 module('blueprintApp').
 factory('ColorPalette', function () {

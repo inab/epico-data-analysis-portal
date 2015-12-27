@@ -124,7 +124,7 @@
 			<label class="btn btn-primary" ng-model="viewClass" uib-btn-radio="'Diseases'">Diseases</label>
 		</div>
 		
-		<div class="no-margin-padding" ng-show="viewClass==='General'">
+		<div class="no-margin-padding" ng-show="rangeData.viewClass==='General'">
 			<!-- This trick allows reflowing the charts which were drawn in background -->
 			{{doReflow()}}<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 			<div class="col-xs-12 col-sm-2 col-lg-1">
@@ -205,7 +205,7 @@
 			
 			<div class="row" style="clear:both;">
 				<div class="col-sm-1 text-center" style="margin-top:1em;">
-					<img ng-src="{{rangeData.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.gChro.n}}">
+					<img ng-src="{{rangeData.ui.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.ui.gChro.n}}">
 				</div>
 				<div class="col-sm-11">
 					<div ng-repeat="ontology in rangeData.treedata">
@@ -215,7 +215,20 @@
 			</div>
 		</div>
 		
-		<div class="no-margin-padding" ng-show="viewClass === 'Diseases'">
+		<div class="no-margin-padding" ng-show="rangeData.viewClass === 'Diseases'">
+			<!-- Single button -->
+			<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
+				<button id="celltype-button" type="button" class="btn btn-primary" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
+					<span class="circle" ng-style="{'border-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color, 'background-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color }"></span>{{rangeData.termNodes[rangeData.ui.celltypeButtonSelected].name}} <span class="caret"></span>
+				</button>
+				<ul class="uib-dropdown-menu" role="menu" aria-labelledby="celltype-button">
+					<li role="menuitem" ng-repeat="termNode in rangeData.termNodes"><a ng-click="$parent.rangeData.ui.celltypeButtonSelected = $index;"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
+					<!--
+					<li class="divider"></li>
+					<li role="menuitem"><a href="#">Separated link</a></li>
+					-->
+				</ul>
+			</div>
 		</div>
 	</uib-tab>
 </uib-tabset>

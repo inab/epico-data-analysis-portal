@@ -341,7 +341,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	}
 	
 	function fetchDiseaseTerms(localScope) {
-		if(localScope.fetchedDiseaseTerms!==undefined) {
+		if(localScope.diseaseNodes!==undefined) {
 			return localScope;
 		}
 		
@@ -390,8 +390,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			}
 		}, function(err,resp) {
 			if(resp.hits.total > 0) {
-				var fetchedDiseaseTermsHash = {};
-				localScope.fetchedDiseaseTerms = resp.hits.hits.map(function(v) {
+				localScope.diseaseNodes = resp.hits.hits.map(function(v) {
 					var n = v.fields;
 					var diseaseNode = {
 						name: n.name[0],
@@ -400,12 +399,10 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						ont: n.ont[0],
 					};
 					
-					fetchedDiseaseTermsHash[diseaseNode.o_uri] = diseaseNode;
-					
 					return diseaseNode;
 				});
 				
-				localScope.fetchedDiseaseTermsHash = fetchedDiseaseTermsHash;
+				deferred.resolve(localScope);
 			} else {
 				return deferred.reject(err);
 			}
@@ -703,7 +700,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						// Sort by root uri
 						localScope.fetchedTreeData = roots.sort(function(a,b) { return a.o_uri.localeCompare(b.o_uri); });
 						
-						ChartService.assignColorMap(localScope,termNodes);
+						ChartService.assignCellTypesColorMap(localScope,termNodes);
+						ChartService.assignMeanSeriesColorMap(localScope);
+						ChartService.assignDiseasesColorMap(localScope);
 						
 						// At last, linking analysis to their corresponding cell types and the mean series
 						localScope.samples.forEach(function(sample) {
@@ -1243,7 +1242,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				if(resp.hits!==undefined) {
 					localScope.maxResultsFetched = resp.hits.total;
 					
-					ChartService.processChartData(localScope,rangeData,range_start,range_end,resp.hits.hits);
+					ChartService.storeFetchedData(rangeData,range_start,range_end,resp.hits.hits);
 					total += resp.hits.hits.length;
 					
 					// Now, updating the graphs
@@ -1253,7 +1252,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					
 					// Re-drawing charts
 					var stillLoading = resp.hits.total > total;
-					ChartService.redrawCharts(rangeData,true,stillLoading);
+					ChartService.redrawCharts(rangeData,true,stillLoading,ConstantsService.VIEW_GENERAL);
 					
 					// Is there any more data?
 					if(stillLoading) {

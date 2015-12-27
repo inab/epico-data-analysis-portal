@@ -4,7 +4,7 @@
 
 angular.
 module('blueprintApp').
-factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,portalConfig,ConstantsService,d3) {
+factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d3',function($q,portalConfig,ConstantsService,ColorPalette,d3) {
 	
 	var METHYL_GRAPH = 'methyl';
 	var METHYL_HYPER_GRAPH = METHYL_GRAPH+'_hyper';
@@ -211,6 +211,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		'MT': {n:"MT",c:"chr",f:"images/GRCh38_chromosome_MT.svg"}
 	};
 	var UnknownChromosome = { n: "(unknown)", f: "images/chr.svg" };
+	
+	// Preparing the color range
+	var Palette = ColorPalette.newInstance();
 	
 	function getXG(d) {
 		return d.x;
@@ -941,67 +944,31 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		
 	}
 	
-	function processChartData(localScope,rangeData,range_start,range_end,results) {
-		results.forEach(function(segment) {
-			var analysis_id = segment._source.analysis_id;
-			if(analysis_id in localScope.analysesHash) {
-				var analysis = localScope.analysesHash[analysis_id];
-				var meanSeriesId = analysis.meanSeries;
-				
-				// This is really only needed by series shared by several charts
-				var seriesId = analysis.cell_type.o_uri+'_'+meanSeriesId;
-				
-				var value;
-				var payload;
-				switch(meanSeriesId) {
-					case EXP_ANY_SERIES:
-						switch(segment._type) {
-							case ConstantsService.EXPG_CONCEPT:
-								value = segment._source.FPKM;
-								meanSeriesId = EXPG_SERIES;
-								payload = segment._source.gene_stable_id;
-								break;
-							case ConstantsService.EXPT_CONCEPT:
-								value = segment._source.FPKM;
-								meanSeriesId = EXPT_SERIES;
-								payload = segment._source.transcript_stable_id;
-								break;
-						}
-						break;
-					case DLAT_HYPER_SERIES:
-						value = segment._source.meth_level;
-						break;
-					case DLAT_HYPO_SERIES:
-						value = segment._source.meth_level;
-						break;
-					case RREG_SERIES:
-						value = segment._source.z_score;
-						break;
-					default:
-						if(meanSeriesId.indexOf(PDNA_NARROW_SERIES)===0) {
-							value = segment._source.log10_qvalue;
-						} else if(meanSeriesId.indexOf(PDNA_BROAD_SERIES)===0) {
-							value = segment._source.log10_qvalue;
-						}
-						break;
-				}
-				
-				if(meanSeriesId in localScope.SeriesToChart) {
-					var chartIds = localScope.SeriesToChart[meanSeriesId];
+	function processGeneralChartData(rangeData) {
+		var origin = rangeData.processedData.all;
+		var dataArray = rangeData.fetchedData.all;
+		var maxI = dataArray.length;
+		if(origin<maxI) {
+			var localScope = rangeData.localScope;
+			for(var i=origin; i<maxI ; i++) {
+				var data = dataArray[i];
+				if(data.meanCellTypeSeriesId in localScope.SeriesToChart) {
+					var chartIds = localScope.SeriesToChart[data.meanCellTypeSeriesId];
 					
 					// We do this for every chart where the series appears
-					chartIds.forEach(function(chartId) {
+					for(var iChart=0;iChart<chartIds.length;iChart++) {
+						var chartId = chartIds[iChart];
 						if(chartId in rangeData.chartMaps.general) {
 							var graph = rangeData.chartMaps.general[chartId];
 							
 							var meanSeriesValues;
-							if(meanSeriesId in graph.bpSideData.sampleToIndex) {
-								meanSeriesValues = graph.bpSideData.sampleToIndex[meanSeriesId];
+							if(data.meanCellTypeSeriesId in graph.bpSideData.sampleToIndex) {
+								meanSeriesValues = graph.bpSideData.sampleToIndex[data.meanCellTypeSeriesId];
 							} else {
 								meanSeriesValues = [];
 								var meanSeries;
 								
-								graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[meanSeriesId];
+								graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data.meanCellTypeSeriesId];
 								switch(graph.type) {
 									case GRAPH_TYPE_STEP_CHARTJS:
 										meanSeries = {
@@ -1078,22 +1045,22 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 										break;
 								}
 								meanSeries.series[meanSeries.seriesDest] = [];
-								graph.bpSideData.sampleToIndex[meanSeriesId] = meanSeriesValues;
+								graph.bpSideData.sampleToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
 								graph.allData.push(meanSeries);
 							}
 							
 							var seriesValues;
-							if(seriesId in graph.bpSideData.sampleToIndex) {
-								seriesValues = graph.bpSideData.sampleToIndex[seriesId];
+							if(data.cellTypeSeriesId in graph.bpSideData.sampleToIndex) {
+								seriesValues = graph.bpSideData.sampleToIndex[data.cellTypeSeriesId];
 							} else {
 								seriesValues = [];
 								var series;
 								
 								// We need this shared reference
-								var cell_type = rangeData.termNodesHash[analysis.cell_type.o_uri];
-								// and signal this cell_type
-								cell_type.wasSeen = true;
-									
+								var cell_type = rangeData.termNodesHash[data.analysis.cell_type.o_uri];
+								
+								var seriesName = data.analysis.cell_type.name;
+								var seriesColor = data.analysis.cell_type.color;
 								switch(graph.type) {
 									case GRAPH_TYPE_STEP_CHARTJS:
 										series = {
@@ -1101,8 +1068,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesGenerator: genMeanSeries,
 											seriesDest: 'data',
 											series: {
-												label: analysis.cell_type.name,
-												strokeColor: analysis.cell_type.color
+												label: seriesName,
+												strokeColor: seriesColor,
 											}
 										};
 										graph.options.data.datasets.push(series.series);
@@ -1114,8 +1081,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesDest: 'dataPoints',
 											series: {
 												type: "stepLine",
-												name: analysis.cell_type.name,
-												color: analysis.cell_type.color
+												name: seriesName,
+												color: seriesColor,
 											}
 										};
 										graph.options.data.push(series.series);
@@ -1127,8 +1094,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesDest: 'data',
 											cell_type: cell_type,
 											series: {
-												name: analysis.cell_type.name,
-												color: analysis.cell_type.color
+												name: seriesName,
+												color: seriesColor,
 											}
 										};
 										graph.options.series.push(series.series);
@@ -1140,8 +1107,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesDest: 'data',
 											cell_type: cell_type,
 											series: {
-												name: analysis.cell_type.name,
-												color: analysis.cell_type.color,
+												name: seriesName,
+												color: seriesColor,
 												shadow: false,
 												connectNulls: false,
 												marker: {
@@ -1164,45 +1131,37 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 											seriesDest: 'values',
 											cell_type: cell_type,
 											series: {
-												key: analysis.cell_type.name,
-												color: analysis.cell_type.color
+												key: seriesName,
+												color: seriesColor,
 											}
 										};
 										graph.data.push(series.series);
 										break;
 								}
 								series.series[series.seriesDest] = [];
-								graph.bpSideData.sampleToIndex[seriesId] = seriesValues;
+								graph.bpSideData.sampleToIndex[data.cellTypeSeriesId] = seriesValues;
 								graph.allData.push(series);
 							}
 							
-							// Clipping to the viewed region
-							var chromosome_start = segment._source.chromosome_start;
-							var chromosome_end = segment._source.chromosome_end;
-							
-							if(chromosome_start < range_start) {
-								chromosome_start = range_start;
-							}
-							if(chromosome_end > range_end) {
-								chromosome_end = range_end;
-							}
-							
-							var sDataS = [chromosome_start,chromosome_end,value,payload];
-							meanSeriesValues.push(sDataS);
-							seriesValues.push(sDataS);
+							meanSeriesValues.push(data.sDataS);
+							seriesValues.push(data.sDataS);
 						}
-					});
+					}
 				}
-				// totalPoints += segment._source.chromosome_end - segment._source.chromosome_start + 1;
-			//} else {
-				// Ignoring what we cannot process
 			}
-		});
+			rangeData.processedData.all = maxI;
+		}
 	}
 	
-	function redrawCharts(charts,doGenerate,stillLoading) {
+	function redrawGeneralCharts(charts,doGenerate,stillLoading) {
 		if('charts' in charts) {
-			charts = charts.charts;
+			var rangeData = charts;
+			
+			// We have to call here this method, to be sure
+			// we have fulfilled all the preconditions
+			processGeneralChartData(rangeData);
+			
+			charts = rangeData.charts;
 		}
 		if(!Array.isArray(charts)) {
 			charts = [ charts ];
@@ -1235,28 +1194,54 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		}
 	}
 	
-	function assignColorMap(localScope,termNodes) {
-		// Preparing the color range
-		var cc = d3.scale.category20();
+	function redrawCharts(charts,doGenerate,stillLoading,viewClass) {
+		if('charts' in charts) {
+			var rangeData = charts;
+			
+			viewClass = rangeData.viewClass;
+		}
+		if(viewClass===undefined) {
+			viewClass = ConstantsService.VIEW_GENERAL;
+		}
+		switch(viewClass) {
+			case ConstantsService.VIEW_GENERAL:
+				redrawGeneralCharts(charts,doGenerate,stillLoading);
+				break;
+		}
+	}
+	
+	function assignCellTypesColorMap(localScope,termNodes) {
+		var cellTypeColors = Palette.getNextColors(termNodes.length);
 		
 		// Coloring the cell types
 		termNodes.forEach(function(termNode,i) {
-			var theColor = cc(i);
+			var theColor = cellTypeColors[i];
 			termNode.color = theColor;
 			termNode.termHidden = false;
 		});
 		
 		// This is needed for the data model
 		localScope.termNodes = termNodes;
-		
+	}
+	
+	function assignMeanSeriesColorMap(localScope) {
 		// And now, the colors for the AVG_SERIES
+		var avgSeriesRGBColors = Palette.getNextColors(localScope.AVG_SERIES.length);
 		var AVG_SERIES_COLORS = {};
 		localScope.AVG_SERIES.forEach(function(meanSeriesDesc, i) {
-			meanSeriesDesc.color = cc(i+termNodes.length);
+			meanSeriesDesc.color = avgSeriesRGBColors[i];
 			AVG_SERIES_COLORS[meanSeriesDesc.seriesId] = meanSeriesDesc;
 		});
 		
 		localScope.AVG_SERIES_COLORS = AVG_SERIES_COLORS;
+	}
+	
+	function assignDiseasesColorMap(localScope) {
+		// The colors for the diseases
+		var diseaseRGBColors = Palette.getNextColors(localScope.diseaseNodes.length);
+		localScope.diseaseNodes.forEach(function(disease, i) {
+			disease.color = diseaseRGBColors[i];
+		});
 	}
 	
 	function assignSeriesDataToChart(chart,data) {
@@ -1462,7 +1447,14 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 			termNodesHash[termNode.o_uri] = termNode;
 		});
 		
+		var diseaseNodes = angular.copy(localScope.diseaseNodes);
+		var diseaseNodesHash = {};
+		diseaseNodes.forEach(function(diseaseNode) {
+			diseaseNodesHash[diseaseNode.o_uri] = diseaseNode;
+		});
+		
 		var rangeData = {
+			localScope: localScope,
 			toBeFetched: true,
 			fetching: false,
 			heading: (range.label !== undefined) ? range.label : ('Region ' + range.chr + ':' + range.start + '-' + range.end),
@@ -1470,6 +1462,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 			treedata: null,
 			termNodes: termNodes,
 			termNodesHash: termNodesHash,
+			diseaseNodes: diseaseNodes,
+			diseaseNodesHash: diseaseNodesHash,
 			charts: [],
 			chartMaps: {
 				general: {},
@@ -1482,7 +1476,14 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 				},
 				all: [],
 			},
-			gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
+			processedData: {
+				byCellType: {},
+				all: 0,
+			},
+			ui: {
+				gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
+				celltypeButtonSelected: 0
+			},
 			viewClass: ConstantsService.VIEW_GENERAL,
 		};
 		
@@ -1494,7 +1495,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 		localScope.graphData.push(rangeData);
 	}
 	
-	function storeFetchedData(localScope,rangeData,range_start,range_end,results) {
+	function storeFetchedData(rangeData,range_start,range_end,results) {
+		var localScope = rangeData.localScope;
 		results.forEach(function(segment) {
 			var analysis_id = segment._source.analysis_id;
 			// We are storing only what we can process / understand
@@ -1563,6 +1565,17 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 					sDataS: sDataS
 				};
 				
+				// Labelling what we have seen
+				// We need this shared reference
+				var cell_type = rangeData.termNodesHash[analysis.cell_type.o_uri];
+				// and signal this cell_type
+				cell_type.wasSeen = true;
+				
+				// And the same for diseases
+				var disease = rangeData.diseaseNodesHash[analysis.lab_experiment.sample.specimen.donor_disease];
+				// and signal this cell_type
+				disease.wasSeen = true;
+				
 				// By default, store all
 				rangeData.fetchedData.all.push(data);
 				var cellDataArray;
@@ -1572,6 +1585,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 					cellDataArray = [];
 					rangeData.fetchedData.byCellType.hash[analysis.cell_type.o_uri] = cellDataArray;
 					rangeData.fetchedData.byCellType.orderedKeys.push(analysis.cell_type.o_uri);
+					rangeData.processedData.byCellType[analysis.cell_type.o_uri] = 0;
 				}
 				cellDataArray.push(data);
 			}
@@ -1581,9 +1595,12 @@ factory('ChartService',['$q','portalConfig','ConstantsService','d3',function($q,
 	return {
 		doChartLayout: doChartLayout,
 		storeFetchedData: storeFetchedData,
-		processChartData: processChartData,
+		processGeneralChartData: processGeneralChartData,
 		redrawCharts: redrawCharts,
-		assignColorMap: assignColorMap,
+		redrawGeneralCharts: redrawGeneralCharts,
+		assignCellTypesColorMap: assignCellTypesColorMap,
+		assignMeanSeriesColorMap: assignMeanSeriesColorMap,
+		assignDiseasesColorMap: assignDiseasesColorMap,
 		assignSeriesDataToChart: assignSeriesDataToChart,
 		getChartSeriesData: getChartSeriesData,
 		initializeAvgSeries: initializeAvgSeries,

@@ -17,9 +17,10 @@
     "angular-bootstrap": "~0.14.3",
     "elasticsearch": "~10.0.1",
     "bower-canvasjs": "inab/bower-canvasjs#~1.7.0",
-    "highcharts-release": "v4.1.9.1",
+    "highcharts-release": "v4.2.1",
     "highcharts-ng": "~0.0.11",
-    "highcharts-export-csv": "highslide-software/export-csv#828f3020fde93fc6868d90963fa047edeaedc399",
+    "highcharts-export-csv": "highcharts/export-csv#105281e6a8251fe6eb4e79fd39ee703a01c1a7ea",
+    "jalette": "jalette#b9b4108c652baef9d77ef4f32d8f09000c7dc2d8",
     "roboto-fontface": "~0.4.3"
   },
   "overrides": {

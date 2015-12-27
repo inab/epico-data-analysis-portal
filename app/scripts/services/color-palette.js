@@ -46,6 +46,7 @@ function ColorPalette(initialPalette) {
  */
 ColorPalette.prototype.reset = function(initialPalette) {
 	this.palette = undefined;
+	this.highColorMark = -1;
 	
 	if(Array.isArray(initialPalette)) {
 		initialPalette = angular.copy(initialPalette);
@@ -92,13 +93,24 @@ ColorPalette.prototype.calculateColors = function(numColors) {
  * @return	{Array}	An array with the first numColors colours from the programmatic palette, in RGB format
  */
 ColorPalette.prototype.getColorArray = function(numColors) {
-	// First, assure the colors are in place
-	this.calculateColors(numColors);
+	var colorArray = [];
 	
-	// Now, return the array, translated to RGB strings
-	return this.palette.map(function(color) {
-		return color.toRgb().toHex();
-	});
+	if(numColors > 0) {
+		// First, assure the colors are in place
+		this.calculateColors(numColors);
+		
+		// Now, return the array, translated to RGB strings
+		for(var iCol = 0; iCol < numColors; iCol++) {
+			colorArray.push(this.palette[iCol].toRgb().toHex());
+		}
+		
+		// Setting the highmark
+		if(this.highColorMark < (numColors-1)) {
+			this.highColorMark = numColors-1;
+		}
+	}
+	
+	return colorArray;
 };
 
 /**
@@ -109,6 +121,11 @@ ColorPalette.prototype.getColorArray = function(numColors) {
 ColorPalette.prototype.getColor = function(iColor) {
 	// First, assure the colors are in place
 	this.calculateColors(iColor+1);
+	
+	// Setting the highmark
+	if(this.highColorMark < iColor) {
+		this.highColorMark = iColor;
+	}
 	
 	// Now, return the color, translated to RGB string
 	return this.palette[iColor].toRgb().toHex();

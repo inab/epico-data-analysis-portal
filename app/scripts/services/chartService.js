@@ -212,9 +212,23 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	};
 	var UnknownChromosome = { n: "(unknown)", f: "images/chr.svg" };
 	
-	// Preparing the color range
+	// Preparing the default color range
 	var Palette = ColorPalette.newInstance();
 	
+	// This is to load newer palette definitions
+	ColorPalette.async().then(function(ColorPalette) {
+		Palette = ColorPalette.newInstance();
+	});
+	
+	var VIEW_GENERAL = 'General';
+	var VIEW_BY_TISSUE = 'Tissues';
+	var VIEW_DISEASES = 'Diseases';
+	var VIEWS = [
+		VIEW_GENERAL,
+		VIEW_BY_TISSUE,
+		VIEW_DISEASES
+	];
+		
 	function getXG(d) {
 		return d.x;
 	}
@@ -1627,6 +1641,26 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 	}
 	
+	// Filling the redraw selector
+	var RedrawSelector = {};
+	
+	function addToRedrawSelector(viewClass,viewDesc,redrawMethod) {
+		RedrawSelector[viewClass] = {
+			viewClass: viewClass,
+			viewDesc: viewDesc,
+			redrawMethod: redrawMethod,
+		};
+	}
+	
+	addToRedrawSelector(VIEW_GENERAL,'General Charts',redrawGeneralCharts);
+	addToRedrawSelector(VIEW_DISEASES,'Diseases by cellular type Charts',redrawCellTypeDiseaseCharts);
+	addToRedrawSelector(VIEW_BY_TISSUE,'By tissue Charts',redrawTissueCharts);
+	
+	// Filling the exported view array
+	var EXPORTED_VIEWS = VIEWS.map(function(viewClass) {
+		return RedrawSelector[viewClass];
+	});
+	
 	function redrawCharts(charts,doGenerate,stillLoading,viewClass) {
 		if('charts' in charts) {
 			var rangeData = charts;
@@ -1634,18 +1668,10 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewClass = rangeData.viewClass;
 		}
 		if(viewClass===undefined) {
-			viewClass = ConstantsService.VIEW_GENERAL;
+			viewClass = VIEW_GENERAL;
 		}
-		switch(viewClass) {
-			case ConstantsService.VIEW_GENERAL:
-				redrawGeneralCharts(charts,doGenerate,stillLoading);
-				break;
-			case ConstantsService.VIEW_DISEASES:
-				redrawCellTypeDiseaseCharts(charts,doGenerate,stillLoading);
-				break;
-			case ConstantsService.VIEW_BY_TISSUE:
-				redrawTissueCharts(charts,doGenerate,stillLoading);
-				break;
+		if(viewClass in RedrawSelector) {
+			RedrawSelector[viewClass].redrawMethod(charts,doGenerate,stillLoading);
 		}
 	}
 	
@@ -1935,7 +1961,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			ui: {
 				gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
 			},
-			viewClass: ConstantsService.VIEW_GENERAL,
+			// Initially, the default view
+			viewClass: VIEWS[0],
 		};
 		
 		// Additional initializations
@@ -2100,6 +2127,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		linkMeanSeriesToAnalysis: linkMeanSeriesToAnalysis,
 		chooseLabelFromSymbols: chooseLabelFromSymbols,
 		REGION_FEATURES: REGION_FEATURES,
+		EXPORTED_VIEWS: EXPORTED_VIEWS,
 		storeRange: storeRange,
 		selectCellTypeForDiseases: selectCellTypeForDiseases,
 		selectTissueForCellTypes: selectTissueForCellTypes,

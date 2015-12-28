@@ -562,6 +562,8 @@ angular.module('blueprintApp')
 		ChartService.redrawCharts(rangeData);
 	};
 	
+	$scope.EXPORTED_VIEWS = ChartService.EXPORTED_VIEWS;
+	
 	$scope.getDataDesc = function() {
 		return $interpolate($scope.dataDesc)($scope);
 	};

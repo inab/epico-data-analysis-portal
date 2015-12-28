@@ -122,12 +122,13 @@
 		<div class="no-margin-padding text-center">
 			<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 			<div class="btn-group">
-				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'General'">General Charts</label>
-				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'Tissues'" ng-click="redrawCharts(rangeData)">By tissue Charts</label>
-				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'Diseases'" ng-click="redrawCharts(rangeData)">Diseases by cellular type Charts</label>
+				<label class="btn btn-default" ng-repeat="view in $parent.EXPORTED_VIEWS" ng-model="$parent.rangeData.viewClass" uib-btn-radio="view.viewClass" ng-click="redrawCharts(rangeData)">{{view.viewDesc}}</label>
 			</div>
 		</div>
 		
+		<!--
+			General
+		-->
 		<div class="no-margin-padding" ng-show="rangeData.viewClass==='General'">
 			<!-- This trick allows reflowing the charts which were drawn in background -->
 			{{doReflow()}}
@@ -219,6 +220,9 @@
 			</div>
 		</div>
 		
+		<!--
+			By Tissues
+		-->
 		<div class="no-margin-padding" ng-show="rangeData.viewClass==='Tissues'">
 			<!-- Single button -->
 			<div class="no-margin-padding text-center">
@@ -282,6 +286,9 @@
 			</div>
 		</div>
 		
+		<!--
+			By Diseases
+		-->
 		<div class="no-margin-padding" ng-show="rangeData.viewClass === 'Diseases'">
 			<!-- Single button -->
 			<div class="no-margin-padding text-center">

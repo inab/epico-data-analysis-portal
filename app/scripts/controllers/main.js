@@ -83,7 +83,7 @@ angular.module('blueprintApp')
 
 	var preventLocationChange;
 	
-	function updateLocation(qString,w) {
+	function updateLocation(qString/*,w*/) {
 		preventLocationChange = true;
 		$location.search({q: qString});
 	}
@@ -121,7 +121,7 @@ angular.module('blueprintApp')
 					flankingWindowSize = parseInt(currentQuery.flankingWindowSize);
 					
 					// Avoiding objects which are not integers
-					if(!(flankingWindowSize > 0)) {
+					if(isNaN(flankingWindowSize) || flankingWindowSize <= 0) {
 						flankingWindowSize = undefined;
 					}
 				}
@@ -135,7 +135,7 @@ angular.module('blueprintApp')
 			
 			// Now, let's remove the ranges which overlap
 			var overlappers = {};
-			localScope.rangeQuery.forEach(function(range,i) {
+			localScope.rangeQuery.forEach(function(range) {
 				var raQuery = range.currentQuery;
 				
 				var featureId;
@@ -640,7 +640,7 @@ angular.module('blueprintApp')
 		var w;
 		if('w' in $location.search()) {
 			w = parseInt($location.search().w);
-			if(!(w > 0)) {
+			if(isNaN(w) || w < 0) {
 				w = 0;
 			}
 		}
@@ -663,13 +663,13 @@ angular.module('blueprintApp')
 				event.preventDefault();
 			}
 		});
-		$scope.$on('$locationChangeSuccess', function(event) {
+		$scope.$on('$locationChangeSuccess', function(/*event*/) {
 			//console.log("Lo vi!!!!!");
 			var query;
 			var w;
 			if('w' in $location.search()) {
 				w = parseInt($location.search().w);
-				if(!(w > 0)) {
+				if(isNaN(w) || w < 0) {
 					w = 0;
 				}
 			}

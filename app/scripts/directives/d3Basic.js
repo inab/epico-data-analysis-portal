@@ -19,7 +19,7 @@
           label: "@",
           onClick: "&"
         },
-        link: function(scope, iElement, iAttrs) {
+        link: function(scope, iElement/*, iAttrs*/) {
           var svg = d3.select(iElement[0])
               .append("svg:svg")
               .attr("width", "100%");
@@ -63,7 +63,7 @@
               .data(data)
               .enter()
                 .append("svg:rect")
-                .on("click", function(d, i){return scope.onClick({item: d});})
+                .on("click", function(d/*, i*/){return scope.onClick({item: d});})
                 .attr("height", 30) // height of each bar
                 .attr("width", 0) // initial width of 0 for transition
                 .attr("x", 10) // half of the 20 side margin specified above
@@ -165,7 +165,7 @@
           label: "@",
           onClick: "&"
         },
-        link: function(scope, iElement, iAttrs) {
+        link: function(scope, iElement/*, iAttrs*/) {
 
           var svg = d3.select(iElement[0])
               .append("svg:svg")
@@ -313,7 +313,7 @@
 				nodeData.forEach(function(v,i) {
 					var experimentDesc = experimentsDescs[i];
 					if(experimentDesc.visible) {
-						var theText = (!isNaN(v) && isFinite(v) && v !== -1)?(v==0?'0':(v<0.01?v.toExponential(1):v.toPrecision(3))):"--";
+						var theText = (!isNaN(v) && isFinite(v) && v !== -1)?(v===0?'0':(v<0.01?v.toExponential(1):v.toPrecision(3))):"--";
 						var theX = treew+sepFromTree-de.y-(svgMargin/2)+expDataWidth*trueI;
 
 						thisnode.append("svg:text")
@@ -363,12 +363,11 @@
                 .data(tree.links(nodes), function(d) { return d.target.id; });
 
             // Enter any new links at the parent's previous position.
+            var oDiag0 = {x: source.x0, y: source.y0};
+            var diag0 = diagonal({source: oDiag0, target: oDiag0});
             link.enter().insert("svg:path", "g")
                 .classed({link:true})
-                .attr("d", function(d) {
-                  var o = {x: source.x0, y: source.y0};
-                  return diagonal({source: o, target: o});
-                })
+                .attr("d", diag0)
               .transition()
                 .duration(duration)
                 .attr("d", diagonal);
@@ -381,10 +380,7 @@
             // Transition exiting nodes to the parent's new position.
             link.exit().transition()
                 .duration(duration)
-                .attr("d", function(d) {
-                  var o = {x: source.x, y: source.y};
-                  return diagonal({source: o, target: o});
-                })
+                .attr("d", diag0)
                 .remove();
 
             // Stash the old positions for transition.
@@ -505,7 +501,7 @@
               //create the graph
               tree.size([h, w]);
               tree.separation(function(a,b){
-                return (a.parent && b.parent && a.parent == b.parent) ? 1 : 2;
+                return (a.parent && b.parent && a.parent === b.parent) ? 1 : 2;
               });
 
               // Initialize the display to show a few nodes.

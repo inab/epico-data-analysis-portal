@@ -9,7 +9,7 @@
 		}])
 		.directive('canvasjs', ['canvasjsObj',function(CanvasJS) {
 			// Element is jqLite wrapped
-			function link(scope,element,attrs) {
+			function link(scope,element/*,attrs*/) {
 				if(scope.config.data===undefined) {
 					scope.config.data = [];
 				}

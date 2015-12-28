@@ -620,6 +620,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		rangeData.rangeStr = rangeStr;
 		rangeData.rangeStrEx = rangeStrEx;
 		rangeData.found = found;
+		
+		// Initializing the layouts, now the common data is available
+		doInitialChartsLayout(rangeData);
 	}
 	
 	function doChartLayout(rangeData,charts,chartsMap) {
@@ -973,6 +976,12 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			HISTONE_GRAPHS.forEach(GraphPrepare);
 		});
 		
+	}
+	
+	function doInitialChartsLayout(rangeData) {
+		doChartLayout(rangeData);
+		selectCellTypeForDiseases(rangeData,0);
+		selectTissueForCellTypes(rangeData,0);
 	}
 	
 	function processGeneralChartData(rangeData) {
@@ -1960,10 +1969,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewClass: VIEWS[0],
 		};
 		
-		// Additional initializations
-		selectCellTypeForDiseases(rangeData,0);
-		selectTissueForCellTypes(rangeData,0);
-		
 		// Only not taking into account flanking window size for explicit ranges
 		if(range.currentQuery.flankingWindowSize !== undefined) {
 			rangeData.flankingWindowSize = range.currentQuery.flankingWindowSize;
@@ -2107,11 +2112,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		
 	return {
 		doRegionFeatureLayout: doRegionFeatureLayout,
-		doChartLayout: doChartLayout,
 		storeFetchedData: storeFetchedData,
 		processGeneralChartData: processGeneralChartData,
 		redrawCharts: redrawCharts,
-		redrawGeneralCharts: redrawGeneralCharts,
 		assignCellTypesColorMap: assignCellTypesColorMap,
 		assignMeanSeriesColorMap: assignMeanSeriesColorMap,
 		assignTermsColorMap: assignTermsColorMap,

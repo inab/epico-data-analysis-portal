@@ -828,7 +828,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		var value = 0.0;
 		var expB = 0;
 		var valueB = 0.0;
-		var histone = lab_experiment.histone;
+		//var histone = lab_experiment.histone;
 		
 		lab_experiment.analyses.forEach(function(analysis) {
 			var analysis_id = analysis.analysis_id;
@@ -1282,7 +1282,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				deferred.reject(err);
 			} else if(resp.hits!==undefined) {
 				ChartService.doRegionFeatureLayout(rangeData,resp.hits.hits);
-				ChartService.doChartLayout(rangeData);
 				deferred.resolve(localScope);
 			} else {
 				deferred.reject(err);

@@ -75,7 +75,7 @@ ColorPalette.prototype.setInitialPalette = function(initialPalette) {
 ColorPalette.prototype.calculateColors = function(numColors) {
 	if(this.palette === undefined) {
 		this.palette = this.initialPalette.map(function(rgbColor) {
-			return jalette.Rgb.fromHex(rgbColor);
+			return jalette.Lab.fromRgb(jalette.Rgb.fromHex(rgbColor));
 		});
 	}
 	
@@ -101,7 +101,7 @@ ColorPalette.prototype.getColorArray = function(numColors) {
 		
 		// Now, return the array, translated to RGB strings
 		for(var iCol = 0; iCol < numColors; iCol++) {
-			colorArray.push(this.palette[iCol].toRgb().toHex());
+			colorArray.push(this.palette[iCol].toRgb().toString());
 		}
 		
 		// Setting the highmark
@@ -128,7 +128,7 @@ ColorPalette.prototype.getColor = function(iColor) {
 	}
 	
 	// Now, return the color, translated to RGB string
-	return this.palette[iColor].toRgb().toHex();
+	return this.palette[iColor].toRgb().toString();
 };
 
 /**
@@ -152,9 +152,10 @@ ColorPalette.prototype.getNextColors = function(numColors) {
 		var newHighColorMark = this.highColorMark + numColors;
 		this.calculateColors(newHighColorMark + 1);
 
+
 		// Now, return the array, translated to RGB strings
 		for(var iCol = this.highColorMark+1; iCol <= newHighColorMark; iCol++) {
-			colorArray.push(this.palette[iCol].toRgb().toHex());
+			colorArray.push(this.palette[iCol].toRgb().toString());
 		}
 		
 		// Setting the highmark

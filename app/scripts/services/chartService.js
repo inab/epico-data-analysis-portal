@@ -1973,19 +1973,19 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	}
 	
 	function selectCellTypeForDiseases(rangeData,cellTypeIndex) {
+		rangeData.chartMaps.celltypeDisease = {};
+		rangeData.ui.celltypeDiseaseCharts = [];
+		doChartLayout(rangeData,rangeData.ui.celltypeDiseaseCharts,rangeData.chartMaps.celltypeDisease);
 		rangeData.ui.celltypeButtonSelected = cellTypeIndex;
 		rangeData.ui.celltypeSelected = rangeData.termNodes[cellTypeIndex];
-		rangeData.ui.celltypeDiseaseCharts = [];
-		rangeData.chartMaps.celltypeDisease = {};
-		doChartLayout(rangeData,rangeData.ui.celltypeDiseaseCharts,rangeData.chartMaps.celltypeDisease);
 	}
 	
 	function selectTissueForCellTypes(rangeData,tissueIndex) {
+		rangeData.chartMaps.byTissue = {};
+		rangeData.ui.tissueCharts = [];
+		doChartLayout(rangeData,rangeData.ui.tissueCharts,rangeData.chartMaps.byTissue);
 		rangeData.ui.tissueButtonSelected = tissueIndex;
 		rangeData.ui.tissueSelected = rangeData.tissueNodes[tissueIndex];
-		rangeData.ui.tissueCharts = [];
-		rangeData.chartMaps.byTissue = {};
-		doChartLayout(rangeData,rangeData.ui.tissueCharts,rangeData.chartMaps.byTissue);
 	}
 	
 	function storeFetchedData(rangeData,range_start,range_end,results) {

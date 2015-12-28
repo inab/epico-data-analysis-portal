@@ -1349,7 +1349,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					// Re-drawing charts
 					var stillLoading = resp.hits.total > total;
 					// Using the default view
-					ChartService.redrawCharts(rangeData,true,stillLoading,ChartService.EXPORTED_VIEWS[0].viewClass);
+					ChartService.redrawCharts(rangeData,true,stillLoading);
 					
 					// Is there any more data?
 					if(stillLoading) {

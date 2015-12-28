@@ -1199,9 +1199,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			charts = [ charts ];
 		}
 		
-		// Normalizing stillLoading to a boolean
-		stillLoading = !!stillLoading;
-		if(!!doGenerate || stillLoading) {
+		if(doGenerate || stillLoading) {
 			charts.forEach(function(chart) {
 				setTimeout(function() {
 					try {
@@ -1362,9 +1360,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			charts = [ charts ];
 		}
 		
-		// Normalizing stillLoading to a boolean
-		stillLoading = !!stillLoading;
-		if(!!doGenerate || stillLoading) {
+		if(doGenerate || stillLoading) {
 			charts.forEach(function(chart) {
 				setTimeout(function() {
 					try {
@@ -1614,9 +1610,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			charts = [ charts ];
 		}
 		
-		// Normalizing stillLoading to a boolean
-		stillLoading = !!stillLoading;
-		if(!!doGenerate || stillLoading) {
+		if(doGenerate || stillLoading) {
 			charts.forEach(function(chart) {
 				setTimeout(function() {
 					try {
@@ -1671,7 +1665,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewClass = VIEW_GENERAL;
 		}
 		if(viewClass in RedrawSelector) {
-			RedrawSelector[viewClass].redrawMethod(charts,doGenerate,stillLoading);
+			// Normalizing doGenerate and stillLoading
+			RedrawSelector[viewClass].redrawMethod(charts,!!doGenerate,!!stillLoading);
 		}
 	}
 	

@@ -314,3 +314,12 @@ $blueprint-inactive-tab-color: aliceblue;
 	margin: 0px;
 	padding: 0px;
 }
+
+.celltype-menu {
+	max-height: 10em;
+	overflow-y: auto;
+}
+
+.celltype-chosen {
+	background-color: lightblue;
+}

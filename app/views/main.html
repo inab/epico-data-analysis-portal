@@ -123,7 +123,7 @@
 			<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 			<div class="btn-group">
 				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'General'">General Charts</label>
-				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'Diseases'">Diseases</label>
+				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'Diseases'">Diseases centric charts</label>
 			</div>
 		</div>
 		
@@ -220,17 +220,19 @@
 		
 		<div class="no-margin-padding" ng-show="rangeData.viewClass === 'Diseases'">
 			<!-- Single button -->
-			<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
-				<button id="celltype-button" type="button" class="btn btn-default" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
-					<span class="circle" ng-style="{'border-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color, 'background-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color }"></span>{{rangeData.termNodes[rangeData.ui.celltypeButtonSelected].name}} <span class="caret"></span>
-				</button>
-				<ul class="uib-dropdown-menu" role="menu" aria-labelledby="celltype-button">
-					<li role="menuitem" ng-repeat="termNode in rangeData.termNodes"><a ng-click="$parent.rangeData.ui.celltypeButtonSelected = $index;"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
-					<!--
-					<li class="divider"></li>
-					<li role="menuitem"><a href="#">Separated link</a></li>
-					-->
-				</ul>
+			<div class="no-margin-padding text-center">
+				<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
+					<button id="celltype-button" type="button" class="btn btn-default" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
+						<span class="circle" ng-style="{'border-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color, 'background-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color }"></span>{{rangeData.termNodes[rangeData.ui.celltypeButtonSelected].name}} <span class="caret"></span>
+					</button>
+					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="celltype-button">
+						<li role="menuitem" ng-class="{'celltype-chosen': $parent.rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in rangeData.termNodes"><a ng-click="$parent.rangeData.ui.celltypeButtonSelected = $index;"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
+						<!--
+						<li class="divider"></li>
+						<li role="menuitem"><a href="#">Separated link</a></li>
+						-->
+					</ul>
+				</div>
 			</div>
 		</div>
 	</uib-tab>

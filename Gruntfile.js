@@ -107,6 +107,7 @@ module.exports = function (grunt) {
 	buildTasks = [
 	    'clean:dist',
 	    'bower-update',
+	    'newer:execute:precomputePalette',
 	    'wiredep',
 	    'template',
 	    'useminPrepare',
@@ -147,6 +148,20 @@ module.exports = function (grunt) {
 
     // Project settings
     yeoman: appConfig,
+
+	execute: {
+		precomputePalette: {
+			src: [
+				'precomputePalette.js'
+			],
+			options: {
+				args: [
+					200,
+					'<%= yeoman.app %>/scripts/precomputedPallete.json'
+				],
+			}
+		}
+	},
 
     // Watches files for changes and runs tasks based on the changed files
     watch: {

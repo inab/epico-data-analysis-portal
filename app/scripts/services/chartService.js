@@ -1691,18 +1691,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			chartMapsFacet: 'general',
 		},
 		{
-			viewClass: VIEW_DISEASES,
-			viewDesc: 'Diseases by cellular type Charts',
-			seriesNodesFacet: 'diseaseNodes',
-			seriesNodesHashFacet: 'diseaseNodesHash',
-			groupBySeriesNodesFacet: 'termNodes',
-			selectGroupMethod: selectCellTypeForDiseases,
-			legendTitle: 'Disease',
-			redrawMethod: redrawCellTypeDiseaseCharts,
-			chartsFacet: 'celltypeDiseaseCharts',
-			chartMapsFacet: 'celltypeDisease',
-		},
-		{
 			viewClass: VIEW_BY_TISSUE,
 			viewDesc: 'By tissue Charts',
 			seriesNodesFacet: 'termNodes',
@@ -1713,6 +1701,18 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			redrawMethod: redrawTissueCharts,
 			chartsFacet: 'tissueCharts',
 			chartMapsFacet: 'byTissue',
+		},
+		{
+			viewClass: VIEW_DISEASES,
+			viewDesc: 'Diseases by cellular type Charts',
+			seriesNodesFacet: 'diseaseNodes',
+			seriesNodesHashFacet: 'diseaseNodesHash',
+			groupBySeriesNodesFacet: 'termNodes',
+			selectGroupMethod: selectCellTypeForDiseases,
+			legendTitle: 'Disease',
+			redrawMethod: redrawCellTypeDiseaseCharts,
+			chartsFacet: 'celltypeDiseaseCharts',
+			chartMapsFacet: 'celltypeDisease',
 		},
 	];
 	

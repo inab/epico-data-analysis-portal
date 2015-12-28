@@ -222,7 +222,7 @@
 			<!-- Single button -->
 			<div class="no-margin-padding text-center">
 				<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
-					<button id="celltype-button" type="button" class="btn btn-default" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
+					<button id="celltype-button" type="button" class="btn btn-default" style="border:none" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
 						<span class="circle" ng-style="{'border-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color, 'background-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color }"></span>{{rangeData.termNodes[rangeData.ui.celltypeButtonSelected].name}} <span class="caret"></span>
 					</button>
 					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="celltype-button">

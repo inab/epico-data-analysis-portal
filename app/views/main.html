@@ -120,8 +120,8 @@
 		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching, 'blink': rangeData.fetching}"></i><i class="hover_red" ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
 		
 		<div class="btn-group">
-			<label class="btn btn-primary" ng-model="viewClass" uib-btn-radio="'General'">General</label>
-			<label class="btn btn-primary" ng-model="viewClass" uib-btn-radio="'Diseases'">Diseases</label>
+			<label class="btn btn-primary" ng-model="rangeData.viewClass" uib-btn-radio="'General'">General</label>
+			<label class="btn btn-primary" ng-model="rangeData.viewClass" uib-btn-radio="'Diseases'">Diseases</label>
 		</div>
 		
 		<div class="no-margin-padding" ng-show="rangeData.viewClass==='General'">

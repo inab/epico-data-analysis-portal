@@ -83,6 +83,7 @@ ColorPalette.prototype.calculateColors = function(numColors) {
 		for(var ipal=this.palette.length; ipal < numColors; ipal++) {
 			var lab = jalette.generateColor(this.palette);
 			this.palette.push(lab);
+			this.initialPalette.push(lab.toRgb().toString());
 		}
 	}
 };
@@ -100,9 +101,7 @@ ColorPalette.prototype.getColorArray = function(numColors) {
 		this.calculateColors(numColors);
 		
 		// Now, return the array, translated to RGB strings
-		for(var iCol = 0; iCol < numColors; iCol++) {
-			colorArray.push(this.palette[iCol].toRgb().toString());
-		}
+		colorArray = this.initialPalette.slice(0,numColors);
 		
 		// Setting the highmark
 		if(this.highColorMark < (numColors-1)) {
@@ -128,7 +127,7 @@ ColorPalette.prototype.getColor = function(iColor) {
 	}
 	
 	// Now, return the color, translated to RGB string
-	return this.palette[iColor].toRgb().toString();
+	return this.initialPalette[iColor];
 };
 
 /**
@@ -154,9 +153,7 @@ ColorPalette.prototype.getNextColors = function(numColors) {
 
 
 		// Now, return the array, translated to RGB strings
-		for(var iCol = this.highColorMark+1; iCol <= newHighColorMark; iCol++) {
-			colorArray.push(this.palette[iCol].toRgb().toString());
-		}
+		colorArray = this.initialPalette.slice(this.highColorMark+1,newHighColorMark+1);
 		
 		// Setting the highmark
 		this.highColorMark = newHighColorMark;
@@ -167,11 +164,24 @@ ColorPalette.prototype.getNextColors = function(numColors) {
 
 angular.
 module('blueprintApp').
-factory('ColorPalette', function () {
+factory('ColorPalette', function ($http) {
 	
-	return {
+	var service = {
+		async: function() {
+			var promise = $http
+				.get('scripts/precomputedPallete.json')
+				.then(function(response) {
+					InitialPalette = response.data;
+					
+					return service;
+				});
+				
+			return promise;
+		},
 		newInstance: function(initialPalette) {
 			return new ColorPalette(initialPalette);
 		},
 	};
+	
+	return service;
 });

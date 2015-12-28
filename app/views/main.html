@@ -122,7 +122,7 @@
 		<div class="no-margin-padding text-center">
 			<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 			<div class="btn-group">
-				<label class="btn btn-default" ng-repeat="view in $parent.EXPORTED_VIEWS" ng-model="$parent.rangeData.viewClass" uib-btn-radio="view.viewClass" ng-click="redrawCharts(rangeData)">{{view.viewDesc}}</label>
+				<label class="btn btn-default" ng-repeat="view in $parent.EXPORTED_VIEWS" ng-model="$parent.rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="$parent.rangeData.fetching || $parent.rangeData.toBeFetched" ng-click="redrawCharts(rangeData)">{{view.viewDesc}}</label>
 			</div>
 		</div>
 		

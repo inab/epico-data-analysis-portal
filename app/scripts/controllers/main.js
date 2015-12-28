@@ -489,7 +489,8 @@ angular.module('blueprintApp')
 		}
 	};
 	
-	$scope.switchSeriesNode = function(event,theSeriesNode,seriesNodes,rangeData) {
+	$scope.switchSeriesNode = function(event,theSeriesNode,rangeData) {
+		var seriesNodes = ChartService.getSeriesNodes(rangeData);
 		if(event.ctrlKey) {
 			seriesNodes.forEach(function(seriesNode) {
 				seriesNode.termHidden = true;
@@ -502,7 +503,8 @@ angular.module('blueprintApp')
 		ChartService.redrawCharts(rangeData);
 	};
 	
-	$scope.switchChart = function(event,chart,charts) {
+	$scope.switchChart = function(event,chart,rangeData) {
+		var charts = ChartService.getCharts(rangeData);
 		if(event.ctrlKey) {
 			charts.forEach(function(chart) {
 				chart.isHidden = true;
@@ -516,7 +518,8 @@ angular.module('blueprintApp')
 		}
 	};
 	
-	$scope.showAllCharts = function(event,charts,rangeData) {
+	$scope.showAllCharts = function(event,rangeData) {
+		var charts = ChartService.getCharts(rangeData);
 		if(event.shiftKey) {
 			charts.forEach(function(chart) {
 				chart.meanSeriesHidden = false;
@@ -529,7 +532,8 @@ angular.module('blueprintApp')
 		}
 	};
 
-	$scope.hideAllCharts = function(event,charts,rangeData) {
+	$scope.hideAllCharts = function(event,rangeData) {
+		var charts = ChartService.getCharts(rangeData);
 		if(event.shiftKey) {
 			charts.forEach(function(chart) {
 				chart.meanSeriesHidden = true;
@@ -542,7 +546,8 @@ angular.module('blueprintApp')
 		}
 	};
 	
-	$scope.showAllSeries = function(seriesNodes,rangeData) {
+	$scope.showAllSeries = function(rangeData) {
+		var seriesNodes = ChartService.getSeriesNodes(rangeData);
 		seriesNodes.forEach(function(seriesNode) {
 			seriesNode.termHidden = false;
 		});
@@ -550,7 +555,8 @@ angular.module('blueprintApp')
 		ChartService.redrawCharts(rangeData);
 	};
 
-	$scope.hideAllSeries = function(seriesNodes,rangeData) {
+	$scope.hideAllSeries = function(rangeData) {
+		var seriesNodes = ChartService.getSeriesNodes(rangeData);
 		seriesNodes.forEach(function(seriesNode) {
 			seriesNode.termHidden = true;
 		});
@@ -558,24 +564,20 @@ angular.module('blueprintApp')
 		ChartService.redrawCharts(rangeData);
 	};
 	
-	$scope.redrawCharts = function(rangeData) {
-		ChartService.redrawCharts(rangeData);
-	};
+	$scope.getCharts = ChartService.getCharts;
+	
+	$scope.getSeriesNodes = ChartService.getSeriesNodes;
+	
+	$scope.getGroupBySeriesNodes = ChartService.getGroupBySeriesNodes;
+	
+	$scope.redrawCharts = ChartService.redrawCharts;
+	
+	$scope.selectGroup = ChartService.selectGroup;
 	
 	$scope.EXPORTED_VIEWS = ChartService.EXPORTED_VIEWS;
 	
 	$scope.getDataDesc = function() {
 		return $interpolate($scope.dataDesc)($scope);
-	};
-	
-	$scope.selectCellTypeForDiseases = function(rangeData,cellTypeIndex) {
-		ChartService.selectCellTypeForDiseases(rangeData,cellTypeIndex);
-		ChartService.redrawCharts(rangeData);
-	};
-	
-	$scope.selectTissueForCellTypes = function(rangeData,tissueIndex) {
-		ChartService.selectTissueForCellTypes(rangeData,tissueIndex);
-		ChartService.redrawCharts(rangeData);
 	};
 	
 	$scope.removeTabResult = function(event,index) {

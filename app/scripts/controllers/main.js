@@ -489,22 +489,22 @@ angular.module('blueprintApp')
 		}
 	};
 	
-	$scope.switchTermNode = function(event,termNode,rangeData) {
+	$scope.switchSeriesNode = function(event,theSeriesNode,seriesNodes,rangeData) {
 		if(event.ctrlKey) {
-			rangeData.termNodes.forEach(function(termNode) {
-				termNode.termHidden = true;
+			seriesNodes.forEach(function(seriesNode) {
+				seriesNode.termHidden = true;
 			});
-			termNode.termHidden = false;
+			theSeriesNode.termHidden = false;
 		} else {
-			termNode.termHidden = !termNode.termHidden;
+			theSeriesNode.termHidden = !theSeriesNode.termHidden;
 		}
 		
 		ChartService.redrawCharts(rangeData);
 	};
 	
-	$scope.switchChart = function(event,chart,rangeData) {
+	$scope.switchChart = function(event,chart,charts) {
 		if(event.ctrlKey) {
-			rangeData.charts.forEach(function(chart) {
+			charts.forEach(function(chart) {
 				chart.isHidden = true;
 			});
 			chart.isHidden = false;
@@ -516,50 +516,59 @@ angular.module('blueprintApp')
 		}
 	};
 	
-	$scope.showAllCharts = function(event,rangeData) {
+	$scope.showAllCharts = function(event,charts,rangeData) {
 		if(event.shiftKey) {
-			rangeData.charts.forEach(function(chart) {
+			charts.forEach(function(chart) {
 				chart.meanSeriesHidden = false;
 			});
 			ChartService.redrawCharts(rangeData);
 		} else {
-			rangeData.charts.forEach(function(chart) {
+			charts.forEach(function(chart) {
 				chart.isHidden = false;
 			});
 		}
 	};
 
-	$scope.hideAllCharts = function(event,rangeData) {
+	$scope.hideAllCharts = function(event,charts,rangeData) {
 		if(event.shiftKey) {
-			rangeData.charts.forEach(function(chart) {
+			charts.forEach(function(chart) {
 				chart.meanSeriesHidden = true;
 			});
 			ChartService.redrawCharts(rangeData);
 		} else {
-			rangeData.charts.forEach(function(chart) {
+			charts.forEach(function(chart) {
 				chart.isHidden = true;
 			});
 		}
 	};
 	
-	$scope.showAllSeries = function(rangeData) {
-		rangeData.termNodes.forEach(function(termNode) {
-			termNode.termHidden = false;
+	$scope.showAllSeries = function(seriesNodes,rangeData) {
+		seriesNodes.forEach(function(seriesNode) {
+			seriesNode.termHidden = false;
 		});
 		
 		ChartService.redrawCharts(rangeData);
 	};
 
-	$scope.hideAllSeries = function(rangeData) {
-		rangeData.termNodes.forEach(function(termNode) {
-			termNode.termHidden = true;
+	$scope.hideAllSeries = function(seriesNodes,rangeData) {
+		seriesNodes.forEach(function(seriesNode) {
+			seriesNode.termHidden = true;
 		});
 		
 		ChartService.redrawCharts(rangeData);
 	};
 	
+	$scope.redrawCharts = function(rangeData) {
+		ChartService.redrawCharts(rangeData);
+	};
+	
 	$scope.getDataDesc = function() {
 		return $interpolate($scope.dataDesc)($scope);
+	};
+	
+	$scope.selectCellTypeForDiseases = function(rangeData,cellTypeIndex) {
+		ChartService.selectCellTypeForDiseases(rangeData,cellTypeIndex);
+		ChartService.redrawCharts(rangeData);
 	};
 	
 	$scope.removeTabResult = function(event,index) {

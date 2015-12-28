@@ -1208,7 +1208,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			if(err) {
 				deferred.reject(err);
 			} else if(resp.hits!==undefined) {
-				ChartService.doChartLayout(localScope,rangeData,resp.hits.hits);
+				ChartService.doRegionFeatureLayout(rangeData,resp.hits.hits);
+				ChartService.doChartLayout(rangeData);
 				deferred.resolve(localScope);
 			} else {
 				deferred.reject(err);

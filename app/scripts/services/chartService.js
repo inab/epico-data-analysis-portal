@@ -404,7 +404,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 				isEmpty = false;
 			}
 			
-			var reDigest = !stillLoading || !('cell_type' in series);
+			var reDigest = !stillLoading || !('term_type' in series);
 			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
 				var preparedValues = new Array(chart.options.xAxis.categories.length);
 				
@@ -418,8 +418,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
 			var visibilityState;
-			if('cell_type' in series) {
-				visibilityState = !stillLoading && !series.cell_type.termHidden;
+			if('term_type' in series) {
+				visibilityState = !stillLoading && !series.term_type.termHidden;
 			} else {
 				visibilityState = stillLoading || !chart.meanSeriesHidden;
 			}
@@ -442,7 +442,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 				isEmpty = false;
 			}
 			
-			var reDigest = !stillLoading || !('cell_type' in series);
+			var reDigest = !stillLoading || !('term_type' in series);
 			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
 				series.seriesDigestedValues = series.seriesGenerator(series.seriesValues);
 				series.series[series.seriesDest] = series.seriesDigestedValues;
@@ -451,8 +451,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
 			var visibilityState;
-			if('cell_type' in series) {
-				visibilityState = !stillLoading && !series.cell_type.termHidden;
+			if('term_type' in series) {
+				visibilityState = !stillLoading && !series.term_type.termHidden;
 			} else {
 				visibilityState = stillLoading || !chart.meanSeriesHidden;
 			}
@@ -544,7 +544,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		});
 	}
 	
-	function doChartLayout(localScope,rangeData,results) {
+	function doRegionFeatureLayout(rangeData,results) {
 		rangeData.regionLayout = {};
 		var range = rangeData.range;
 		var rangeStr = range.chr+":"+range.start+"-"+range.end;
@@ -602,7 +602,17 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		} else {
 			found = 'No gene or transcript in this region';
 		}
+		rangeData.regionFeature = regionFeature;
+		rangeData.rangeStr = rangeStr;
+		rangeData.rangeStrEx = rangeStrEx;
 		rangeData.found = found;
+	}
+	
+	function doChartLayout(rangeData,charts,chartsMap) {
+		if(charts===undefined) {
+			charts = rangeData.charts;
+			chartsMap = rangeData.chartMaps.general;
+		}
 		
 		var HighchartsCommonExportingOptions = {
 			scale: 1,
@@ -628,6 +638,13 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 				//}
 			}
 		};
+		
+		var range_start = rangeData.range.start;
+		var range_end = rangeData.range.end;
+		if(rangeData.flankingWindowSize!==undefined) {
+			range_start -= rangeData.flankingWindowSize;
+			range_end += rangeData.flankingWindowSize;
+		}
 		
 		// So, we can prepare the charts
 		var histoneInstance;
@@ -655,11 +672,11 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 								y: getYG,
 								useInteractiveGuideline: true,
 								interpolate: 'step',
-								noData: "Fetching "+noData+" from "+rangeStr,
+								noData: "Fetching "+noData+" from "+rangeData.rangeStr,
 								showLegend: false,
 								transitionDuration: 0,
 								xAxis: {
-									axisLabel: 'Coordinates (at '+rangeStrEx+')'
+									axisLabel: 'Coordinates (at '+rangeData.rangeStrEx+')'
 								},
 								yAxis: {
 									axisLabel: gData.yAxisLabel,
@@ -771,7 +788,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 							},
 							xAxis: {
 								title: {
-									text: 'Ensembl Ids (at '+rangeStrEx+')'
+									text: 'Ensembl Ids (at '+rangeData.rangeStrEx+')'
 								},
 								categories: []
 							},
@@ -846,7 +863,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 							},
 							xAxis: {
 								title: {
-									text: 'Coordinates (at '+rangeStrEx+')'
+									text: 'Coordinates (at '+rangeData.rangeStrEx+')'
 								},
 								min: range_start,
 								max: range_end,
@@ -918,10 +935,10 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			
 			// Common attributes
 			chart.type = gData.type;
-			chart.regionFeature = regionFeature;
+			chart.regionFeature = rangeData.regionFeature;
 			chart.allData = [];
 			chart.bpSideData = {
-				sampleToIndex: {},
+				seriesToIndex: {},
 				meanSeries: null
 			};
 			chart.title = title;
@@ -930,14 +947,14 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 				chart.isHidden = gData.isInitiallyHidden;
 			}
 
-			rangeData.charts.push(chart);
+			charts.push(chart);
 			
-			rangeData.chartMaps.general[gName] = chart;
+			chartsMap[gName] = chart;
 		};
 		
 		GRAPHS.forEach(GraphPrepare);
 		
-		localScope.histones.forEach(function(histone) {
+		rangeData.localScope.histones.forEach(function(histone) {
 			histoneInstance = histone;
 			HISTONE_GRAPHS.forEach(GraphPrepare);
 		});
@@ -962,8 +979,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 							var graph = rangeData.chartMaps.general[chartId];
 							
 							var meanSeriesValues;
-							if(data.meanCellTypeSeriesId in graph.bpSideData.sampleToIndex) {
-								meanSeriesValues = graph.bpSideData.sampleToIndex[data.meanCellTypeSeriesId];
+							if(data.meanCellTypeSeriesId in graph.bpSideData.seriesToIndex) {
+								meanSeriesValues = graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId];
 							} else {
 								meanSeriesValues = [];
 								var meanSeries;
@@ -1045,19 +1062,19 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 										break;
 								}
 								meanSeries.series[meanSeries.seriesDest] = [];
-								graph.bpSideData.sampleToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
+								graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
 								graph.allData.push(meanSeries);
 							}
 							
 							var seriesValues;
-							if(data.cellTypeSeriesId in graph.bpSideData.sampleToIndex) {
-								seriesValues = graph.bpSideData.sampleToIndex[data.cellTypeSeriesId];
+							if(data.cellTypeSeriesId in graph.bpSideData.seriesToIndex) {
+								seriesValues = graph.bpSideData.seriesToIndex[data.cellTypeSeriesId];
 							} else {
 								seriesValues = [];
 								var series;
 								
 								// We need this shared reference
-								var cell_type = rangeData.termNodesHash[data.analysis.cell_type.o_uri];
+								var term_type = rangeData.termNodesHash[data.analysis.cell_type.o_uri];
 								
 								var seriesName = data.analysis.cell_type.name;
 								var seriesColor = data.analysis.cell_type.color;
@@ -1092,7 +1109,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 											seriesValues: seriesValues,
 											seriesGenerator: genBoxPlotSeries,
 											seriesDest: 'data',
-											cell_type: cell_type,
+											term_type: term_type,
 											series: {
 												name: seriesName,
 												color: seriesColor,
@@ -1105,7 +1122,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 											seriesValues: seriesValues,
 											seriesGenerator: genMeanSeriesHighcharts,
 											seriesDest: 'data',
-											cell_type: cell_type,
+											term_type: term_type,
 											series: {
 												name: seriesName,
 												color: seriesColor,
@@ -1129,7 +1146,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 											seriesValues: seriesValues,
 											seriesGenerator: genMeanSeries,
 											seriesDest: 'values',
-											cell_type: cell_type,
+											term_type: term_type,
 											series: {
 												key: seriesName,
 												color: seriesColor,
@@ -1139,7 +1156,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 										break;
 								}
 								series.series[series.seriesDest] = [];
-								graph.bpSideData.sampleToIndex[data.cellTypeSeriesId] = seriesValues;
+								graph.bpSideData.seriesToIndex[data.cellTypeSeriesId] = seriesValues;
 								graph.allData.push(series);
 							}
 							
@@ -1153,6 +1170,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 	}
 	
+	
 	function redrawGeneralCharts(charts,doGenerate,stillLoading) {
 		if('charts' in charts) {
 			var rangeData = charts;
@@ -1162,6 +1180,169 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			processGeneralChartData(rangeData);
 			
 			charts = rangeData.charts;
+		}
+		if(!Array.isArray(charts)) {
+			charts = [ charts ];
+		}
+		
+		// Normalizing stillLoading to a boolean
+		stillLoading = !!stillLoading;
+		if(!!doGenerate || stillLoading) {
+			charts.forEach(function(chart) {
+				setTimeout(function() {
+					try {
+						chart.seriesAggregator(chart,doGenerate,stillLoading);
+						chart.options.loading = stillLoading;
+					} catch(e) {
+						console.log(e);
+					}
+				},0);
+			});
+		} else {
+			charts.forEach(function(chart) {
+				try {
+					chart.seriesAggregator(chart,doGenerate,stillLoading);
+					chart.options.loading = stillLoading;
+				} catch(e) {
+					console.log(e);
+				}
+			});
+			// To force a reflow / redraw
+			//$scope.$broadcast('highchartsng.reflow');
+		}
+	}
+	
+	// This is a trimmed version of processGeneralChartData
+	function processCellTypeDiseaseChartData(rangeData) {
+		var origin = rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri];
+		var dataArray = rangeData.fetchedData.byCellType.hash[rangeData.ui.celltypeSelected.o_uri];
+		var maxI = dataArray.length;
+		if(origin<maxI) {
+			var localScope = rangeData.localScope;
+			for(var i=origin; i<maxI ; i++) {
+				var data = dataArray[i];
+				if(data.meanCellTypeSeriesId in localScope.SeriesToChart) {
+					var chartIds = localScope.SeriesToChart[data.meanCellTypeSeriesId];
+					
+					// We do this for every chart where the series appears
+					for(var iChart=0;iChart<chartIds.length;iChart++) {
+						var chartId = chartIds[iChart];
+						if(chartId in rangeData.chartMaps.celltypeDisease) {
+							var graph = rangeData.chartMaps.celltypeDisease[chartId];
+							
+							var seriesValues;
+							if(data.diseaseSeriesId in graph.bpSideData.seriesToIndex) {
+								seriesValues = graph.bpSideData.seriesToIndex[data.diseaseSeriesId];
+							} else {
+								seriesValues = [];
+								var series;
+								
+								// We need this shared reference
+								var disease = rangeData.diseaseNodesHash[data.analysis.lab_experiment.sample.specimen.donor_disease];
+								
+								var seriesName = disease.name;
+								var seriesColor = disease.color;
+								switch(graph.type) {
+									case GRAPH_TYPE_STEP_CHARTJS:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'data',
+											series: {
+												label: seriesName,
+												strokeColor: seriesColor,
+											}
+										};
+										graph.options.data.datasets.push(series.series);
+										break;
+									case GRAPH_TYPE_STEP_CANVASJS:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'dataPoints',
+											series: {
+												type: "stepLine",
+												name: seriesName,
+												color: seriesColor,
+											}
+										};
+										graph.options.data.push(series.series);
+										break;
+									case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genBoxPlotSeries,
+											seriesDest: 'data',
+											term_type: disease,
+											series: {
+												name: seriesName,
+												color: seriesColor,
+											}
+										};
+										graph.options.series.push(series.series);
+										break;
+									case GRAPH_TYPE_STEP_HIGHCHARTS:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genMeanSeriesHighcharts,
+											seriesDest: 'data',
+											term_type: disease,
+											series: {
+												name: seriesName,
+												color: seriesColor,
+												shadow: false,
+												connectNulls: false,
+												marker: {
+													enabled: false
+												},
+												tooltip: {
+													shared: true,
+													shadow: false,
+												},
+												turboThreshold: 1000,
+												step: 'left',
+											}
+										};
+										graph.options.series.push(series.series);
+										break;
+									case GRAPH_TYPE_STEP_NVD3:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'values',
+											term_type: disease,
+											series: {
+												key: seriesName,
+												color: seriesColor,
+											}
+										};
+										graph.data.push(series.series);
+										break;
+								}
+								series.series[series.seriesDest] = [];
+								graph.bpSideData.seriesToIndex[data.diseaseSeriesId] = seriesValues;
+								graph.allData.push(series);
+							}
+							
+							seriesValues.push(data.sDataS);
+						}
+					}
+				}
+			}
+			rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri] = maxI;
+		}
+	}
+	
+	// This is almost identical to redrawGeneralCharts
+	function redrawCellTypeDiseaseCharts(charts,doGenerate,stillLoading) {
+		if('ui' in charts) {
+			var rangeData = charts;
+			
+			// We have to call here this method, to be sure
+			// we have fulfilled all the preconditions
+			processCellTypeDiseaseChartData(rangeData);
+			
+			charts = rangeData.ui.celltypeDiseaseCharts;
 		}
 		if(!Array.isArray(charts)) {
 			charts = [ charts ];
@@ -1206,6 +1387,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		switch(viewClass) {
 			case ConstantsService.VIEW_GENERAL:
 				redrawGeneralCharts(charts,doGenerate,stillLoading);
+				break;
+			case ConstantsService.VIEW_DISEASES:
+				redrawCellTypeDiseaseCharts(charts,doGenerate,stillLoading);
 				break;
 		}
 	}
@@ -1482,10 +1666,11 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			},
 			ui: {
 				gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
-				celltypeButtonSelected: 0
 			},
 			viewClass: ConstantsService.VIEW_GENERAL,
 		};
+		
+		selectCellTypeForDiseases(rangeData,0);
 		
 		// Only not taking into account flanking window size for explicit ranges
 		if(range.currentQuery.flankingWindowSize !== undefined) {
@@ -1493,6 +1678,14 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 		
 		localScope.graphData.push(rangeData);
+	}
+	
+	function selectCellTypeForDiseases(rangeData,cellTypeIndex) {
+		rangeData.ui.celltypeButtonSelected = cellTypeIndex;
+		rangeData.ui.celltypeSelected = rangeData.termNodes[cellTypeIndex];
+		rangeData.ui.celltypeDiseaseCharts = [];
+		rangeData.chartMaps.celltypeDisease = {};
+		doChartLayout(rangeData,rangeData.ui.celltypeDiseaseCharts,rangeData.chartMaps.celltypeDisease);
 	}
 	
 	function storeFetchedData(rangeData,range_start,range_end,results) {
@@ -1591,8 +1784,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			}
 		});
 	}
-	
+		
 	return {
+		doRegionFeatureLayout: doRegionFeatureLayout,
 		doChartLayout: doChartLayout,
 		storeFetchedData: storeFetchedData,
 		processGeneralChartData: processGeneralChartData,
@@ -1609,5 +1803,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		chooseLabelFromSymbols: chooseLabelFromSymbols,
 		REGION_FEATURES: REGION_FEATURES,
 		storeRange: storeRange,
+		selectCellTypeForDiseases: selectCellTypeForDiseases,
 	};
 }]);

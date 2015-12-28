@@ -1938,7 +1938,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewClass: ConstantsService.VIEW_GENERAL,
 		};
 		
+		// Additional initializations
 		selectCellTypeForDiseases(rangeData,0);
+		selectTissueForCellTypes(rangeData,0);
 		
 		// Only not taking into account flanking window size for explicit ranges
 		if(range.currentQuery.flankingWindowSize !== undefined) {

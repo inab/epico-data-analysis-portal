@@ -625,7 +625,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		doInitialChartsLayout(rangeData);
 	}
 	
-	function doChartLayout(rangeData,charts,chartsMap) {
+	function doChartLayout(rangeData,charts,chartsMap,postTitle) {
 		if(charts===undefined) {
 			charts = rangeData.charts;
 			chartsMap = rangeData.chartMaps.general;
@@ -670,6 +670,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			var chart;
 			
 			var title = gData.title;
+			if(postTitle!==undefined) {
+				title += ' on ' + postTitle;
+			}
 			var noData = gData.noData;
 			var gName = gData.name;
 	
@@ -1980,17 +1983,17 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	function selectCellTypeForDiseases(rangeData,cellTypeIndex) {
 		rangeData.chartMaps.celltypeDisease = {};
 		rangeData.ui.celltypeDiseaseCharts = [];
-		doChartLayout(rangeData,rangeData.ui.celltypeDiseaseCharts,rangeData.chartMaps.celltypeDisease);
 		rangeData.ui.celltypeButtonSelected = cellTypeIndex;
 		rangeData.ui.celltypeSelected = rangeData.termNodes[cellTypeIndex];
+		doChartLayout(rangeData,rangeData.ui.celltypeDiseaseCharts,rangeData.chartMaps.celltypeDisease,rangeData.ui.celltypeSelected.name);
 	}
 	
 	function selectTissueForCellTypes(rangeData,tissueIndex) {
 		rangeData.chartMaps.byTissue = {};
 		rangeData.ui.tissueCharts = [];
-		doChartLayout(rangeData,rangeData.ui.tissueCharts,rangeData.chartMaps.byTissue);
 		rangeData.ui.tissueButtonSelected = tissueIndex;
 		rangeData.ui.tissueSelected = rangeData.tissueNodes[tissueIndex];
+		doChartLayout(rangeData,rangeData.ui.tissueCharts,rangeData.chartMaps.byTissue,rangeData.ui.tissueSelected.name);
 	}
 	
 	function storeFetchedData(rangeData,range_start,range_end,results) {

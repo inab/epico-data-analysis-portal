@@ -294,7 +294,7 @@
 			<div class="no-margin-padding text-center">
 				<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
 					<button id="celltype-button" type="button" class="btn btn-default" style="border:none" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
-						Cellular type <span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
+						Cellular type: <span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
 					</button>
 					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="celltype-button">
 						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in rangeData.termNodes"><a ng-click="selectCellTypeForDiseases($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>

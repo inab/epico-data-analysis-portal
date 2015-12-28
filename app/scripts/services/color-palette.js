@@ -75,7 +75,7 @@ ColorPalette.prototype.setInitialPalette = function(initialPalette) {
 ColorPalette.prototype.calculateColors = function(numColors) {
 	if(this.palette === undefined) {
 		this.palette = this.initialPalette.map(function(rgbColor) {
-			return jalette.Lab.fromRgb(jalette.Rgb.fromHex(rgbColor));
+			return jalette.Lab.fromRgb(jalette.from(rgbColor));
 		});
 	}
 	

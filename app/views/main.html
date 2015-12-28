@@ -231,7 +231,7 @@
 						Tissue: <span class="circle" ng-style="{'border-color': rangeData.ui.tissueSelected.color, 'background-color': rangeData.ui.tissueSelected.color }"></span>{{rangeData.ui.tissueSelected.name}} <span class="caret"></span>
 					</button>
 					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="tissue-button">
-						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.tissueButtonSelected === $index}" ng-repeat="tissueNode in getGroupBySeries(rangeData,'Tissues')"><a ng-click="selectGroup($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': tissueNode.color, 'background-color': tissueNode.color }"></span>{{tissueNode.name}}</a></li>
+						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.tissueButtonSelected === $index}" ng-repeat="tissueNode in getGroupBySeriesNodes(rangeData,'Tissues')"><a ng-click="selectGroup($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': tissueNode.color, 'background-color': tissueNode.color }"></span>{{tissueNode.name}}</a></li>
 						<!--
 						<li class="divider"></li>
 						<li role="menuitem"><a href="#">Separated link</a></li>

@@ -106,7 +106,7 @@
             <!-- <p class="small">Chromosome regions should be shorter than 10Kb</p> -->
 	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:208856422-208956421'; search()" style="cursor: pointer;">chr1:208856422-208956421</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a>, <a ng-click="query='pathway:Cell Cycle, Mitotic'; search()" style="cursor: pointer;">Pathway <i>Cell Cycle, Mitotic</i></a></p>
           </div>
-          <div class="col-sm-3 text-center"><button ng-click="search()" ng-disabled="queryInProgress" type="button" class="btn btn-primary btn-lg" ng-bind-html="searchButtonText">Search</button></div>
+          <div class="col-sm-3 text-center"><button ng-click="search()" ng-disabled="queryInProgress" type="button" class="btn btn-primary btn-bp btn-lg" ng-bind-html="searchButtonText">Search</button></div>
         </div>
       </form>
     </div>
@@ -122,8 +122,8 @@
 		<div class="no-margin-padding text-center">
 			<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 			<div class="btn-group">
-				<label class="btn btn-primary" ng-model="rangeData.viewClass" uib-btn-radio="'General'">General</label>
-				<label class="btn btn-primary" ng-model="rangeData.viewClass" uib-btn-radio="'Diseases'">Diseases</label>
+				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'General'">General Charts</label>
+				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'Diseases'">Diseases</label>
 			</div>
 		</div>
 		
@@ -221,7 +221,7 @@
 		<div class="no-margin-padding" ng-show="rangeData.viewClass === 'Diseases'">
 			<!-- Single button -->
 			<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
-				<button id="celltype-button" type="button" class="btn btn-primary" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
+				<button id="celltype-button" type="button" class="btn btn-default" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
 					<span class="circle" ng-style="{'border-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color, 'background-color': rangeData.termNodes[rangeData.ui.celltypeButtonSelected].color }"></span>{{rangeData.termNodes[rangeData.ui.celltypeButtonSelected].name}} <span class="caret"></span>
 				</button>
 				<ul class="uib-dropdown-menu" role="menu" aria-labelledby="celltype-button">

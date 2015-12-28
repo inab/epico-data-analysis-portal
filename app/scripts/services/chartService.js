@@ -1375,6 +1375,258 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 	}
 	
+	// This is almost identical to processGeneralChartData
+	function processTissueChartData(rangeData) {
+		var origin = rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri];
+		var dataArray = rangeData.fetchedData.byTissue.hash[rangeData.ui.tissueSelected.o_uri];
+		var maxI = dataArray.length;
+		if(origin<maxI) {
+			var localScope = rangeData.localScope;
+			for(var i=origin; i<maxI ; i++) {
+				var data = dataArray[i];
+				if(data.meanCellTypeSeriesId in localScope.SeriesToChart) {
+					var chartIds = localScope.SeriesToChart[data.meanCellTypeSeriesId];
+					
+					// We do this for every chart where the series appears
+					for(var iChart=0;iChart<chartIds.length;iChart++) {
+						var chartId = chartIds[iChart];
+						if(chartId in rangeData.chartMaps.general) {
+							var graph = rangeData.chartMaps.byTissue[chartId];
+							
+							var meanSeriesValues;
+							if(data.meanCellTypeSeriesId in graph.bpSideData.seriesToIndex) {
+								meanSeriesValues = graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId];
+							} else {
+								meanSeriesValues = [];
+								var meanSeries;
+								
+								graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data.meanCellTypeSeriesId];
+								switch(graph.type) {
+									case GRAPH_TYPE_STEP_CHARTJS:
+										meanSeries = {
+											seriesValues: meanSeriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'data',
+											series: {
+												label: graph.bpSideData.meanSeries.name,
+												strokeColor: graph.bpSideData.meanSeries.color
+											}
+										};
+										graph.options.data.datasets.push(meanSeries.series);
+										break;
+									case GRAPH_TYPE_STEP_CANVASJS:
+										meanSeries = {
+											seriesValues: meanSeriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'dataPoints',
+											series: {
+												type: "stepLine",
+												name: graph.bpSideData.meanSeries.name,
+												color: graph.bpSideData.meanSeries.color
+											}
+										};
+										graph.options.data.push(meanSeries.series);
+										break;
+									case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+										meanSeries = {
+											seriesValues: meanSeriesValues,
+											seriesGenerator: genBoxPlotSeries,
+											seriesDest: 'data',
+											series: {
+												name: graph.bpSideData.meanSeries.name,
+												color: graph.bpSideData.meanSeries.color
+											}
+										};
+										graph.options.series.push(meanSeries.series);
+										break;
+									case GRAPH_TYPE_STEP_HIGHCHARTS:
+										meanSeries = {
+											seriesValues: meanSeriesValues,
+											seriesGenerator: genMeanSeriesHighcharts,
+											seriesDest: 'data',
+											series: {
+												name: graph.bpSideData.meanSeries.name,
+												color: graph.bpSideData.meanSeries.color,
+												shadow: false,
+												connectNulls: false,
+												marker: {
+													enabled: false
+												},
+												tooltip: {
+													shared: true,
+													shadow: false,
+												},
+												turboThreshold: 0,
+												step: 'left',
+											}
+										};
+										graph.options.series.push(meanSeries.series);
+										break;
+									case GRAPH_TYPE_STEP_NVD3:
+										meanSeries = {
+											seriesValues: meanSeriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'values',
+											series: {
+												type: 'area',
+												key: graph.bpSideData.meanSeries.name,
+												color: graph.bpSideData.meanSeries.color
+											}
+										};
+										graph.data.push(meanSeries.series);
+										break;
+								}
+								meanSeries.series[meanSeries.seriesDest] = [];
+								graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
+								graph.allData.push(meanSeries);
+							}
+							
+							var seriesValues;
+							if(data.cellTypeSeriesId in graph.bpSideData.seriesToIndex) {
+								seriesValues = graph.bpSideData.seriesToIndex[data.cellTypeSeriesId];
+							} else {
+								seriesValues = [];
+								var series;
+								
+								// We need this shared reference
+								var term_type = rangeData.termNodesHash[data.analysis.cell_type.o_uri];
+								
+								var seriesName = data.analysis.cell_type.name;
+								var seriesColor = data.analysis.cell_type.color;
+								switch(graph.type) {
+									case GRAPH_TYPE_STEP_CHARTJS:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'data',
+											series: {
+												label: seriesName,
+												strokeColor: seriesColor,
+											}
+										};
+										graph.options.data.datasets.push(series.series);
+										break;
+									case GRAPH_TYPE_STEP_CANVASJS:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'dataPoints',
+											series: {
+												type: "stepLine",
+												name: seriesName,
+												color: seriesColor,
+											}
+										};
+										graph.options.data.push(series.series);
+										break;
+									case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genBoxPlotSeries,
+											seriesDest: 'data',
+											term_type: term_type,
+											series: {
+												name: seriesName,
+												color: seriesColor,
+											}
+										};
+										graph.options.series.push(series.series);
+										break;
+									case GRAPH_TYPE_STEP_HIGHCHARTS:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genMeanSeriesHighcharts,
+											seriesDest: 'data',
+											term_type: term_type,
+											series: {
+												name: seriesName,
+												color: seriesColor,
+												shadow: false,
+												connectNulls: false,
+												marker: {
+													enabled: false
+												},
+												tooltip: {
+													shared: true,
+													shadow: false,
+												},
+												turboThreshold: 1000,
+												step: 'left',
+											}
+										};
+										graph.options.series.push(series.series);
+										break;
+									case GRAPH_TYPE_STEP_NVD3:
+										series = {
+											seriesValues: seriesValues,
+											seriesGenerator: genMeanSeries,
+											seriesDest: 'values',
+											term_type: term_type,
+											series: {
+												key: seriesName,
+												color: seriesColor,
+											}
+										};
+										graph.data.push(series.series);
+										break;
+								}
+								series.series[series.seriesDest] = [];
+								graph.bpSideData.seriesToIndex[data.cellTypeSeriesId] = seriesValues;
+								graph.allData.push(series);
+							}
+							
+							meanSeriesValues.push(data.sDataS);
+							seriesValues.push(data.sDataS);
+						}
+					}
+				}
+			}
+			rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri] = maxI;
+		}
+	}
+	
+	// This is almost identical to redrawGeneralCharts
+	function redrawTissueCharts(charts,doGenerate,stillLoading) {
+		if('ui' in charts) {
+			var rangeData = charts;
+			
+			// We have to call here this method, to be sure
+			// we have fulfilled all the preconditions
+			processTissueChartData(rangeData);
+			
+			charts = rangeData.ui.tissueCharts;
+		}
+		if(!Array.isArray(charts)) {
+			charts = [ charts ];
+		}
+		
+		// Normalizing stillLoading to a boolean
+		stillLoading = !!stillLoading;
+		if(!!doGenerate || stillLoading) {
+			charts.forEach(function(chart) {
+				setTimeout(function() {
+					try {
+						chart.seriesAggregator(chart,doGenerate,stillLoading);
+						chart.options.loading = stillLoading;
+					} catch(e) {
+						console.log(e);
+					}
+				},0);
+			});
+		} else {
+			charts.forEach(function(chart) {
+				try {
+					chart.seriesAggregator(chart,doGenerate,stillLoading);
+					chart.options.loading = stillLoading;
+				} catch(e) {
+					console.log(e);
+				}
+			});
+			// To force a reflow / redraw
+			//$scope.$broadcast('highchartsng.reflow');
+		}
+	}
+	
 	function redrawCharts(charts,doGenerate,stillLoading,viewClass) {
 		if('charts' in charts) {
 			var rangeData = charts;
@@ -1390,6 +1642,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 				break;
 			case ConstantsService.VIEW_DISEASES:
 				redrawCellTypeDiseaseCharts(charts,doGenerate,stillLoading);
+				break;
+			case ConstantsService.VIEW_BY_TISSUE:
+				redrawTissueCharts(charts,doGenerate,stillLoading);
 				break;
 		}
 	}
@@ -1420,11 +1675,11 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		localScope.AVG_SERIES_COLORS = AVG_SERIES_COLORS;
 	}
 	
-	function assignDiseasesColorMap(localScope) {
+	function assignTermsColorMap(termNodes) {
 		// The colors for the diseases
-		var diseaseRGBColors = Palette.getNextColors(localScope.diseaseNodes.length);
-		localScope.diseaseNodes.forEach(function(disease, i) {
-			disease.color = diseaseRGBColors[i];
+		var termRGBColors = Palette.getNextColors(termNodes.length);
+		termNodes.forEach(function(term, i) {
+			term.color = termRGBColors[i];
 		});
 	}
 	
@@ -1637,6 +1892,12 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			diseaseNodesHash[diseaseNode.o_uri] = diseaseNode;
 		});
 		
+		var tissueNodes = angular.copy(localScope.tissueNodes);
+		var tissueNodesHash = {};
+		tissueNodes.forEach(function(tissueNode) {
+			tissueNodesHash[tissueNode.o_uri] = tissueNode;
+		});
+		
 		var rangeData = {
 			localScope: localScope,
 			toBeFetched: true,
@@ -1648,6 +1909,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			termNodesHash: termNodesHash,
 			diseaseNodes: diseaseNodes,
 			diseaseNodesHash: diseaseNodesHash,
+			tissueNodes: tissueNodes,
+			tissueNodesHash: tissueNodesHash,
 			charts: [],
 			chartMaps: {
 				general: {},
@@ -1658,10 +1921,15 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 					hash: {},
 					orderedKeys: [],
 				},
+				byTissue: {
+					hash: {},
+					orderedKeys: [],
+				},
 				all: [],
 			},
 			processedData: {
 				byCellType: {},
+				byTissue: {},
 				all: 0,
 			},
 			ui: {
@@ -1686,6 +1954,14 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		rangeData.ui.celltypeDiseaseCharts = [];
 		rangeData.chartMaps.celltypeDisease = {};
 		doChartLayout(rangeData,rangeData.ui.celltypeDiseaseCharts,rangeData.chartMaps.celltypeDisease);
+	}
+	
+	function selectTissueForCellTypes(rangeData,tissueIndex) {
+		rangeData.ui.tissueButtonSelected = tissueIndex;
+		rangeData.ui.tissueSelected = rangeData.tissueNodes[tissueIndex];
+		rangeData.ui.tissueCharts = [];
+		rangeData.chartMaps.byTissue = {};
+		doChartLayout(rangeData,rangeData.ui.tissueCharts,rangeData.chartMaps.byTissue);
 	}
 	
 	function storeFetchedData(rangeData,range_start,range_end,results) {
@@ -1758,29 +2034,49 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 					sDataS: sDataS
 				};
 				
-				// Labelling what we have seen
-				// We need this shared reference
-				var cell_type = rangeData.termNodesHash[analysis.cell_type.o_uri];
-				// and signal this cell_type
-				cell_type.wasSeen = true;
 				
-				// And the same for diseases
+				// Signaling diseases
 				var disease = rangeData.diseaseNodesHash[analysis.lab_experiment.sample.specimen.donor_disease];
-				// and signal this cell_type
 				disease.wasSeen = true;
 				
 				// By default, store all
 				rangeData.fetchedData.all.push(data);
+				
+				// By cell type
 				var cellDataArray;
-				if(analysis.cell_type.o_uri in rangeData.fetchedData.byCellType.hash) {
-					cellDataArray = rangeData.fetchedData.byCellType.hash[analysis.cell_type.o_uri];
+				var cellTypeUri = analysis.cell_type.o_uri;
+				// Labelling what we have seen
+				// We need this shared reference
+				var cell_type = rangeData.termNodesHash[cellTypeUri];
+				// and signal this cell_type
+				cell_type.wasSeen = true;
+				if(cellTypeUri in rangeData.fetchedData.byCellType.hash) {
+					cellDataArray = rangeData.fetchedData.byCellType.hash[cellTypeUri];
 				} else {
 					cellDataArray = [];
-					rangeData.fetchedData.byCellType.hash[analysis.cell_type.o_uri] = cellDataArray;
-					rangeData.fetchedData.byCellType.orderedKeys.push(analysis.cell_type.o_uri);
-					rangeData.processedData.byCellType[analysis.cell_type.o_uri] = 0;
+					rangeData.fetchedData.byCellType.hash[cellTypeUri] = cellDataArray;
+					rangeData.fetchedData.byCellType.orderedKeys.push(cellTypeUri);
+					rangeData.processedData.byCellType[cellTypeUri] = 0;
 				}
 				cellDataArray.push(data);
+				
+				// By tissue
+				var tissueDataArray;
+				var tissueUri = analysis.lab_experiment.sample.specimen.specimen_term;
+				// Labelling what we have seen
+				// We need this shared reference
+				var tissue = rangeData.tissueNodesHash[tissueUri];
+				// and signal this cell_type
+				tissue.wasSeen = true;
+				if(tissueUri in rangeData.fetchedData.byTissue.hash) {
+					tissueDataArray = rangeData.fetchedData.byTissue.hash[tissueUri];
+				} else {
+					tissueDataArray = [];
+					rangeData.fetchedData.byTissue.hash[tissueUri] = tissueDataArray;
+					rangeData.fetchedData.byTissue.orderedKeys.push(tissueUri);
+					rangeData.processedData.byTissue[tissueUri] = 0;
+				}
+				tissueDataArray.push(data);
 			}
 		});
 	}
@@ -1794,7 +2090,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		redrawGeneralCharts: redrawGeneralCharts,
 		assignCellTypesColorMap: assignCellTypesColorMap,
 		assignMeanSeriesColorMap: assignMeanSeriesColorMap,
-		assignDiseasesColorMap: assignDiseasesColorMap,
+		assignTermsColorMap: assignTermsColorMap,
 		assignSeriesDataToChart: assignSeriesDataToChart,
 		getChartSeriesData: getChartSeriesData,
 		initializeAvgSeries: initializeAvgSeries,
@@ -1804,5 +2100,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		REGION_FEATURES: REGION_FEATURES,
 		storeRange: storeRange,
 		selectCellTypeForDiseases: selectCellTypeForDiseases,
+		selectTissueForCellTypes: selectTissueForCellTypes,
 	};
 }]);

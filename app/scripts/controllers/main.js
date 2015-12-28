@@ -571,6 +571,11 @@ angular.module('blueprintApp')
 		ChartService.redrawCharts(rangeData);
 	};
 	
+	$scope.selectTissueForCellTypes = function(rangeData,tissueIndex) {
+		ChartService.selectTissueForCellTypes(rangeData,tissueIndex);
+		ChartService.redrawCharts(rangeData);
+	};
+	
 	$scope.removeTabResult = function(event,index) {
 		event.stopPropagation();
 		var rangeData = $scope.graphData[index];
@@ -614,9 +619,14 @@ angular.module('blueprintApp')
 					console.error('Initialization error AnalysisMetadata');
 					console.error(err);
 				})
-				.then(QueryService.fetchCellTerms, function(err) {
+				.then(QueryService.fetchTissueTerms, function(err) {
 					openModal('Initialization error','Error while fetching disease terms metadata');
 					console.error('Initialization error DiseaseTerms');
+					console.error(err);
+				})
+				.then(QueryService.fetchCellTerms, function(err) {
+					openModal('Initialization error','Error while fetching tissue terms metadata');
+					console.error('Initialization error TissueTerms');
 					console.error(err);
 				})
 				.catch(function(err) {

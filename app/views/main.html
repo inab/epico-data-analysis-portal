@@ -122,8 +122,9 @@
 		<div class="no-margin-padding text-center">
 			<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
 			<div class="btn-group">
-				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'General'" ng-click="">General Charts</label>
-				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'Diseases'">Diseases by cellular type Charts</label>
+				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'General'">General Charts</label>
+				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'Tissues'" ng-click="redrawCharts(rangeData)">By tissue Charts</label>
+				<label class="btn btn-default" ng-model="rangeData.viewClass" uib-btn-radio="'Diseases'" ng-click="redrawCharts(rangeData)">Diseases by cellular type Charts</label>
 			</div>
 		</div>
 		
@@ -218,15 +219,15 @@
 			</div>
 		</div>
 		
-		<div class="no-margin-padding" ng-show="rangeData.viewClass === 'Diseases'">
+		<div class="no-margin-padding" ng-show="rangeData.viewClass==='Tissues'">
 			<!-- Single button -->
 			<div class="no-margin-padding text-center">
-				<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
-					<button id="celltype-button" type="button" class="btn btn-default" style="border:none" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
-						<span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
+				<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.tissueButtonIsOpen">
+					<button id="tissue-button" type="button" class="btn btn-default" style="border:none" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
+						<span class="circle" ng-style="{'border-color': rangeData.ui.tissueSelected.color, 'background-color': rangeData.ui.tissueSelected.color }"></span>{{rangeData.ui.tissueSelected.name}} <span class="caret"></span>
 					</button>
-					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="celltype-button">
-						<li role="menuitem" ng-class="{'celltype-chosen': $parent.rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in rangeData.termNodes"><a ng-click="selectCellTypeForDiseases($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
+					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="tissue-button">
+						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.tissueButtonSelected === $index}" ng-repeat="tissueNode in rangeData.tissueNodes"><a ng-click="selectTissueForCellTypes($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': tissueNode.color, 'background-color': tissueNode.color }"></span>{{tissueNode.name}}</a></li>
 						<!--
 						<li class="divider"></li>
 						<li role="menuitem"><a href="#">Separated link</a></li>
@@ -238,20 +239,68 @@
 			{{doReflow()}}
 			<div class="col-xs-12 col-sm-2 col-lg-1">
 				<div class="row terms-selector">
-					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData.ui.celltypeDiseaseCharts,rangeData)">
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData.ui.tissueCharts,rangeData)">
 						<span class="square" style="border-color: #202020 ; background-color: white;"></span>
 						<span class="term">Hide all charts / mean series</span>
 					</div>
-					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllCharts($event,rangeData.ui.celltypeDiseaseCharts,rangeData)">
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllCharts($event,rangeData.ui.tissueCharts,rangeData)">
 						<span class="square" style="border-color: #202020 ; background-color: #202020;"></span>
 						<span class="term">Show all charts / mean series</span>
 					</div>
 					<div class="col-xs-1 col-sm-12">&nbsp;</div>
-					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.celltypeDiseaseCharts" ng-click="switchChart($event,chart,$parent.rangeData.ui.celltypeDiseaseCharts)" ng-hide="chart.isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'">
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.tissueCharts" ng-click="switchChart($event,chart,$parent.rangeData.ui.tissueCharts)" ng-hide="chart.isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'">
 						<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
 						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 					</div>
 				</div>
+				<div class="row terms-selector">
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData.termNodes,rangeData)">
+						<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
+						<span class="term">Hide all cell types</span>
+					</div>
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllSeries(rangeData.termNodes,rangeData)">
+						<span class="circle" style="border-color: #202020 ; background-color: #202020;"></span>
+						<span class="term">Show all cell types</span>
+					</div>
+					<div class="col-xs-1 col-sm-12">&nbsp;</div>
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.termNodes" ng-click="switchSeriesNode($event,termNode,$parent.rangeData.termNodes,$parent.rangeData)" ng-if="termNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-popup-delay="500">
+						<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
+						<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
+					</div>
+				</div>
+			</div>
+			
+			<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
+				<div class="row" style="width:100%">
+					<div class="col-md-12 col-lg-6" ng-repeat="chart in rangeData.ui.tissueCharts" ng-hide="chart.isEmpty || chart.isHidden">
+						<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
+						<canvasjs class="datachart" ng-if="chart.library==='canvasjs'" config="chart.options"></canvasjs>
+						<chartjs class="datachart" ng-if="chart.library==='chartjs'" config="chart.options"></chartjs>
+						<highchart class="datachart" ng-if="chart.library==='highcharts'" config="chart.options"></highchart>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="no-margin-padding" ng-show="rangeData.viewClass === 'Diseases'">
+			<!-- Single button -->
+			<div class="no-margin-padding text-center">
+				<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
+					<button id="celltype-button" type="button" class="btn btn-default" style="border:none" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
+						<span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
+					</button>
+					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="celltype-button">
+						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in rangeData.termNodes"><a ng-click="selectCellTypeForDiseases($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
+						<!--
+						<li class="divider"></li>
+						<li role="menuitem"><a href="#">Separated link</a></li>
+						-->
+					</ul>
+				</div>
+			</div>
+			<!-- This trick allows reflowing the charts which were drawn in background -->
+			{{doReflow()}}
+			<div class="col-xs-12 col-sm-2 col-lg-1">
 				<div class="row terms-selector">
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData.diseaseNodes,rangeData)">
 						<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
@@ -265,6 +314,21 @@
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="diseaseNode in rangeData.diseaseNodes" ng-click="switchSeriesNode($event,diseaseNode,$parent.rangeData.diseaseNodes,$parent.rangeData)" ng-if="diseaseNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-popup-delay="500">
 						<span class="circle" ng-style="{'border-color': diseaseNode.color, 'background-color': diseaseNode.termHidden ? 'white' : diseaseNode.color }"></span>
 						<span class="term" ng-style="{color: diseaseNode.termHidden ? 'gray' : 'initial'}">{{diseaseNode.name}}</span>
+					</div>
+				</div>
+				<div class="row terms-selector">
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData.ui.celltypeDiseaseCharts,rangeData)">
+						<span class="square" style="border-color: #202020 ; background-color: white;"></span>
+						<span class="term">Hide all charts / mean series</span>
+					</div>
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllCharts($event,rangeData.ui.celltypeDiseaseCharts,rangeData)">
+						<span class="square" style="border-color: #202020 ; background-color: #202020;"></span>
+						<span class="term">Show all charts / mean series</span>
+					</div>
+					<div class="col-xs-1 col-sm-12">&nbsp;</div>
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.celltypeDiseaseCharts" ng-click="switchChart($event,chart,$parent.rangeData.ui.celltypeDiseaseCharts)" ng-hide="chart.isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'">
+						<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
+						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 					</div>
 				</div>
 			</div>

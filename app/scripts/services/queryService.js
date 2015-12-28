@@ -432,6 +432,76 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		return deferred.promise;
 	}
 	
+	function fetchTissueTerms(localScope) {
+		if(localScope.tissueNodes!==undefined) {
+			return localScope;
+		}
+		
+		var deferred = $q.defer();
+        
+		// Let's calculate the unique terms
+		var theUris=[];
+		var theUrisHash = {};
+		localScope.specimens.forEach(function(specimen) {
+			var d = specimen.specimen_term;
+			if(!(d in theUrisHash)) {
+				theUris.push(d);
+				theUrisHash[d]=1;
+			}
+		});
+		
+		es.search({
+			index: ConstantsService.METADATA_MODEL_INDEX,
+			type: ConstantsService.CVTERM_CONCEPT,
+			size: 10000,
+			body: {
+				query: {
+					filtered: {
+						query: {
+							match_all: {}
+						},
+						filter: {
+							and: {
+								filters: [{
+									//term: {
+									//	ont: 'cv:CellOntology'
+									//}
+									terms: {
+										ont: ['cv:UBERON','cv:EFO','cv:CellLineOntology']
+									}
+								},{
+									terms: {
+										alt_id: theUris
+									}
+								}]
+							}
+						}
+					}
+				},
+				fields: ['term','term_uri','name','ont']
+			}
+		}, function(err,resp) {
+			if(resp.hits.total > 0) {
+				localScope.tissueNodes = resp.hits.hits.map(function(v) {
+					var n = v.fields;
+					var tissueNode = {
+						name: n.name[0],
+						o: n.term[0],
+						o_uri: n.term_uri[0],
+						ont: n.ont[0],
+					};
+					
+					return tissueNode;
+				});
+				
+				deferred.resolve(localScope);
+			} else {
+				return deferred.reject(err);
+			}
+		});
+		return deferred.promise;
+	}
+	
 	function fetchCellTerms(localScope) {
 		if(localScope.fetchedTreeData!==undefined) {
 			return localScope;
@@ -724,7 +794,10 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						
 						ChartService.assignCellTypesColorMap(localScope,termNodes);
 						ChartService.assignMeanSeriesColorMap(localScope);
-						ChartService.assignDiseasesColorMap(localScope);
+						// Diseases
+						ChartService.assignTermsColorMap(localScope.diseaseNodes);
+						// Tissues
+						ChartService.assignTermsColorMap(localScope.tissueNodes);
 						
 						// At last, linking analysis to their corresponding cell types and the mean series
 						localScope.samples.forEach(function(sample) {
@@ -1832,6 +1905,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		
 		fetchCellTerms: fetchCellTerms,
 		fetchDiseaseTerms: fetchDiseaseTerms,
+		fetchTissueTerms: fetchTissueTerms,
 		initTree: initTree,
 		// The range query core
 		genShouldQuery: genShouldQuery,

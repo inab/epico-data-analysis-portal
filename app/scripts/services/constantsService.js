@@ -54,6 +54,7 @@ factory('ConstantsService',function() {
 		SEARCH_URIS: SEARCH_URIS,
 		
 		VIEW_GENERAL: 'General',
+		VIEW_TISSUES: 'Tissues',
 		VIEW_DISEASES: 'Diseases',
 		
 		isReactome: function(queryType) {

@@ -206,6 +206,16 @@ div.suggest-container:empty {
 	border-width: 1px;
 	border-radius: 1em;
 	padding: 1em;
+	> .panel-heading,
+	> .panel-body {
+		padding: 0px;
+	}
+	> .panel-body {
+		padding-top: 1em;
+	}
+	.panel-title {
+		font-size: 1.2em;
+	}
 }
 
 span.circle , span.square {

@@ -133,7 +133,7 @@
 			<!-- This trick allows reflowing the charts which were drawn in background -->
 			{{doReflow()}}
 			<uib-accordion class="col-xs-12 col-sm-2 col-lg-1">
-				<uib-accordion-group heading="Charts" panel-class="panel-info" class="row terms-selector">
+				<uib-accordion-group heading="Showing {{getVisibleChartsCount(rangeData)}} of {{getChartsWithDataCount(rangeData)}} charts" panel-class="panel-info" class="row terms-selector">
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData)">
 						<span class="square" style="border-color: #202020 ; background-color: white;"></span>
 						<span class="term">Hide all charts / mean series</span>
@@ -148,14 +148,14 @@
 						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 					</div>
 				</uib-accordion-group>
-				<uib-accordion-group heading="Cell Types" panel-class="panel-info" class="row terms-selector">
+				<uib-accordion-group heading="{{getLegendTitle(rangeData)}}: {{getVisibleSeriesCount(rangeData)}} of {{getSeenSeriesCount(rangeData)}} for this range" panel-class="panel-info" class="row terms-selector">
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData)">
 						<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
-						<span class="term">Hide all cell types</span>
+						<span class="term">Hide all {{getLegendTitle(rangeData)}}</span>
 					</div>
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllSeries(rangeData)">
 						<span class="circle" style="border-color: #202020 ; background-color: #202020;"></span>
-						<span class="term">Show all cell types</span>
+						<span class="term">Show all {{getLegendTitle(rangeData)}}</span>
 					</div>
 					<div class="col-xs-1 col-sm-12">&nbsp;</div>
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in getSeriesNodes(rangeData,'General')" ng-click="switchSeriesNode($event,termNode,$parent.rangeData)" ng-if="termNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-popup-delay="500">
@@ -241,8 +241,8 @@
 			</div>
 			<!-- This trick allows reflowing the charts which were drawn in background -->
 			{{doReflow()}}
-			<div class="col-xs-12 col-sm-2 col-lg-1">
-				<div class="row terms-selector">
+			<uib-accordion class="col-xs-12 col-sm-2 col-lg-1">
+				<uib-accordion-group heading="Showing {{getVisibleChartsCount(rangeData)}} of {{getChartsWithDataCount(rangeData)}} charts" panel-class="panel-info" class="row terms-selector">
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData)">
 						<span class="square" style="border-color: #202020 ; background-color: white;"></span>
 						<span class="term">Hide all charts / mean series</span>
@@ -256,23 +256,23 @@
 						<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
 						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 					</div>
-				</div>
-				<div class="row terms-selector">
+				</uib-accordion-group>
+				<uib-accordion-group heading="{{getLegendTitle(rangeData)}}: {{getVisibleSeriesCount(rangeData)}} of {{getSeenSeriesCount(rangeData)}} for this range" panel-class="panel-info" class="row terms-selector">
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData)">
 						<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
-						<span class="term">Hide all cell types</span>
+						<span class="term">Hide all {{getLegendTitle(rangeData)}}</span>
 					</div>
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllSeries(rangeData)">
 						<span class="circle" style="border-color: #202020 ; background-color: #202020;"></span>
-						<span class="term">Show all cell types</span>
+						<span class="term">Show all {{getLegendTitle(rangeData)}}</span>
 					</div>
 					<div class="col-xs-1 col-sm-12">&nbsp;</div>
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in getSeriesNodes(rangeData,'Tissues')" ng-click="switchSeriesNode($event,termNode,$parent.rangeData)" ng-if="termNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-popup-delay="500">
 						<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
 						<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
 					</div>
-				</div>
-			</div>
+				</uib-accordion-group>
+			</uib-accordion>
 			
 			<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
 				<div class="row" style="width:100%">
@@ -307,23 +307,8 @@
 			</div>
 			<!-- This trick allows reflowing the charts which were drawn in background -->
 			{{doReflow()}}
-			<div class="col-xs-12 col-sm-2 col-lg-1">
-				<div class="row terms-selector">
-					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData)">
-						<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
-						<span class="term">Hide all cell types</span>
-					</div>
-					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllSeries(rangeData)">
-						<span class="circle" style="border-color: #202020 ; background-color: #202020;"></span>
-						<span class="term">Show all cell types</span>
-					</div>
-					<div class="col-xs-1 col-sm-12">&nbsp;</div>
-					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="diseaseNode in getSeriesNodes(rangeData,'Diseases')" ng-click="switchSeriesNode($event,diseaseNode,$parent.rangeData)" ng-if="diseaseNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-popup-delay="500">
-						<span class="circle" ng-style="{'border-color': diseaseNode.color, 'background-color': diseaseNode.termHidden ? 'white' : diseaseNode.color }"></span>
-						<span class="term" ng-style="{color: diseaseNode.termHidden ? 'gray' : 'initial'}">{{diseaseNode.name}}</span>
-					</div>
-				</div>
-				<div class="row terms-selector">
+			<uib-accordion class="col-xs-12 col-sm-2 col-lg-1">
+				<uib-accordion-group heading="Showing {{getVisibleChartsCount(rangeData)}} of {{getChartsWithDataCount(rangeData)}} charts" panel-class="panel-info" class="row terms-selector">
 					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData)">
 						<span class="square" style="border-color: #202020 ; background-color: white;"></span>
 						<span class="term">Hide all charts / mean series</span>
@@ -337,8 +322,23 @@
 						<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
 						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 					</div>
-				</div>
-			</div>
+				</uib-accordion-group>
+				<uib-accordion-group heading="{{getLegendTitle(rangeData)}}: {{getVisibleSeriesCount(rangeData)}} of {{getSeenSeriesCount(rangeData)}} for this range" panel-class="panel-info" class="row terms-selector">
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData)">
+						<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
+						<span class="term">Hide all {{getLegendTitle(rangeData)}}</span>
+					</div>
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllSeries(rangeData)">
+						<span class="circle" style="border-color: #202020 ; background-color: #202020;"></span>
+						<span class="term">Show all {{getLegendTitle(rangeData)}}</span>
+					</div>
+					<div class="col-xs-1 col-sm-12">&nbsp;</div>
+					<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="diseaseNode in getSeriesNodes(rangeData,'Diseases')" ng-click="switchSeriesNode($event,diseaseNode,$parent.rangeData)" ng-if="diseaseNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-popup-delay="500">
+						<span class="circle" ng-style="{'border-color': diseaseNode.color, 'background-color': diseaseNode.termHidden ? 'white' : diseaseNode.color }"></span>
+						<span class="term" ng-style="{color: diseaseNode.termHidden ? 'gray' : 'initial'}">{{diseaseNode.name}}</span>
+					</div>
+				</uib-accordion-group>
+			</uib-accordion>
 			<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
 				<div class="row" style="width:100%">
 					<div class="col-md-12 col-lg-6" ng-repeat="chart in getCharts(rangeData,'Diseases')" ng-hide="chart.isEmpty || chart.isHidden">

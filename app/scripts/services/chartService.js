@@ -1763,6 +1763,14 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		return ('groupBySeriesNodesFacet' in RedrawSelector[viewClass]) ? rangeData[RedrawSelector[viewClass].groupBySeriesNodesFacet] : [];
 	}
 	
+	function getLegendTitle(rangeData,viewClass) {
+		if(viewClass===undefined) {
+			viewClass = rangeData.viewClass;
+		}
+		
+		return RedrawSelector[viewClass].legendTitle;
+	}
+	
 	function redrawCharts(charts,doGenerate,stillLoading,viewClass) {
 		if('ui' in charts) {
 			var rangeData = charts;
@@ -2220,5 +2228,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		getCharts: getCharts,
 		getSeriesNodes: getSeriesNodes,
 		getGroupBySeriesNodes: getGroupBySeriesNodes,
+		getLegendTitle: getLegendTitle,
 	};
 }]);

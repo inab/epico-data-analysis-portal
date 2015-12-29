@@ -574,10 +574,64 @@ angular.module('blueprintApp')
 	
 	$scope.selectGroup = ChartService.selectGroup;
 	
+	$scope.getLegendTitle = ChartService.getLegendTitle;
+	
 	$scope.EXPORTED_VIEWS = ChartService.EXPORTED_VIEWS;
 	
 	$scope.getDataDesc = function() {
 		return $interpolate($scope.dataDesc)($scope);
+	};
+	
+	$scope.getSeenSeriesCount = function(rangeData) {
+		var count = 0;
+		
+		var seriesNodes = ChartService.getSeriesNodes(rangeData);
+		seriesNodes.forEach(function(seriesNode) {
+			if(seriesNode.wasSeen) {
+				count++;
+			}
+		});
+		
+		return count;
+	};
+	
+	$scope.getVisibleSeriesCount = function(rangeData) {
+		var count = 0;
+		
+		var seriesNodes = ChartService.getSeriesNodes(rangeData);
+		seriesNodes.forEach(function(seriesNode) {
+			if(seriesNode.wasSeen && !seriesNode.termHidden) {
+				count++;
+			}
+		});
+		
+		return count;
+	};
+	
+	$scope.getChartsWithDataCount = function(rangeData) {
+		var count = 0;
+		
+		var charts = ChartService.getCharts(rangeData);
+		charts.forEach(function(chart) {
+			if(!chart.isEmpty) {
+				count++;
+			}
+		});
+		
+		return count;
+	};
+	
+	$scope.getVisibleChartsCount = function(rangeData) {
+		var count = 0;
+		
+		var charts = ChartService.getCharts(rangeData);
+		charts.forEach(function(chart) {
+			if(!chart.isEmpty && !chart.isHidden) {
+				count++;
+			}
+		});
+		
+		return count;
 	};
 	
 	$scope.removeTabResult = function(event,index) {

@@ -231,7 +231,7 @@
 						Tissue: <span class="circle" ng-style="{'border-color': rangeData.ui.tissueSelected.color, 'background-color': rangeData.ui.tissueSelected.color }"></span>{{rangeData.ui.tissueSelected.name}} <span class="caret"></span>
 					</button>
 					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="tissue-button">
-						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.tissueButtonSelected === $index}" ng-repeat="tissueNode in getGroupBySeriesNodes(rangeData,'Tissues')"><a ng-click="selectGroup($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': tissueNode.color, 'background-color': tissueNode.color }"></span>{{tissueNode.name}}</a></li>
+						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.tissueButtonSelected === $index}" ng-repeat="tissueNode in getGroupBySeriesNodes(rangeData,'Tissues')" ng-if="termNode.wasSeen"><a ng-click="selectGroup($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': tissueNode.color, 'background-color': tissueNode.color }"></span>{{tissueNode.name}}</a></li>
 						<!--
 						<li class="divider"></li>
 						<li role="menuitem"><a href="#">Separated link</a></li>
@@ -297,7 +297,7 @@
 						Cellular type: <span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
 					</button>
 					<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="celltype-button">
-						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in getGroupBySeriesNodes(rangeData,'Diseases')"><a ng-click="selectGroup($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
+						<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': $parent.rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in getGroupBySeriesNodes(rangeData,'Diseases')" ng-if="termNode.wasSeen"><a ng-click="selectGroup($parent.rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
 						<!--
 						<li class="divider"></li>
 						<li role="menuitem"><a href="#">Separated link</a></li>

@@ -1669,12 +1669,16 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	function selectCellTypeForDiseases(rangeData,cellTypeIndex) {
 		rangeData.ui.celltypeButtonSelected = cellTypeIndex;
 		rangeData.ui.celltypeSelected = rangeData.termNodes[cellTypeIndex];
+		// Fixing redrawing issue
+		rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri] = 0;
 		doChartLayout(rangeData,VIEW_DISEASES,rangeData.ui.celltypeSelected.name);
 	}
 	
 	function selectTissueForCellTypes(rangeData,tissueIndex) {
 		rangeData.ui.tissueButtonSelected = tissueIndex;
 		rangeData.ui.tissueSelected = rangeData.tissueNodes[tissueIndex];
+		// Fixing redrawing issue
+		rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri] = 0;
 		doChartLayout(rangeData,VIEW_BY_TISSUE,rangeData.ui.tissueSelected.name);
 	}
 	

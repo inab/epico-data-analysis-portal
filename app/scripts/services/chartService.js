@@ -1727,7 +1727,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewClass = rangeData.viewClass;
 		}
 		
-		return rangeData.ui[RedrawSelector[viewClass].chartsFacet];
+		return (RedrawSelector[viewClass].chartsFacet in rangeData.ui) ? rangeData.ui[RedrawSelector[viewClass].chartsFacet] : [];
 	}
 	
 	

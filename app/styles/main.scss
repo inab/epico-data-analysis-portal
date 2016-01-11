@@ -207,10 +207,10 @@ div.suggest-container:empty {
 	border-radius: 1em;
 	padding: 1em;
 	> .panel-heading,
-	> .panel-body {
+	> .panel-collapse > .panel-body {
 		padding: 0px;
 	}
-	> .panel-body {
+	> .panel-collapse > .panel-body {
 		padding-top: 1em;
 	}
 	.panel-title {
@@ -234,7 +234,7 @@ tr.termItem {
 	vertical-align: top;
 }
 
-.termItem.pointer , i.glyphicon {
+.termItem.pointer , i.glyphicon , li.pointer {
 	cursor: pointer;
 	
 	-webkit-touch-callout: none;

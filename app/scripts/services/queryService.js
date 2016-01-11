@@ -26,6 +26,25 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		'T-cell acute leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023449',
 	};
 	
+	function getDataModel(localScope) {
+		if(localScope.dataModel!==undefined) {
+			return localScope;
+		}
+		
+		return es.search({
+			index: ConstantsService.METADATA_MODEL_INDEX,
+			type: ConstantsService.DATA_MODEL_CONCEPT,
+			size: 100,
+			body: {},
+		}).then(function(resp) {
+			if(typeof(resp.hits.hits) !== undefined) {
+				localScope.dataModel = resp.hits.hits[0]._source;
+			}
+			
+			return localScope;
+		});
+	}
+	
 	function getSampleTrackingData(localScope) {
 		if(localScope.donors!==undefined && localScope.donors.length!==0) {
 			return localScope;
@@ -157,8 +176,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				subtotalsData.push(
 					['Donors', numDonors],
 					['Cellular Lines', numCellularLines],
-					['Pooled Donors', numPooledDonors],
-					['Samples', numSamples]
+					['Pooled Donors', numPooledDonors]
+					//,
+					//['Samples', numSamples]
 				);
 				localScope.numCellularLines = numCellularLines;
 				
@@ -191,7 +211,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				
 				// Sorting histones by name
 				histones.sort(function(a,b) { return a.histoneName.localeCompare(b.histoneName); });
-				localScope.numHistones = histones.length;
 				localScope.histoneMap = histoneMap;
 				localScope.histones = histones;
 				
@@ -1281,7 +1300,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			if(err) {
 				deferred.reject(err);
 			} else if(resp.hits!==undefined) {
-				ChartService.doRegionFeatureLayout(rangeData,resp.hits.hits);
+				ChartService.doRegionFeatureLayout(rangeData,resp.hits.hits,localScope);
 				deferred.resolve(localScope);
 			} else {
 				deferred.reject(err);
@@ -1900,6 +1919,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	}
 	
 	return {
+		getDataModel: getDataModel,
 		getSampleTrackingData: getSampleTrackingData,
 		getAnalysisMetadata: getAnalysisMetadata,
 		

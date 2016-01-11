@@ -553,7 +553,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		});
 	}
 	
-	function doRegionFeatureLayout(rangeData,results) {
+	function doRegionFeatureLayout(rangeData,results,localScope) {
 		rangeData.regionLayout = {};
 		var range = rangeData.range;
 		var rangeStr = range.chr+":"+range.start+"-"+range.end;
@@ -583,7 +583,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			// Getting a understandable label
 			featureRegion.label = chooseLabelFromSymbols(featureRegion.symbol);
 			
-			var uri = (dest in ConstantsService.SEARCH_URIS) ? ConstantsService.SEARCH_URIS[dest] : ConstantsService.DEFAULT_SEARCH_URI;
+			var uri = (dest in localScope.SEARCH_URIS) ? localScope.SEARCH_URIS[dest] : localScope.DEFAULT_SEARCH_URI;
 			// Matching the feature_id to its region
 			featureRegion.coordinates.forEach(function(coordinates) {
 				regionFeature[coordinates.feature_id] = featureRegion;
@@ -602,7 +602,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			});
 		});
 		if(found.length>0) {
-			var newFound = "Region <a href='"+ConstantsService.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
+			var newFound = "Region <a href='"+localScope.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
 			if(rangeData.flankingWindowSize!==undefined) {
 				newFound += " (&plusmn; "+rangeData.flankingWindowSize+"bp)";
 			}
@@ -2006,7 +2006,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		};
 		
 		var subtotals = angular.copy(subtotalsChartTemplate);
-		subtotals.options.title.text = 'Donors & Samples';
+		subtotals.options.title.text = 'Donor types';
 		subtotals.options.options.tooltip.pointFormat = '<span style="color:{point.color}">\u25CF</span> {point.y}';
 		
 		$scope.subtotals = subtotals;

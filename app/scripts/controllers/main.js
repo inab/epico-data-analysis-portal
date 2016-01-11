@@ -194,7 +194,7 @@ angular.module('blueprintApp')
 					}
 					var rangeStr = range.chr+":"+range.start+"-"+range.end;
 					
-					regions += "<a href='"+ConstantsService.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
+					regions += "<a href='"+localScope.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
 					
 					ChartService.storeRange(localScope,range);
 				}
@@ -203,7 +203,7 @@ angular.module('blueprintApp')
 			localScope.currentQueries.forEach(function(currentQuery) {
 				if(currentQuery.additivity !== DIFF_ADDITIVITY) {
 					if(currentQuery.queryType !== RANGE_QUERY) {
-						var uri = (currentQuery.queryType in ConstantsService.SEARCH_URIS) ? ConstantsService.SEARCH_URIS[currentQuery.queryType] : ConstantsService.DEFAULT_SEARCH_URI;
+						var uri = (currentQuery.queryType in localScope.SEARCH_URIS) ? localScope.SEARCH_URIS[currentQuery.queryType] : localScope.DEFAULT_SEARCH_URI;
 						var featureLabel = currentQuery.featureLabel !== undefined ? currentQuery.featureLabel : currentQuery.query;
 						localScope.found += currentQuery.queryTypeStr+" <a href='"+uri+currentQuery.ensemblGeneId+"' target='_blank'>"+featureLabel+" ["+currentQuery.ensemblGeneId+"]</a>";
 					}
@@ -666,12 +666,42 @@ angular.module('blueprintApp')
 	function init($q,$scope) {
 		var deferred = $q.defer();
 		var promise = deferred.promise;
-		promise = promise.then(QueryService.getSampleTrackingData)
-				.then(QueryService.getAnalysisMetadata, function(err) {
+		promise = promise
+				.then(QueryService.getDataModel)
+				.then(function(localScope) {
+					localScope.ensemblVer = localScope.dataModel.annotations.EnsemblVer;
+					localScope.ensemblArchive = localScope.dataModel.annotations.EnsemblArchive;
+					localScope.gencodeVer = localScope.dataModel.annotations.GENCODEVer;
+					localScope.reactomeVer = localScope.dataModel.annotations.ReactomeVer;
+					
+					localScope.REGION_SEARCH_URI = $interpolate(ConstantsService.REGION_SEARCH_URI)(localScope);
+					localScope.DEFAULT_SEARCH_URI = $interpolate(ConstantsService.DEFAULT_SEARCH_URI)(localScope);
+					
+					var SEARCH_URIS = {};
+					for(var key in ConstantsService.SEARCH_URIS) {
+						SEARCH_URIS[key] = $interpolate(ConstantsService.SEARCH_URIS[key])(localScope);
+					}
+					localScope.SEARCH_URIS = SEARCH_URIS;
+					//console.log(localScope.dataModel);
+					
+					return localScope;
+				}, function(err) {
+					openModal('Initialization error','Error while fetching BLUEPRINT data model');
+					console.error('Initialization error DataModel');
+					console.error(err);
+				})
+				.then(QueryService.getSampleTrackingData)
+				.then(function(localScope) {
+					localScope.numSamples = localScope.samples.length;
+					localScope.numHistones = localScope.histones.length; 
+					
+					return localScope;
+				}, function(err) {
 					openModal('Initialization error','Error while fetching samples and experiments metadata');
 					console.error('Initialization error SampleTrackingData');
 					console.error(err);
 				})
+				.then(QueryService.getAnalysisMetadata)
 				.then(QueryService.fetchDiseaseTerms, function(err) {
 					openModal('Initialization error','Error while fetching analysis metadata');
 					console.error('Initialization error AnalysisMetadata');

@@ -5,12 +5,12 @@
 angular.
 module('blueprintApp').
 factory('ConstantsService',function() {
-	var DEFAULT_SEARCH_URI = 'http://www.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
-	var REGION_SEARCH_URI = 'http://www.ensembl.org/Homo_sapiens/Location/View?r=';
+	var DEFAULT_SEARCH_URI = 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
+	var REGION_SEARCH_URI = 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Homo_sapiens/Location/View?r=';
 	var SEARCH_URIS = {
-		gene: 'http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core&g=',
+		gene: 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Homo_sapiens/Gene/Summary?db=core&g=',
 		pathway: 'http://www.reactome.org/content/detail/',
-		transcript: 'http://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core&t=',
+		transcript: 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Homo_sapiens/Transcript/Summary?db=core&t=',
 		reaction: 'http://www.reactome.org/content/detail/',
 		region: REGION_SEARCH_URI,
 	};
@@ -29,6 +29,7 @@ factory('ConstantsService',function() {
 		SPECIMEN_CONCEPT: 'sdata.specimen',
 		SAMPLE_CONCEPT: 'sdata.sample',
 		
+		DATA_MODEL_CONCEPT: 'model',
 		CVTERM_CONCEPT: 'cvterm',
 		
 		EXTERNAL_FEATURES_CONCEPT: 'external.features',

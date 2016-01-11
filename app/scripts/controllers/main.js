@@ -320,6 +320,8 @@ angular.module('blueprintApp')
 						};
 						if(flankingWindowSize!==undefined) {
 							currentQuery.flankingWindowSize = flankingWindowSize;
+						} else if(m===undefined) {
+							currentQuery.flankingWindowSize = localScope.flankingWindowSize;
 						}
 						localScope.currentQueries.push(currentQuery);
 						if(m) {

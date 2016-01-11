@@ -1286,7 +1286,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 								must: [
 									{
 										terms: {
-											feature: ChartService.REGION_FEATURES
+											feature: ConstantsService.REGION_FEATURES
 										},
 									},
 									nestedShouldQuery,

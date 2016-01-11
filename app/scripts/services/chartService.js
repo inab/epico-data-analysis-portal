@@ -176,12 +176,27 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 	];
 	
-	var REGION_FEATURE_GENE = 'gene';
-	var REGION_FEATURE_TRANSCRIPT = 'transcript';
-	var REGION_FEATURES = [REGION_FEATURE_GENE , REGION_FEATURE_TRANSCRIPT];
-	var REGION_FEATURES_COLORS = {};
-	REGION_FEATURES_COLORS[REGION_FEATURE_GENE] = '#ffffcc';
-	REGION_FEATURES_COLORS[REGION_FEATURE_TRANSCRIPT] = 'orange';
+	var PLOTBAND_FEATURE = 'plotband';
+	var BORDERED_PLOTBAND_FEATURE = 'bordered-plotband';
+	var PLOTLINE_FEATURE = 'plotline';
+	
+	var DRAWABLE_REGION_FEATURES = {};
+	DRAWABLE_REGION_FEATURES[ConstantsService.REGION_FEATURE_GENE] = {
+		color: '#ffffcc',
+		type: PLOTBAND_FEATURE,
+	};
+	DRAWABLE_REGION_FEATURES[ConstantsService.REGION_FEATURE_START_CODON] = {
+		color: '#008000',
+		type: PLOTLINE_FEATURE,
+		showLabel: true,
+	};
+	DRAWABLE_REGION_FEATURES[ConstantsService.REGION_FEATURE_STOP_CODON] = {
+		color: '#800000',
+		type: PLOTLINE_FEATURE,
+		showLabel: true,
+	};
+	
+	var LABELLED_REGION_FEATURES = [ConstantsService.REGION_FEATURE_GENE , ConstantsService.REGION_FEATURE_TRANSCRIPT];
 	
 	var ChromosomesHash = {
 		'1': {n:1,c:"chr",f:"images/GRCh38_chromosome_1.svg"},
@@ -237,7 +252,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var featureLabel;
 		
 		symbols.some(function(symbol) {
-			if(symbol.indexOf('ENSG')!==0 && symbol.indexOf('ENST')!==0 && symbol.indexOf('HGNC:')!==0) {
+			if(symbol.indexOf('ENSG')!==0 && symbol.indexOf('ENST')!==0 && symbol.indexOf('ENSE')!==0 && symbol.indexOf('HGNC:')!==0) {
 				featureLabel = symbol;
 				return true;
 			}
@@ -583,23 +598,25 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			// Getting a understandable label
 			featureRegion.label = chooseLabelFromSymbols(featureRegion.symbol);
 			
-			var uri = (dest in localScope.SEARCH_URIS) ? localScope.SEARCH_URIS[dest] : localScope.DEFAULT_SEARCH_URI;
-			// Matching the feature_id to its region
-			featureRegion.coordinates.forEach(function(coordinates) {
-				regionFeature[coordinates.feature_id] = featureRegion;
-				
-				if(isReactome && coordinates.feature_id.indexOf(rangeData.range.label)===0) {
-					// Setting it only once
-					rangeData.heading = rangeData.range.label = featureRegion.label;
-					isReactome = false;
-				}
-				
-				// Preparing the label
-				if(found.length > 0) {
-					found += ', ';
-				}
-				found += dest+" <a href='"+uri+coordinates.feature_id+"' title='"+coordinates.feature_id+"' target='_blank'>"+featureRegion.label+"</a>";
-			});
+			if(LABELLED_REGION_FEATURES.some(function(feat) { return dest === feat; })) {
+				var uri = (dest in localScope.SEARCH_URIS) ? localScope.SEARCH_URIS[dest] : localScope.DEFAULT_SEARCH_URI;
+				// Matching the feature_id to its region
+				featureRegion.coordinates.forEach(function(coordinates) {
+					regionFeature[coordinates.feature_id] = featureRegion;
+					
+					if(isReactome && coordinates.feature_id.indexOf(rangeData.range.label)===0) {
+						// Setting it only once
+						rangeData.heading = rangeData.range.label = featureRegion.label;
+						isReactome = false;
+					}
+					
+					// Preparing the label
+					if(found.length > 0) {
+						found += ', ';
+					}
+					found += dest+" <a href='"+uri+coordinates.feature_id+"' title='"+coordinates.feature_id+"' target='_blank'>"+featureRegion.label+"</a>";
+				});
+			}
 		});
 		if(found.length>0) {
 			var newFound = "Region <a href='"+localScope.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
@@ -848,6 +865,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 					break;
 				case GRAPH_TYPE_STEP_HIGHCHARTS:
 					var plotBands = [];
+					var plotLines = [];
 					chart = {
 						options: {
 							options: {
@@ -897,7 +915,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 								min: range_start,
 								max: range_end,
 								allowDecimals: false,
-								plotBands: plotBands
+								plotBands: plotBands,
+								plotLines: plotLines,
 							},
 							yAxis: {
 								title: {
@@ -928,36 +947,124 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 					}
 					
 					// Adding the gene and transcript regions
-					//REGION_FEATURES.forEach(function(featureType) {
-					//	var featureColor = REGION_FEATURES_COLORS[featureType];
-					//	rangeData.regionLayout[featureType].forEach(function(featureRegion) {
-					//		featureRegion.coordinates.forEach(function(coords) {
-					//			var plotBand = {
-					//				borderColor: {
-					//					linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-					//					stops: [
-					//						[0, featureColor],
-					//						[1, '#000000']
-					//					]
-					//				},
-					//				borderWidth: 1,
-					//				from: coords.chromosome_start,
-					//				to: coords.chromosome_end,
-					//			};
-					//			plotBands.push(plotBand);
-					//			
-					//			switch(featureType) {
-					//				case REGION_FEATURE_GENE:
-					//					plotBand.label = {
-					//						text: featureRegion.label,
-					//						fontSize: '8px',
-					//						rotation: 330
-					//					};
-					//					break;
-					//			}
-					//		});
-					//	});
-					//});
+					ConstantsService.REGION_FEATURES.forEach(function(featureType) {
+						if(featureType in DRAWABLE_REGION_FEATURES) {
+							var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
+							
+							// Consolidating the declared feature regions
+							var consolidatedFeatureRegions = [];
+							var consolidatedHash = {};
+							rangeData.regionLayout[featureType].forEach(function(featureRegion) {
+								var uKey = '';
+								featureRegion.coordinates.forEach(function(coords) {
+									uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
+								});
+								var feaRegion;
+								if(uKey in consolidatedHash) {
+									feaRegion = consolidatedHash[uKey];
+									feaRegion.label += ', ' + featureRegion.label;
+								} else {
+									feaRegion = {
+										label: featureRegion.label,
+										coordinates: featureRegion.coordinates,
+									};
+									consolidatedFeatureRegions.push(feaRegion);
+									consolidatedHash[uKey] = feaRegion;
+								}
+							});
+							
+							consolidatedFeatureRegions.forEach(function(featureRegion) {
+								featureRegion.coordinates.forEach(function(coords) {
+									switch(drawableFeature.type) {
+										case PLOTBAND_FEATURE:
+											var plotBand = {
+												//borderColor: drawableFeature.color,
+												//borderColor: {
+												//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+												//	stops: [
+												//		[0, drawableFeature.color],
+												//		[1, '#000000']
+												//	]
+												//},
+												//borderWidth: 1,
+												color: drawableFeature.color,
+												from: coords.chromosome_start,
+												to: coords.chromosome_end,
+												//zIndex: zIndex+5
+											};
+											plotBands.push(plotBand);
+											
+											if(drawableFeature.showLabel) {
+												var plotBandLabel = {
+													text: featureRegion.label,
+													style: {
+														fontSize: '8px',
+													},
+													rotation: 330
+												};
+												plotBand.label = plotBandLabel;
+											}
+											break;
+										case BORDERED_PLOTBAND_FEATURE:
+											var borderedPlotBand = {
+												borderColor: drawableFeature.color,
+												//borderColor: {
+												//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+												//	stops: [
+												//		[0, drawableFeature.color],
+												//		[1, '#000000']
+												//	]
+												//},
+												borderWidth: 1,
+												color: drawableFeature.color,
+												from: coords.chromosome_start,
+												to: coords.chromosome_end,
+												zIndex: 5
+											};
+											plotBands.push(borderedPlotBand);
+											
+											if(drawableFeature.showLabel) {
+												var borderedPlotBandLabel = {
+													text: featureRegion.label,
+													textAlign: 'left',
+													style: {
+														fontSize: '0.2em',
+													},
+													x: -10,
+													rotation: 90
+												};
+												borderedPlotBand.label = borderedPlotBandLabel;
+											}
+											break;
+										case PLOTLINE_FEATURE:
+											var plotLine = {
+												color: drawableFeature.color,
+												width: 2,
+												value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
+												zIndex: 5
+											};
+											plotLines.push(plotLine);
+											
+											if(drawableFeature.showLabel) {
+												var plotLineLabel = {
+													text: featureRegion.label,
+													style: {
+														fontSize: '0.2em',
+													}
+												};
+												if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
+													plotLineLabel.rotation = 270;
+													plotLineLabel.textAlign = 'right';
+													plotLineLabel.x = 10;
+												}
+												plotLine.label = plotLineLabel;
+											}
+											break;
+									}
+								});
+							});
+						}
+					});
 					break;
 			}
 			
@@ -2225,7 +2332,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		initializeSubtotalsCharts: initializeSubtotalsCharts,
 		linkMeanSeriesToAnalysis: linkMeanSeriesToAnalysis,
 		chooseLabelFromSymbols: chooseLabelFromSymbols,
-		REGION_FEATURES: REGION_FEATURES,
 		EXPORTED_VIEWS: EXPORTED_VIEWS,
 		storeRange: storeRange,
 		selectGroup: selectGroup,

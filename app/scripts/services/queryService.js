@@ -1310,6 +1310,58 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		return deferred.promise;
 	}
 	
+	function getChartStats(localScope,rangeData) {
+		var deferred = $q.defer();
+		var shouldQuery = genShouldQuery(rangeData);
+		
+		localScope.searchButtonText = FETCHING_LABEL;
+		var total = 0;
+		es.search({
+			size: 10000000,
+			index: ConstantsService.PRIMARY_DATA_INDEX,
+			//scroll: '60s',
+			search_type: 'count',
+			query_cache: 'true',
+			body: {
+				query: {
+					filtered: {
+						filter: {
+							bool: {
+								should: shouldQuery
+							}
+						}
+					}
+				},
+				aggregations: {
+					analyses: {
+						terms: {
+							field: 'analysis_id',
+							size: 0
+						},
+					},
+				}
+			}
+		}, function(err,resp) {
+			if(resp!==undefined) {
+				if(resp.aggregations!==undefined) {
+					console.log(resp.aggregations);
+					deferred.resolve(localScope);
+				} else {
+					deferred.reject(resp);
+				}
+			} else {
+				console.log("DEBUG Total "+total);
+				console.log(resp);
+				console.log("DEBUG Total err "+total);
+				console.log(err);
+				
+				deferred.reject(err);
+			}
+		});
+		
+		return deferred.promise;
+	}
+	
 	function getChartData(localScope,rangeData) {
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData);
@@ -1412,17 +1464,17 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		return deferred.promise;
 	}
 	
-	function getWgbsStatsData(localScope,rangeData) {
+	function getStatsData(localScope,rangeData) {
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData);
 		
-		//rangeData.stats.bisulfiteSeq = [];
-		rangeData.stats.bisulfiteSeqHash = {};
+		localScope.searchButtonText = FETCHING_LABEL;
+		var total = 0;
 		es.search({
-			size:10000000,
+			size: 10000000,
 			index: ConstantsService.PRIMARY_DATA_INDEX,
-			type: ConstantsService.DLAT_CONCEPT,
 			search_type: 'count',
+			query_cache: 'true',
 			body: {
 				query: {
 					filtered: {
@@ -1433,250 +1485,185 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						}
 					}
 				},
-				aggs: {
-					analyses: {
-						terms: {
-							field: 'analysis_id',
-							size: 0
+				aggregations: {
+					Wgbs: {
+						filter: {
+							term: {
+								_type: ConstantsService.DLAT_CONCEPT
+							}
 						},
-						aggs: {
-							stats_meth_level: {
-								extended_stats: {
-									field: 'meth_level'
+						aggregations: {
+							analyses: {
+								terms: {
+									field: 'analysis_id',
+									size: 0
+								},
+								aggs: {
+									stats_meth_level: {
+										extended_stats: {
+											field: 'meth_level'
+										}
+									}
+								}
+							}
+						}
+					},
+					RnaSeqG: {
+						filter: {
+							term: {
+								_type: ConstantsService.EXPG_CONCEPT
+							}
+						},
+						aggregations: {
+							analyses: {
+								terms: {
+									field: 'analysis_id',
+									size: 0
+								},
+								aggs: {
+									stats_normalized_read_count: {
+										extended_stats: {
+											field: 'expected_count'
+										}
+									}
+								}
+							}
+						}
+					},
+					RnaSeqT: {
+						filter: {
+							term: {
+								_type: ConstantsService.EXPT_CONCEPT
+							}
+						},
+						aggregations: {
+							analyses: {
+								terms: {
+									field: 'analysis_id',
+									size: 0
+								},
+								aggs: {
+									stats_normalized_read_count: {
+										extended_stats: {
+											field: 'expected_count'
+										}
+									}
+								}
+							}
+						}
+					},
+					Dnase: {
+						filter: {
+							term: {
+								_type: ConstantsService.RREG_CONCEPT
+							}
+						},
+						aggregations: {
+							analyses:{
+								terms:{
+									field: 'analysis_id',
+									size: 0
+								},
+								aggs:{
+									peak_size: {
+										sum: {
+											lang: "expression",
+											script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
+										}
+									}
+								}
+							}
+						}
+					},
+					ChipSeq: {
+						filter: {
+							term: {
+								_type: ConstantsService.PDNA_CONCEPT
+							}
+						},
+						aggregations: {
+							analyses:{
+								terms:{
+									field: 'analysis_id',
+									size: 0
+								},
+								aggs:{
+									peak_size: {
+										sum: {
+											lang: "expression",
+											script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
+										}
+									}
 								}
 							}
 						}
 					}
 				}
 			}
-		},function(err,resp) {
-			if(typeof(resp.aggregations) !== undefined){  
-				resp.aggregations.analyses.buckets.forEach(function(d) {
-					//rangeData.stats.bisulfiteSeq.push(d);
-					rangeData.stats.bisulfiteSeqHash[d.key] = d;
-				});
-				deferred.resolve(localScope);
+		}, function(err,resp) {
+			if(resp!==undefined) {
+				if(resp.aggregations!==undefined) {
+					console.log('Aggregations');
+					console.log(resp.aggregations);
+					
+					// Wgbs
+					//rangeData.stats.bisulfiteSeq = [];
+					rangeData.stats.bisulfiteSeqHash = {};
+					resp.aggregations.Wgbs.analyses.buckets.forEach(function(d) {
+						//rangeData.stats.bisulfiteSeq.push(d);
+						rangeData.stats.bisulfiteSeqHash[d.key] = d;
+					});
+					
+					// RnaSeqG
+					//rangeData.stats.rnaSeqG = [];
+					rangeData.stats.rnaSeqGHash = {};
+					resp.aggregations.RnaSeqG.analyses.buckets.forEach(function(d) {
+						//rangeData.stats.rnaSeqG.push(d);
+						rangeData.stats.rnaSeqGHash[d.key] = d;
+					});
+					
+					// RnaSeqT
+					//rangeData.stats.rnaSeqT = [];
+					rangeData.stats.rnaSeqTHash = {};
+					resp.aggregations.RnaSeqT.analyses.buckets.forEach(function(d) {
+						//rangeData.stats.rnaSeqT.push(d);
+						rangeData.stats.rnaSeqTHash[d.key] = d;
+					});
+					
+					// Dnase
+					//rangeData.stats.dnaseSeq = [];
+					rangeData.stats.dnaseSeqHash = {};
+					resp.aggregations.Dnase.analyses.buckets.forEach(function(d) {
+						//rangeData.stats.dnaseSeq.push(d);
+						rangeData.stats.dnaseSeqHash[d.key] = d;
+					});
+					
+					// ChIP-Seq
+					rangeData.stats.chipSeq = [];
+					rangeData.stats.chipSeqHash = {};
+					resp.aggregations.ChipSeq.analyses.buckets.forEach(function(d) {
+						rangeData.stats.chipSeq.push(d);
+						rangeData.stats.chipSeqHash[d.key] = d;
+					});
+
+					deferred.resolve(localScope);
+				} else {
+					deferred.reject(resp);
+				}
 			} else {
-				return deferred.reject(err); 
+				console.log("DEBUG Total "+total);
+				console.log(resp);
+				console.log("DEBUG Total err "+total);
+				console.log(err);
+				
+				deferred.reject(err);
 			}
 		});
 		
 		return deferred.promise;
 	}
 	
-	function getRnaSeqGStatsData(localScope,rangeData) {
-		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData);
-		
-		//rangeData.stats.rnaSeqG = [];
-		rangeData.stats.rnaSeqGHash = {};
-		es.search({
-			size:10000000,	
-			index: ConstantsService.PRIMARY_DATA_INDEX,
-			type: ConstantsService.EXPG_CONCEPT,
-			search_type: 'count',
-			body: {
-				query: {
-					filtered: {
-						filter: {
-							bool: {
-								should: shouldQuery
-							}
-						}
-					}
-				},
-				aggs: {
-					analyses: {
-						terms: {
-							field: 'analysis_id',
-							size: 0
-						},
-						aggs: {
-							stats_normalized_read_count: {
-								extended_stats: {
-									field: 'expected_count'
-								}
-							}
-						}
-					}
-				}
-			}
-		},function(err,resp) {
-			if(typeof(resp.aggregations) !== undefined){	
-				resp.aggregations.analyses.buckets.forEach(function(d) {
-					//rangeData.stats.rnaSeqG.push(d);
-					rangeData.stats.rnaSeqGHash[d.key] = d;
-				});
-				deferred.resolve(localScope);
-			} else {
-				return deferred.reject(err); 
-			}
-		});
-		
-		return deferred.promise;
-	}
-
-	function getRnaSeqTStatsData(localScope,rangeData) {
-		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData);
-		
-		//rangeData.stats.rnaSeqT = [];
-		rangeData.stats.rnaSeqTHash = {};
-		es.search({
-			size:10000000,	
-			index: ConstantsService.PRIMARY_DATA_INDEX,
-			type: ConstantsService.EXPT_CONCEPT,
-			search_type: 'count',
-			body: {
-				query: {
-					filtered: {
-						filter: {
-							bool: {
-								should: shouldQuery
-							}
-						}
-					}
-				},
-				aggs: {
-					analyses: {
-						terms: {
-							field: 'analysis_id',
-							size: 0
-						},
-						aggs: {
-							stats_normalized_read_count: {
-								extended_stats: {
-									field: 'expected_count'
-								}
-							}
-						}
-					}
-				}
-			}
-		},function(err,resp) {
-			if(typeof(resp.aggregations) !== undefined){	
-				resp.aggregations.analyses.buckets.forEach(function(d) {
-					//rangeData.stats.rnaSeqT.push(d);
-					rangeData.stats.rnaSeqTHash[d.key] = d;
-				});
-				deferred.resolve(localScope);
-			} else {
-				return deferred.reject(err); 
-			}
-		});
-		
-		return deferred.promise;
-	}
-
-	function getDnaseStatsData(localScope,rangeData) {
-		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData);
-		
-		//rangeData.stats.dnaseSeq = [];
-		rangeData.stats.dnaseSeqHash = {};
-		es.search({
-			size:10000000,	
-			index: ConstantsService.PRIMARY_DATA_INDEX,
-			type: ConstantsService.RREG_CONCEPT,
-			search_type: 'count',
-			body: {
-				query: {
-					filtered: {
-						filter: {
-							bool: {
-								should: shouldQuery
-							}
-						}
-					}
-				},
-				aggs: {
-					analyses:{
-						terms:{
-							field: 'analysis_id',
-							size: 0
-						},
-						aggs:{
-							peak_size: {
-								sum: {
-									lang: "expression",
-									script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
-								}
-							}
-						}
-					}
-				}
-
-
-			}
-		},function(err,resp) {
-			if(typeof(resp.aggregations) !== undefined){	
-				resp.aggregations.analyses.buckets.forEach(function(d) {
-					//rangeData.stats.dnaseSeq.push(d);
-					rangeData.stats.dnaseSeqHash[d.key] = d;
-				});
-				deferred.resolve(localScope);
-			}else{
-				return deferred.reject(err); 
-			}
-		});
-		
-		return deferred.promise;
-	}
-	
-	function getChipSeqStatsData(localScope,rangeData) {			
-		var deferred = $q.defer();
-		var shouldQuery = genShouldQuery(rangeData);
-		
-		rangeData.stats.chipSeq = [];
-		rangeData.stats.chipSeqHash = {};
-		es.search({
-			size:10000000,	
-			index: ConstantsService.PRIMARY_DATA_INDEX,
-			type: ConstantsService.PDNA_CONCEPT,
-			search_type: 'count',
-			body: {
-				query: {
-					filtered: {
-						filter: {
-							bool: {
-								should: shouldQuery
-							}
-						}
-					}
-				},
-				aggs: {
-					analyses:{
-						terms:{
-							field: 'analysis_id',
-							size: 0
-						},
-						aggs:{
-							peak_size: {
-								sum: {
-									lang: "expression",
-									script: "doc['chromosome_end'].value - doc['chromosome_start'].value + 1" 
-								}
-							}
-						}
-					}
-				}
-			}
-		},function(err,resp) {
-			if(typeof(resp.aggregations) !== undefined) {
-				resp.aggregations.analyses.buckets.forEach(function(d) {
-					rangeData.stats.chipSeq.push(d);
-					rangeData.stats.chipSeqHash[d.key] = d;
-				});
-				deferred.resolve(localScope);
-			} else {
-				return deferred.reject(err); 
-			}
-		});
-		
-		return deferred.promise;
-	}
-	
-	var DEFAULT_QUERY_TYPES = ["gene","pathway","reaction"];
+	var DEFAULT_QUERY_TYPES = [ConstantsService.REGION_FEATURE_GENE,ConstantsService.REGION_FEATURE_PATHWAY,ConstantsService.REGION_FEATURE_REACTION];
 	
 	function scheduleGetRanges(currentQueries,parentProcessRangeMatchNoResults,parentPromise) {
 		currentQueries.forEach(function(currentQuery) {
@@ -1934,12 +1921,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		rangeLaunch: rangeLaunch,
 		// Query methods
 		getGeneLayout: getGeneLayout,
+		getChartStats: getChartStats,
 		getChartData: getChartData,
-		getWgbsStatsData: getWgbsStatsData,
-		getRnaSeqGStatsData: getRnaSeqGStatsData,
-		getRnaSeqTStatsData: getRnaSeqTStatsData,
-		getDnaseStatsData: getDnaseStatsData,
-		getChipSeqStatsData: getChipSeqStatsData,
+		getStatsData: getStatsData,
 		// Misc methods
 		suggestSearch: suggestSearch,
 		scheduleGetRanges: scheduleGetRanges,

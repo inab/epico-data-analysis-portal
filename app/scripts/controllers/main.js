@@ -227,11 +227,10 @@ angular.module('blueprintApp')
 		return promise;
 	}
 	
-	var topFeatures = {
-		'gene': null,
-		'reaction': null,
-		'pathway': null
-	};
+	var topFeatures = {};
+	topFeatures[ConstantsService.REGION_FEATURE_GENE] = null;
+	topFeatures[ConstantsService.REGION_FEATURE_REACTION] = null;
+	topFeatures[ConstantsService.REGION_FEATURE_PATHWAY] = null;
 
 	function processRangeMatchNoResults(localScope,origQuery,queryTypes,deferred) {
 		var queryTypesStr;
@@ -248,7 +247,7 @@ angular.module('blueprintApp')
 		});
 	}
 	
-	var preprocessQuery = function(localScope) {
+	function preprocessQuery(localScope) {
 		console.log('Running preprocessQuery');
 		var deferred = $q.defer();
 		var promise = deferred.promise;
@@ -360,7 +359,7 @@ angular.module('blueprintApp')
 		deferred.resolve(localScope);
 		
 		return promise;
-	};
+	}
 
     $scope.resultsSearch = [];
     
@@ -419,14 +418,19 @@ angular.module('blueprintApp')
 			var promise = deferred.promise;
 			promise = promise
 				.then(QueryService.rangeLaunch(QueryService.getGeneLayout,rangeData))
-				.then(QueryService.rangeLaunch(QueryService.getChartData,rangeData), function(err) {
+				.then(QueryService.rangeLaunch(QueryService.getChartStats,rangeData), function(err) {
 					openModal('Data error','Error while fetching gene layout');
 					console.error('Gene layout');
 					console.error(err);
 				})
+				.then(QueryService.rangeLaunch(QueryService.getChartData,rangeData), function(err) {
+					openModal('Data error','Error while fetching charts stats');
+					console.error('Charts stats');
+					console.error(err);
+				})
 				// Either the browser or the server gets too stressed with this concurrent query
 				//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
-				.then(QueryService.rangeLaunch(QueryService.getWgbsStatsData,rangeData), function(err) {
+				.then(QueryService.rangeLaunch(QueryService.getStatsData,rangeData), function(err) {
 					if(typeof err === "string") {
 						openModal(err,'There is no data stored for '+$scope.currentQueryStr);
 					} else {
@@ -435,29 +439,9 @@ angular.module('blueprintApp')
 						console.error(err);
 					}
 				})
-				.then(QueryService.rangeLaunch(QueryService.getRnaSeqGStatsData,rangeData), function(err) {
-					openModal('Data error','Error while computing WGBS stats');
-					console.error('WGBS stats data');
-					console.error(err);
-				})
-				.then(QueryService.rangeLaunch(QueryService.getRnaSeqTStatsData,rangeData), function(err) {
-					openModal('Data error','Error while computing RNA-Seq (genes) stats');
-					console.error('RNA-Seq gene stats data');
-					console.error(err);
-				})
-				.then(QueryService.rangeLaunch(QueryService.getChipSeqStatsData,rangeData), function(err) {
-					openModal('Data error','Error while computing RNA-Seq (transcripts) stats');
-					console.error('RNA-Seq transcript stats data');
-					console.error(err);
-				})
-				.then(QueryService.rangeLaunch(QueryService.getDnaseStatsData,rangeData), function(err) {
-					openModal('Data error','Error while computing ChIP-Seq stats');
-					console.error('ChIP-Seq stats data');
-					console.error(err);
-				})
 				.then(QueryService.rangeLaunch(QueryService.initTree,rangeData), function(err) {
-					openModal('Data error','Error while computing DNAse stats');
-					console.error('DNAse stats data');
+					openModal('Data error','Error while computing stats');
+					console.error('Stats data');
 					console.error(err);
 				}).
 				catch(function(err) {

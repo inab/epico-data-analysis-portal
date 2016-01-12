@@ -1603,9 +1603,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		}, function(err,resp) {
 			if(resp!==undefined) {
 				if(resp.aggregations!==undefined) {
-					console.log('Aggregations');
-					console.log(resp.aggregations);
-					
 					// Wgbs
 					//rangeData.stats.bisulfiteSeq = [];
 					rangeData.stats.bisulfiteSeqHash = {};

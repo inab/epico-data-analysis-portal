@@ -125,8 +125,23 @@
 	<uib-tab ng-repeat="rangeData in graphData" select="doRefresh(rangeData)">
 		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching, 'blink': rangeData.fetching}"></i><i class="hover_red" ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
 		
-		<div class="no-margin-padding text-center">
+		<!-- Types of analysis -->
+		<div class="no-margin-padding">
 			<p class="text-center" ng-bind-html="rangeData.queryFound"></p><p class="text-center" ng-bind-html="rangeData.found"></p>
+			
+			<!-- Selection tree -->
+			<div class="row" style="clear:both;">
+				<div class="col-sm-1 text-center">
+					<img ng-src="{{rangeData.ui.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.ui.gChro.n}}">
+				</div>
+				<div class="col-sm-3" ng-repeat="ontology in rangeData.treedata">
+					<treecontrol class="tree-light" tree-model="ontology.root" selected-nodes="ontology.selectedNodes" expanded-nodes="ontology.expandedNodes" on-selection="node.termHidden = !node.termHidden" options="$parent.commonTreeControlOptions">
+						<span class="circle" ng-style="{'border-color': node.color, 'background-color': node.wasSeen ? node.color : 'white'}"></span> {{node.name}} ({{node.o}})
+					</treecontrol>
+				</div>
+			</div>
+		</div>
+		<div class="no-margin-padding text-center">
 			<div class="btn-group">
 				<label class="btn btn-default" ng-repeat="view in $parent.EXPORTED_VIEWS" ng-model="$parent.rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="$parent.rangeData.fetching || $parent.rangeData.toBeFetched" ng-click="redrawCharts(rangeData)">{{view.viewDesc}}</label>
 			</div>
@@ -220,7 +235,7 @@
 				</div>
 				<div class="col-sm-11">
 					<div ng-repeat="ontology in rangeData.treedata">
-						<d3-tree data="ontology" label="name" style="display"></d3-tree>      
+						<d3-tree data="ontology" label="name" tree-style="'display'"></d3-tree>      
 					</div>
 				</div>
 			</div>

@@ -159,7 +159,7 @@
       return {
         restrict: 'EA',
         scope: {
-          style:"=",
+          treeStyle:"=",
           data: "=",
           label: "@",
           onClick: "&"
@@ -208,7 +208,7 @@
           );
 
           // watch for data changes and re-render
-          scope.$watch('data', function(newVals) {
+          scope.$watchCollection('data', function(newVals) {
             if(typeof(newVals)==="object"){ 
               return scope.render(newVals);
             }
@@ -395,7 +395,7 @@
             svg.selectAll("*").remove();
 
             //Draw headers
-            if(data){
+            if(data && data.depth){
 		// setup variables
 		experimentsDescs = data.experiments;
 		var experimentTypes = [];

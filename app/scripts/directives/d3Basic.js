@@ -1,12 +1,11 @@
 (function () {
   'use strict';
 /* jshint camelcase: false , quotmark: false */
-/* global d3 */
 
   angular.module('blueprintApp.d3',[])
     .factory('d3',[function(){
 	// Got rid of internal, static, d3 library
-	return d3;
+	return window.d3;
     }])
 
 

@@ -1432,7 +1432,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					resp.aggregations.analyses.buckets.forEach(function(analysisStat) {
 						ChartService.recordAnalysisOnCellType(rangeData,analysisStat.key,analysisStat.doc_count);
 					});
-
+					
+					rangeData.ui.numAnalysesInRange = resp.aggregations.analyses.buckets.length;
+					
 					var clonedTreeData = angular.copy(localScope.fetchedTreeData);
 					var clonedExperimentLabels = angular.copy(localScope.experimentLabels);
 					
@@ -1447,9 +1449,11 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					});
 					
 					rangeData.treedata = [];
+					rangeData.ui.numCellTypesInRange = 0;
 					rangeData.treedata = clonedTreeData.map(function(cloned) {
 						// Patching the tree
 						var nodesReport = prepareTermNodesInTree(cloned,rangeData.termNodesHash);
+						rangeData.ui.numCellTypesInRange += nodesReport.wereSeenNodes.length;
 						return {
 							root: cloned,
 							experiments: clonedExperimentLabels,

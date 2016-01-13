@@ -1906,7 +1906,11 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		termNodes.forEach(function(termNode,i) {
 			var theColor = cellTypeColors[i];
 			termNode.color = theColor;
-			termNode.termHidden = false;
+			// By default, they are hidden
+			termNode.termHidden = true;
+			termNode.analysisInRange = [];
+			termNode.numDataEntries = 0;
+			termNode.analysisTypes = {};
 		});
 		
 		// This is needed for the data model
@@ -2204,6 +2208,40 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		redrawCharts(rangeData,undefined,undefined,viewClass);
 	}
 	
+	function recordAnalysisOnCellType(rangeData,analysis_id,entries_count) {
+		if(analysis_id in rangeData.localScope.analysesHash) {
+			var analysis = rangeData.localScope.analysesHash[analysis_id];
+			var cellTypeId = analysis.cell_type.o_uri;
+			if(cellTypeId in rangeData.termNodesHash) {
+				var term = rangeData.termNodesHash[cellTypeId];
+				term.wasSeen = true;
+				term.analysisInRange.push(analysis);
+				term.numDataEntries += entries_count;
+				
+				var meanCellTypeSeriesId = analysis.meanSeries;
+				switch(meanCellTypeSeriesId) {
+					case EXP_ANY_SERIES:
+						meanCellTypeSeriesId = [ EXPG_SERIES, EXPT_SERIES ];
+						break;
+					default:
+						meanCellTypeSeriesId = [ meanCellTypeSeriesId ];
+				}
+				meanCellTypeSeriesId.forEach(function(ser) {
+					if(ser in rangeData.localScope.AVG_SERIES_COLORS) {
+						var chartIds = rangeData.localScope.AVG_SERIES_COLORS[ser].chartId;
+						if(Array.isArray(chartIds)) {
+							chartIds.forEach(function(chartId) {
+								term.analysisTypes[chartId] = null;
+							});
+						} else {
+							term.analysisTypes[chartIds] = null;
+						}
+					}
+				});
+			}
+		}
+	}
+	
 	function storeFetchedData(rangeData,range_start,range_end,results) {
 		var localScope = rangeData.localScope;
 		results.forEach(function(segment) {
@@ -2323,6 +2361,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		
 	return {
 		doRegionFeatureLayout: doRegionFeatureLayout,
+		recordAnalysisOnCellType: recordAnalysisOnCellType,
 		storeFetchedData: storeFetchedData,
 		redrawCharts: redrawCharts,
 		assignCellTypesColorMap: assignCellTypesColorMap,

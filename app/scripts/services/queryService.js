@@ -956,8 +956,21 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		return {notBroad:value, broad:valueB}; 
 	}
 	
-	function replaceTermNodesInTree(o,termNodesHash) {
+	function prepareTermNodesInTree(o,termNodesHash,nodesReport) {
+		if(nodesReport===undefined) {
+			nodesReport = {
+				parentNodes: [],
+				wereSeenNodes: []
+			};
+		}
+		
+		if(o.wasSeen) {
+			nodesReport.wereSeenNodes.push(o);
+		}
+		
 		if(o.children) {
+			nodesReport.parentNodes.push(o);
+			
 			var children;
 			var changed = false;
 			
@@ -977,9 +990,14 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			
 			// Then, populate them!
 			o.children.forEach(function(child) {
-				replaceTermNodesInTree(child,termNodesHash);
+				prepareTermNodesInTree(child,termNodesHash,nodesReport);
+				
+				// For reverse lookups
+				child.parent = o;
 			});
 		}
+		
+		return nodesReport;
 	}
 	
 	function populateBasicTree(o,samples,ontology,rangeData) {
@@ -1411,6 +1429,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			if(resp!==undefined) {
 				if(resp.aggregations!==undefined) {
 					console.log(resp.aggregations);
+					resp.aggregations.analyses.buckets.forEach(function(analysisStat) {
+						ChartService.recordAnalysisOnCellType(rangeData,analysisStat.key,analysisStat.doc_count);
+					});
 
 					var clonedTreeData = angular.copy(localScope.fetchedTreeData);
 					var clonedExperimentLabels = angular.copy(localScope.experimentLabels);
@@ -1428,11 +1449,13 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					rangeData.treedata = [];
 					rangeData.treedata = clonedTreeData.map(function(cloned) {
 						// Patching the tree
-						replaceTermNodesInTree(cloned,rangeData.termNodesHash);
+						var nodesReport = prepareTermNodesInTree(cloned,rangeData.termNodesHash);
 						return {
 							root: cloned,
 							experiments: clonedExperimentLabels,
-							experimentLabelsHash: experimentLabelsHash
+							experimentLabelsHash: experimentLabelsHash,
+							selectedNodes: [],
+							expandedNodes: nodesReport.parentNodes,
 						};
 					});
 					

@@ -218,7 +218,7 @@ div.suggest-container:empty {
 	}
 }
 
-span.circle , span.square {
+span.circle , span.square, span.rounded-square {
 	border-style: solid;
 	border-width: 1px;
 	width: 1em;
@@ -245,11 +245,20 @@ tr.termItem {
 	user-select: none;
 }
 
+$circle-common: 50%;
 span.circle {
-	border-radius: 50%;
-	-moz-border-radius: 50%;
-	-webkit-border-radius: 50%;
-	-ms-border-radius: 50%;
+	border-radius: $circle-common;
+	-moz-border-radius: $circle-common;
+	-webkit-border-radius: $circle-common;
+	-ms-border-radius: $circle-common;
+}
+
+$rounded-square-common: 25%;
+span.rounded-square {
+	border-radius: $rounded-square-common;
+	-moz-border-radius: $rounded-square-common;
+	-webkit-border-radius: $rounded-square-common;
+	-ms-border-radius: $rounded-square-common;
 }
 
 .term {

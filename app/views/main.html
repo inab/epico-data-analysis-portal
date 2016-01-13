@@ -136,7 +136,8 @@
 				</div>
 				<div class="col-sm-3" ng-repeat="ontology in rangeData.treedata">
 					<treecontrol class="tree-light" tree-model="ontology.root" selected-nodes="ontology.selectedNodes" expanded-nodes="ontology.expandedNodes" on-selection="node.termHidden = !node.termHidden" options="$parent.commonTreeControlOptions">
-						<span class="circle" ng-style="{'border-color': node.color, 'background-color': node.wasSeen ? node.color : 'white'}"></span> {{node.name}} ({{node.o}})
+						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined
+					}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}">{{node.name}} ({{node.o}})</span>
 					</treecontrol>
 				</div>
 			</div>

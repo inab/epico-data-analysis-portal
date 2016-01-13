@@ -651,6 +651,49 @@ angular.module('blueprintApp')
 		$scope.graphData.splice(index, 1);
 	};
 	
+	$scope.onTreeSelection = function(ontology,node,selected) {
+		// This is done later
+		// if(node.termHidden!==undefined) {
+		// 	node.termHidden = !selected;
+		// }
+		
+		if(selected) {
+			if(node.children!==undefined) {
+				if(ontology.expandedNodes.indexOf(node)===-1) {
+					ontology.expandedNodes.push(node);
+				}
+				var childrenSets = [node.children];
+				do {
+					var newChildrenSets = [];
+					childrenSets.forEach(function(childrenSet) {
+						childrenSet.forEach(function(child) {
+							if(ontology.selectedNodes.indexOf(child)===-1) {
+								ontology.selectedNodes.push(child);
+								if(child.children!==undefined) {
+									if(ontology.expandedNodes.indexOf(child)===-1) {
+										ontology.expandedNodes.push(child);
+									}
+									newChildrenSets.push(child.children);
+								}
+							}
+						});
+					});
+					childrenSets = newChildrenSets;
+				} while(childrenSets.length > 0);
+			}
+		} else {
+			var parent = node.parent;
+			while(parent!==undefined) {
+				var parPos = ontology.selectedNodes.indexOf(parent);
+				if(parPos===-1) {
+					break;
+				}
+				ontology.selectedNodes.splice(parPos,1);
+				parent = parent.parent;
+			}
+		}
+	};
+	
 	function init($q,$scope) {
 		var deferred = $q.defer();
 		var promise = deferred.promise;

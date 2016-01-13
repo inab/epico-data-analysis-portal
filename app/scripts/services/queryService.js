@@ -656,8 +656,13 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						var roots = [];
 						
 						// First pass, the nodes
-						var rawnodes = resp.hits.hits.map(function(v) {
+						// Sorting by ontology, so we discard cv:EFO terms in case they are already defined in cv:CellOntology or cv:CellLineOntology
+						var rawnodes = resp.hits.hits.sort(function(a,b) {
+							return a.fields.ont[0].localeCompare(b.fields.ont[0]);
+						}).map(function(v) {
 							var n = v.fields;
+							n._id = v._id;
+							
 							var treeNode = {
 								name: n.name[0],
 								o: n.term[0],
@@ -665,8 +670,17 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 								ont: n.ont[0],
 							};
 							
-							treeNodes[treeNode.o] = treeNode;
-							fetchedNodes[treeNode.o] = n;
+							if(treeNode.o in treeNodes) {
+								// This is for nodes with the same name
+								// but different unique id, so we don't have stale references
+								if(fetchedNodes[treeNode.o]._id !== n._id) {
+									fetchedNodes[treeNode.o].parents = fetchedNodes[treeNode.o].parents.concat(n.parents);
+								}
+								
+							} else {
+								treeNodes[treeNode.o] = treeNode;
+								fetchedNodes[treeNode.o] = n;
+							}
 							
 							return treeNode;
 						});
@@ -701,6 +715,59 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						console.log(fetchedNodes);
 						console.log("Tree Nodes");
 						console.log(treeNodes);
+						*/
+						
+						/* This code was intended to be for dagre-d3 usage. Disable it for now
+						
+						var ontologies = [];
+						var ontsVisited = {};
+						var graphVisited = {};
+						var nowGraphNodes = termNodes.map(function(tn) {
+							return tn.o;
+						});
+						var rootOntologies = [];
+						var knownRootOntologies = {};
+						while(nowGraphNodes.length > 0) {
+							var nextGraphNodes = [];
+							nowGraphNodes.forEach(function(term) {
+								if(!(term in graphVisited)) {
+									graphVisited[term] = null;
+									
+									var fn = fetchedNodes[term];
+									var tn = treeNodes[term];
+									
+									var ontology;
+									if(tn.ont in ontsVisited) {
+										ontology = ontsVisited[tn.ont];
+									} else {
+										ontology = {
+											graphNodes: [],
+											graphEdges: []
+										};
+										ontologies.push(ontology);
+										ontsVisited[tn.ont] = ontology;
+									}
+									
+									ontology.graphNodes.push(tn);
+									if(fn.parents) {
+										var isDead = true;
+										fn.parents.forEach(function(p_term) {
+											if(p_term in treeNodes) {
+												isDead = false;
+												nextGraphNodes.push(p_term);
+												ontology.graphEdges.push({parent: p_term, child: term});
+											}
+										});
+									} else if(!(tn.ont in knownRootOntologies)) {
+										rootOntologies.push(ontology);
+										knownRootOntologies[tn.ont] = null;
+									}
+								}
+							});
+							
+							nowGraphNodes = nextGraphNodes;
+						}
+						localScope.fetchedGraphData = rootOntologies.sort(function(a,b) { return a.graphNodes.length - b.graphNodes.length; });
 						*/
 						
 						// Second pass, the parent-child relationships

@@ -954,115 +954,117 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 							// Consolidating the declared feature regions
 							var consolidatedFeatureRegions = [];
 							var consolidatedHash = {};
-							rangeData.regionLayout[featureType].forEach(function(featureRegion) {
-								var uKey = '';
-								featureRegion.coordinates.forEach(function(coords) {
-									uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
-								});
-								var feaRegion;
-								if(uKey in consolidatedHash) {
-									feaRegion = consolidatedHash[uKey];
-									feaRegion.label += ', ' + featureRegion.label;
-								} else {
-									feaRegion = {
-										label: featureRegion.label,
-										coordinates: featureRegion.coordinates,
-									};
-									consolidatedFeatureRegions.push(feaRegion);
-									consolidatedHash[uKey] = feaRegion;
-								}
-							});
-							
-							consolidatedFeatureRegions.forEach(function(featureRegion) {
-								featureRegion.coordinates.forEach(function(coords) {
-									switch(drawableFeature.type) {
-										case PLOTBAND_FEATURE:
-											var plotBand = {
-												//borderColor: drawableFeature.color,
-												//borderColor: {
-												//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-												//	stops: [
-												//		[0, drawableFeature.color],
-												//		[1, '#000000']
-												//	]
-												//},
-												//borderWidth: 1,
-												color: drawableFeature.color,
-												from: coords.chromosome_start,
-												to: coords.chromosome_end,
-												//zIndex: zIndex+5
-											};
-											plotBands.push(plotBand);
-											
-											if(drawableFeature.showLabel) {
-												var plotBandLabel = {
-													text: featureRegion.label,
-													style: {
-														fontSize: '8px',
-													},
-													rotation: 330
-												};
-												plotBand.label = plotBandLabel;
-											}
-											break;
-										case BORDERED_PLOTBAND_FEATURE:
-											var borderedPlotBand = {
-												borderColor: drawableFeature.color,
-												//borderColor: {
-												//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-												//	stops: [
-												//		[0, drawableFeature.color],
-												//		[1, '#000000']
-												//	]
-												//},
-												borderWidth: 1,
-												color: drawableFeature.color,
-												from: coords.chromosome_start,
-												to: coords.chromosome_end,
-												zIndex: 5
-											};
-											plotBands.push(borderedPlotBand);
-											
-											if(drawableFeature.showLabel) {
-												var borderedPlotBandLabel = {
-													text: featureRegion.label,
-													textAlign: 'left',
-													style: {
-														fontSize: '0.2em',
-													},
-													x: -10,
-													rotation: 90
-												};
-												borderedPlotBand.label = borderedPlotBandLabel;
-											}
-											break;
-										case PLOTLINE_FEATURE:
-											var plotLine = {
-												color: drawableFeature.color,
-												width: 2,
-												value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
-												zIndex: 5
-											};
-											plotLines.push(plotLine);
-											
-											if(drawableFeature.showLabel) {
-												var plotLineLabel = {
-													text: featureRegion.label,
-													style: {
-														fontSize: '0.2em',
-													}
-												};
-												if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
-													plotLineLabel.rotation = 270;
-													plotLineLabel.textAlign = 'right';
-													plotLineLabel.x = 10;
-												}
-												plotLine.label = plotLineLabel;
-											}
-											break;
+							if(featureType in rangeData.regionLayout) {
+								rangeData.regionLayout[featureType].forEach(function(featureRegion) {
+									var uKey = '';
+									featureRegion.coordinates.forEach(function(coords) {
+										uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
+									});
+									var feaRegion;
+									if(uKey in consolidatedHash) {
+										feaRegion = consolidatedHash[uKey];
+										feaRegion.label += ', ' + featureRegion.label;
+									} else {
+										feaRegion = {
+											label: featureRegion.label,
+											coordinates: featureRegion.coordinates,
+										};
+										consolidatedFeatureRegions.push(feaRegion);
+										consolidatedHash[uKey] = feaRegion;
 									}
 								});
-							});
+								
+								consolidatedFeatureRegions.forEach(function(featureRegion) {
+									featureRegion.coordinates.forEach(function(coords) {
+										switch(drawableFeature.type) {
+											case PLOTBAND_FEATURE:
+												var plotBand = {
+													//borderColor: drawableFeature.color,
+													//borderColor: {
+													//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+													//	stops: [
+													//		[0, drawableFeature.color],
+													//		[1, '#000000']
+													//	]
+													//},
+													//borderWidth: 1,
+													color: drawableFeature.color,
+													from: coords.chromosome_start,
+													to: coords.chromosome_end,
+													//zIndex: zIndex+5
+												};
+												plotBands.push(plotBand);
+												
+												if(drawableFeature.showLabel) {
+													var plotBandLabel = {
+														text: featureRegion.label,
+														style: {
+															fontSize: '8px',
+														},
+														rotation: 330
+													};
+													plotBand.label = plotBandLabel;
+												}
+												break;
+											case BORDERED_PLOTBAND_FEATURE:
+												var borderedPlotBand = {
+													borderColor: drawableFeature.color,
+													//borderColor: {
+													//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+													//	stops: [
+													//		[0, drawableFeature.color],
+													//		[1, '#000000']
+													//	]
+													//},
+													borderWidth: 1,
+													color: drawableFeature.color,
+													from: coords.chromosome_start,
+													to: coords.chromosome_end,
+													zIndex: 5
+												};
+												plotBands.push(borderedPlotBand);
+												
+												if(drawableFeature.showLabel) {
+													var borderedPlotBandLabel = {
+														text: featureRegion.label,
+														textAlign: 'left',
+														style: {
+															fontSize: '0.2em',
+														},
+														x: -10,
+														rotation: 90
+													};
+													borderedPlotBand.label = borderedPlotBandLabel;
+												}
+												break;
+											case PLOTLINE_FEATURE:
+												var plotLine = {
+													color: drawableFeature.color,
+													width: 2,
+													value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
+													zIndex: 5
+												};
+												plotLines.push(plotLine);
+												
+												if(drawableFeature.showLabel) {
+													var plotLineLabel = {
+														text: featureRegion.label,
+														style: {
+															fontSize: '0.2em',
+														}
+													};
+													if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
+														plotLineLabel.rotation = 270;
+														plotLineLabel.textAlign = 'right';
+														plotLineLabel.x = 10;
+													}
+													plotLine.label = plotLineLabel;
+												}
+												break;
+										}
+									});
+								});
+							}
 						}
 					});
 					break;

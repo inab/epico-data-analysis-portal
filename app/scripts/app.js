@@ -9,13 +9,15 @@
  */
 // setup dependency injection
 angular.module('blueprintApp.d3',[]);
-angular.module('blueprintApp.canvasjs',[]);
+//angular.module('blueprintApp.dagre-d3',[]);
+//angular.module('blueprintApp.canvasjs',[]);
 angular.module('blueprintApp.elasticsearch',[]);
 angular.module('blueprintApp.controllers', []);
 
 angular.module('blueprintApp', [
     'blueprintApp.d3',
-    'blueprintApp.canvasjs',
+//    'blueprintApp.dagre-d3',
+//    'blueprintApp.canvasjs',
     'blueprintApp.elasticsearch',
     'blueprintApp.controllers',
     'highcharts-ng',

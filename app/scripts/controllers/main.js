@@ -61,7 +61,7 @@ angular.module('blueprintApp')
 	
 	function openModal(state,message,callback,size) {
 		var modalInstance = $modal.open({
-			animation: false,
+			animation: true,
 			templateUrl: 'messages.html',
 			controller: 'ModalInstanceCtrl',
 			//bindToController: true,

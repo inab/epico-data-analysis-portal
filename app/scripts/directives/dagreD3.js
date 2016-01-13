@@ -96,7 +96,7 @@ angular.module('blueprintApp.dagre-d3',[])
 			});
 			
 			// watch for data changes and re-render
-			scope.$watch('data', function(newVals) {
+			scope.$watchCollection('data', function(newVals) {
 				return scope.render(newVals);
 			}, true);
 

@@ -956,22 +956,19 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		return {notBroad:value, broad:valueB}; 
 	}
 	
-	function populateBasicTree(o,samples,clonedExperimentLabels,experimentLabelsHash,rangeData,isDetailed) {
-		var numNodes = 1;
-		// First, the children
+	function replaceTermNodesInTree(o,termNodesHash) {
 		if(o.children) {
-			var termNodesHash = rangeData.termNodesHash;
-			var children = [];
+			var children;
 			var changed = false;
 			
 			// First, replace those nodes which are termNodes
-			o.children.forEach(function(child) {
+			children = o.children.map(function(child) {
 				if(child.o_uri && (child.o_uri in termNodesHash)) {
 					child = termNodesHash[child.o_uri];
 					changed = true;
 				}
 				
-				children.push(child);
+				return child;
 			});
 			
 			if(changed) {
@@ -980,7 +977,18 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			
 			// Then, populate them!
 			o.children.forEach(function(child) {
-				numNodes += populateBasicTree(child,samples,clonedExperimentLabels,experimentLabelsHash,rangeData,isDetailed);
+				replaceTermNodesInTree(child,termNodesHash);
+			});
+		}
+	}
+	
+	function populateBasicTree(o,samples,ontology,rangeData) {
+		var numNodes = 1;
+		// First, the children
+		if(o.children) {
+			// Then, populate them!
+			o.children.forEach(function(child) {
+				numNodes += populateBasicTree(child,samples,ontology,rangeData);
 			});
 		} else {
 			o.children = [];
@@ -988,6 +996,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		
 		// And now, me!
 		if(o.o_uri) {
+			var clonedExperimentLabels = ontology.experiments;
+			var experimentLabelsHash = ontology.experimentLabelsHash;
+			var isDetailed = ontology.isDetailed;
 			var range = rangeData.range;
 			var stats = rangeData.stats;
 			
@@ -1161,29 +1172,17 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			return undefined;
 		}
 		
-		console.log("initializing tree");
+		console.log("initializing stats tree");
 		
 		var lastSearchMode = localScope.display;
 		if(lastSearchMode!=='none') {
 			var isDetailed = lastSearchMode==='detailed';
 			
-			var clonedTreeData = angular.copy(localScope.fetchedTreeData);
-			var clonedExperimentLabels = angular.copy(localScope.experimentLabels);
-			
-			var experimentLabelsHash = {};
-			clonedExperimentLabels.forEach(function(expLabel,iExpLabel) {
-				expLabel.pos = iExpLabel;
-				if(!(expLabel.experiment_type in experimentLabelsHash)) {
-					experimentLabelsHash[expLabel.experiment_type] = [ expLabel ];
-				} else {
-					experimentLabelsHash[expLabel.experiment_type].push(expLabel);
-				}
-			});
-			
-			rangeData.treedata = [];
-			clonedTreeData.forEach(function(cloned) {
-				var numNodes = populateBasicTree(cloned,localScope.samples,clonedExperimentLabels,experimentLabelsHash,rangeData,isDetailed);
-				rangeData.treedata.push({root: cloned, numNodes: numNodes, depth:(isDetailed?localScope.depth+1:localScope.depth), experiments: clonedExperimentLabels});
+			rangeData.treedata.forEach(function(ontology) {
+				ontology.isDetailed = isDetailed;
+				var numNodes = populateBasicTree(ontology.root,localScope.samples,ontology,rangeData);
+				ontology.numNodes = numNodes;
+				ontology.depth = isDetailed?localScope.depth+1:localScope.depth;
 			});
 		}
 	}
@@ -1412,6 +1411,31 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			if(resp!==undefined) {
 				if(resp.aggregations!==undefined) {
 					console.log(resp.aggregations);
+
+					var clonedTreeData = angular.copy(localScope.fetchedTreeData);
+					var clonedExperimentLabels = angular.copy(localScope.experimentLabels);
+					
+					var experimentLabelsHash = {};
+					clonedExperimentLabels.forEach(function(expLabel,iExpLabel) {
+						expLabel.pos = iExpLabel;
+						if(!(expLabel.experiment_type in experimentLabelsHash)) {
+							experimentLabelsHash[expLabel.experiment_type] = [ expLabel ];
+						} else {
+							experimentLabelsHash[expLabel.experiment_type].push(expLabel);
+						}
+					});
+					
+					rangeData.treedata = [];
+					rangeData.treedata = clonedTreeData.map(function(cloned) {
+						// Patching the tree
+						replaceTermNodesInTree(cloned,rangeData.termNodesHash);
+						return {
+							root: cloned,
+							experiments: clonedExperimentLabels,
+							experimentLabelsHash: experimentLabelsHash
+						};
+					});
+					
 					deferred.resolve(localScope);
 				} else {
 					deferred.reject(resp);

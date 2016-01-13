@@ -20,6 +20,7 @@ angular.module('blueprintApp', [
 //    'blueprintApp.canvasjs',
     'blueprintApp.elasticsearch',
     'blueprintApp.controllers',
+    'treeControl',
     'highcharts-ng',
     'ngAnimate',
     'ngCookies',

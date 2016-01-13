@@ -496,6 +496,11 @@ module.exports = function (grunt) {
           src: ['generated/*']
         }, {
           expand: true,
+          cwd: 'bower_components/angular-tree-control/images',
+          src: '*',
+          dest: '<%= yeoman.dist %>/images',
+        }, {
+          expand: true,
           cwd: 'bower_components/roboto-fontface/fonts',
           src: '*',
           dest: '<%= yeoman.dist %>/fonts'

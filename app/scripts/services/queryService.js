@@ -1428,7 +1428,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		}, function(err,resp) {
 			if(resp!==undefined) {
 				if(resp.aggregations!==undefined) {
-					console.log(resp.aggregations);
+					// These are the analysis in the query region
 					resp.aggregations.analyses.buckets.forEach(function(analysisStat) {
 						ChartService.recordAnalysisOnCellType(rangeData,analysisStat.key,analysisStat.doc_count);
 					});

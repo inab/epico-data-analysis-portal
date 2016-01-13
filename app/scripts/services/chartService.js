@@ -2154,6 +2154,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		
 		var rangeData = {
 			localScope: localScope,
+			state: ConstantsService.STATE_INITIAL,
 			toBeFetched: true,
 			fetching: false,
 			heading: (range.label !== undefined) ? range.label : ('Region ' + range.chr + ':' + range.start + '-' + range.end),

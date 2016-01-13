@@ -273,8 +273,9 @@
             
             nodeEnter.append("svg:circle")
                 .attr("r", 1e-6)
-                .attr('title',function(d) { return d.name; })
-                .style("fill", function(d) {return d.analyzed ? ( d.color ? d.color: "rgb(232,0,0)") : ((typeof(d.experimentsCount) !== 'undefined')?"#FFF":  "#CCC"); })
+                .attr('title',function(d) { return d.name+' ('+d.o+')'; })
+		.attr("stroke-width", function(d) { return d.wasSeen ? 2 : 3; })
+                .style("fill", function(d) {return d.color ? ( d.wasSeen ? d.color: "#EEE") : "#CCC"; })
                 .style("stroke", function(d) {return d.analyzed ? ( d.color ? d.color: "rgb(232,0,0)") : ((typeof(d.experimentsCount) !== 'undefined')?"#4c00e2":  "#CCC"); })
 		.on("click", function(d) { scope.toggle(d); scope.update(d); });
 
@@ -292,6 +293,7 @@
 			.attr("text-anchor", function(d) { return d.children || d._children ? "start" : "start"; })
 			.text(function(d) { return d.name; })
 			.style("fill-opacity", 1e-6)
+			.style("font-style", function(d) { return d.color ? 'normal': 'italic'; })
 			.each(function(de) {
 				//console.log("Jarl: "+(treew+sepFromTree-d.y-(svgMargin/2)-30));
 				wrap(d3.select(this), treew+sepFromTree-de.y-svgMargin-30);

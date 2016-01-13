@@ -333,3 +333,21 @@ $blueprint-inactive-tab-color: aliceblue;
 .celltype-chosen {
 	background-color: lightblue;
 }
+
+/* Dagre-d3 */
+.dagre text {
+  font-weight: 300;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+  font-size: 14px;
+}
+
+.dagre .node rect {
+  stroke: #999;
+  fill: #fff;
+  stroke-width: 1.5px;
+}
+
+.dagre .edgePath path {
+  stroke: #333;
+  stroke-width: 1.5px;
+}

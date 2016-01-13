@@ -58,6 +58,14 @@ factory('ConstantsService',function() {
 		EXPERIMENT_TYPE_MRNA_SEQ: 'mRNA-seq',
 		EXPERIMENT_TYPE_HISTONE_MARK: 'Histone ',
 		
+		STATE_INITIAL: 'initial',
+		STATE_SELECT_CELL_TYPES: 'selectCellTypes',
+		STATE_SELECT_CHARTS: 'selectCharts',
+		STATE_FETCH_DATA: 'fetchData',
+		STATE_NO_DATA: 'no_data',
+		STATE_END: 'end',
+		STATE_ERROR: 'error',
+		
 		DEFAULT_SEARCH_URI: DEFAULT_SEARCH_URI,
 		REGION_SEARCH_URI: REGION_SEARCH_URI,
 		SEARCH_URIS: SEARCH_URIS,

@@ -134,7 +134,10 @@
 					 <br>
 					 <span ng-show="rangeData.ui.numCellTypesInRange!==undefined">Found {{rangeData.ui.numCellTypesInRange}} cellular types, involved in {{rangeData.ui.numAnalysesInRange}} analyses</span>
 				 </p>
+			
+				<uib-progressbar class="progress-striped active initial-progressbar" animate="true" value="100" type="info" ng-show="rangeData.state==='initial'"><span>Fetching gene layout and stats</span></uib-progressbar>
 			</div>
+
 			
 			<!-- Selection tree -->
 			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCellTypes'">

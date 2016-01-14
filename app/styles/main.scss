@@ -362,3 +362,13 @@ $blueprint-inactive-tab-color: aliceblue;
   stroke: #333;
   stroke-width: 1.5px;
 }
+
+.initial-progressbar {
+	width: 50%;
+	height: 4em;
+	margin: 0 auto;
+	span {
+		line-height: 2em;
+		font-size: 2em;
+	}
+}

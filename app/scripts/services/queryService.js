@@ -1529,15 +1529,18 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					ChartService.storeFetchedData(rangeData,range_start,range_end,resp.hits.hits);
 					total += resp.hits.hits.length;
 					
-					// Now, updating the graphs
-					localScope.searchButtonText = PLOTTING_LABEL;
-					localScope.resultsFetched = total;
-					//var xRange = [rangeData.range.start,rangeData.range.end];
-					
 					// Re-drawing charts
 					var stillLoading = resp.hits.total > total;
-					// Using the default view
-					ChartService.redrawCharts(rangeData,true,stillLoading);
+
+					// Now, updating the graphs
+					if(rangeData.state===ConstantsService.STATE_FETCH_DATA) {
+						localScope.searchButtonText = PLOTTING_LABEL;
+						localScope.resultsFetched = total;
+						//var xRange = [rangeData.range.start,rangeData.range.end];
+						
+						// Using the default view
+						ChartService.redrawCharts(rangeData,true,stillLoading);
+					}
 					
 					// Is there any more data?
 					if(stillLoading) {

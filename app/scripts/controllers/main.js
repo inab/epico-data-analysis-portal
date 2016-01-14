@@ -22,7 +22,12 @@ angular.module('blueprintApp')
 	var UNION_ADDITIVITY_PATTERN = / *\+ +/;
 	var DIFF_ADDITIVITY_PATTERN = / *\- +/;
 	
-	$scope.commonTreeControlOptions = {nodeChildren: "children",dirSelectable:true,multiSelection:true};
+	$scope.commonTreeControlOptions = {
+		nodeChildren: "children",
+		dirSelectable:true,
+		multiSelection:true,
+		equality: function(a,b) { return a!==undefined && b!==undefined && a.o_uri === b.o_uri; }
+	};
 	
     $scope.fetchedTreeData = undefined;
 
@@ -386,7 +391,11 @@ angular.module('blueprintApp')
 			var promise = deferred.promise;
 			promise = promise.then(preprocessQuery)
 				.then(updateChromosomes)
-				.then(QueryService.launch(QueryService.getGeneLayout))
+				.then(QueryService.launch(QueryService.getGeneLayout),function(err) {
+					openModal('Data error','Error while issuing initial query');
+					console.error('updateChromosomes');
+					console.error(err);
+				})
 				.catch(function(err) {
 					openModal('Data error','Error while fetching gene layout');
 					console.error('Gene layout');
@@ -405,59 +414,110 @@ angular.module('blueprintApp')
 			$scope.$broadcast('highchartsng.reflow');
 		},10);
 	};
+	
+	function doInitial(rangeData) {
+		var localScope = rangeData.localScope;
+		localScope.queryInProgress = true;
+		localScope.searchButtonText = SEARCHING_LABEL;
 		
-	$scope.doRefresh = function(rangeData) {
+		var deferred = $q.defer();
+		var promise = deferred.promise;
+		promise = promise
+			.then(QueryService.rangeLaunch(QueryService.getGeneLayout,rangeData))
+			.then(QueryService.rangeLaunch(QueryService.getChartStats,rangeData), function(err) {
+				rangeData.state = ConstantsService.STATE_ERROR;
+				openModal('Data error','Error while fetching gene layout');
+				console.error('Gene layout');
+				console.error(err);
+			})
+			.then(function(localScope) {
+				rangeData.state = ConstantsService.STATE_SELECT_CELL_TYPES;
+				return localScope;
+			}, function(err) {
+				if(rangeData.state === ConstantsService.STATE_INITIAL) {
+					rangeData.state = ConstantsService.STATE_ERROR;
+					openModal('Data error','Error while fetching charts stats');
+					console.error('Charts stats');
+					console.error(err);
+				}
+			})
+			.finally(function() {
+				localScope.queryInProgress = false;
+				localScope.searchButtonText = SEARCH_LABEL;
+			});
+		
+		deferred.resolve(localScope);
+		
+		return '';
+	}
+	
+	function doRefresh(rangeData) {
 		if(rangeData.toBeFetched) {
 			rangeData.fetching = true;
 			rangeData.toBeFetched = false;
 			
-			$scope.queryInProgress = true;
-			$scope.resultsFetched = 0;
-			$scope.maxResultsFetched = 0;
-			$scope.searchButtonText = SEARCHING_LABEL;
-                        
+			var localScope = rangeData.localScope;
+			localScope.queryInProgress = true;
+			localScope.resultsFetched = 0;
+			localScope.maxResultsFetched = 0;
+			localScope.searchButtonText = SEARCHING_LABEL;
+			
 			var deferred = $q.defer();
 			var promise = deferred.promise;
 			promise = promise
-				.then(QueryService.rangeLaunch(QueryService.getGeneLayout,rangeData))
-				.then(QueryService.rangeLaunch(QueryService.getChartStats,rangeData), function(err) {
-					openModal('Data error','Error while fetching gene layout');
-					console.error('Gene layout');
-					console.error(err);
-				})
-				.then(QueryService.rangeLaunch(QueryService.getChartData,rangeData), function(err) {
-					openModal('Data error','Error while fetching charts stats');
-					console.error('Charts stats');
-					console.error(err);
-				})
+				.then(QueryService.rangeLaunch(QueryService.getChartData,rangeData))
 				// Either the browser or the server gets too stressed with this concurrent query
 				//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
 				.then(QueryService.rangeLaunch(QueryService.getStatsData,rangeData), function(err) {
 					if(typeof err === "string") {
-						openModal(err,'There is no data stored for '+$scope.currentQueryStr);
+						rangeData.state = ConstantsService.STATE_NO_DATA;
+						openModal(err,'There is no data stored for '+localScope.currentQueryStr);
 					} else {
+						rangeData.state = ConstantsService.STATE_ERROR;
 						openModal('Data error','Error while fetching chart data');
 						console.error('Chart data');
 						console.error(err);
 					}
 				})
 				.then(QueryService.rangeLaunch(QueryService.initTree,rangeData), function(err) {
-					openModal('Data error','Error while computing stats');
-					console.error('Stats data');
-					console.error(err);
+					if(rangeData.state === ConstantsService.STATE_FETCH_DATA) {
+						rangeData.state = ConstantsService.STATE_ERROR;
+						openModal('Data error','Error while computing stats');
+						console.error('Stats data');
+						console.error(err);
+					}
 				}).
-				catch(function(err) {
-					openModal('Data error','Error while initializing stats tree');
-					console.error('Stats tree');
-					console.error(err);
+				then(function(localScope) {
+					rangeData.state = ConstantsService.STATE_END;
+					return localScope;
+				},function(err) {
+					if(rangeData.state === ConstantsService.STATE_FETCH_DATA) {
+						rangeData.state = ConstantsService.STATE_ERROR;
+						openModal('Data error','Error while initializing stats tree');
+						console.error('Stats tree');
+						console.error(err);
+					}
 				})
 				.finally(function() {
 					rangeData.fetching = false;
-					$scope.queryInProgress = false;
-					$scope.searchButtonText = SEARCH_LABEL;
+					localScope.queryInProgress = false;
+					localScope.searchButtonText = SEARCH_LABEL;
 				});
-				 
-			deferred.resolve($scope);
+			 
+			deferred.resolve(localScope);
+		}
+		
+		return '';
+	}
+	
+	$scope.doState = function(rangeData) {
+		switch(rangeData.state) {
+			case ConstantsService.STATE_INITIAL:
+				doInitial(rangeData);
+				break;
+			case ConstantsService.STATE_FETCH_DATA:
+				doRefresh(rangeData);
+				break;
 		}
 		
 		return '';
@@ -692,6 +752,32 @@ angular.module('blueprintApp')
 				parent = parent.parent;
 			}
 		}
+	};
+	
+	$scope.selectVisibleCellTypes = function(rangeData) {
+		var doSelectAll=true;
+		
+		rangeData.treedata.forEach(function(ontology) {
+			ontology.selectedNodes.forEach(function(termNode) {
+				if(termNode.wasSeen) {
+					doSelectAll=false;
+					termNode.termHidden=false;
+				}
+			});
+		});
+		
+		// Select all when no one was selected
+		if(doSelectAll) {
+			rangeData.termNodes.forEach(function(termNode) {
+				if(termNode.wasSeen) {
+					termNode.termHidden=false;
+				}
+			});
+		}
+		
+		// Changing to this state
+		rangeData.state = ConstantsService.STATE_FETCH_DATA;
+		doRefresh(rangeData);
 	};
 	
 	function init($q,$scope) {

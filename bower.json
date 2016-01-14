@@ -15,7 +15,7 @@
     "angular-touch": "~1.4.8",
     "angular-route": "~1.4.8",
     "angular-bootstrap": "~0.14.3",
-    "angular-tree-control": "~0.2.23",
+    "angular-tree-control": "jmfernandez/angular-tree-control#dad854a431f1c17a7a79d3771e71dbaffd97c59a",
     "elasticsearch": "~10.0.1",
     "highcharts-release": "v4.2.1",
     "highcharts-ng": "~0.0.11",

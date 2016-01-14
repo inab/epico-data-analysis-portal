@@ -1433,6 +1433,16 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						ChartService.recordAnalysisOnCellType(rangeData,analysisStat.key,analysisStat.doc_count);
 					});
 					
+					// Postprocessing
+					rangeData.termNodes.forEach(function(term) {
+						if(term.analysisInRange!==undefined && term.analysisInRange.length >0) {
+							term.analysisInRangeHtml = term.analysisInRange.map(function(an) {
+								return an.analysis_id;
+							}).join("\n");
+						}
+						
+					});
+					
 					rangeData.ui.numAnalysesInRange = resp.aggregations.analyses.buckets.length;
 					
 					var clonedTreeData = angular.copy(localScope.fetchedTreeData);

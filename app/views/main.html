@@ -104,7 +104,7 @@
 		</div>
 	</div>
           <div class="col-sm-6">
-		<input id="search" type="text" ng-model="query" ng-keypress="enterSearch($event)" ng-disabled="queryInProgress" placeholder="Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" uib-typeahead="suggest for suggest in suggestSearch($viewValue)" typeadhead-loading="loadingSuggestions" typeahead-no-results="noSuggestion" typeahead-popup-template-url="suggestionPopupTemplate.html" typeahead-min-length="3" typeahead-on-select="query=label.term;search($label)" typeahead-template-url="suggestionTemplate.html" class="form-control" style="background:#f5f5f5">
+		<input id="search" type="text" ng-model="query" ng-keypress="enterSearch($event)" ng-disabled="queryInProgress" placeholder="Step 1: Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" uib-typeahead="suggest for suggest in suggestSearch($viewValue)" typeadhead-loading="loadingSuggestions" typeahead-no-results="noSuggestion" typeahead-popup-template-url="suggestionPopupTemplate.html" typeahead-min-length="3" typeahead-on-select="query=label.term;search($label)" typeahead-template-url="suggestionTemplate.html" class="form-control" style="background:#f5f5f5">
 		<i ng-show="loadingSuggestions" class="glyphicon glyphicon-refresh"></i>
 		<div ng-show="noSuggestion">
 			<i class="glyphicon glyphicon-remove"></i> No Results Found
@@ -123,7 +123,7 @@
 -->
 <uib-tabset ng-if="graphData.length &gt; 0">
 	<uib-tab ng-repeat="rangeData in graphData" select="doState(rangeData)">
-		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-download': rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching, 'blink': rangeData.fetching}"></i><i class="hover_red" ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
+		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-filter': rangeData.state==='selectCellTypes','glyphicon-download': rangeData.state!=='selectCellTypes' && rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching, 'blink': rangeData.fetching}"></i><i class="hover_red" ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
 		
 		<!-- Types of analysis -->
 		<div class="no-margin-padding">
@@ -138,15 +138,18 @@
 			
 			<!-- Selection tree -->
 			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCellTypes'">
-				<h3 class="text-center">Step 1: Found {{rangeData.ui.numCellTypesInRange}} cellular types which are involved on {{rangeData.ui.numAnalysesInRange}} analyses in this range</h3>
+				<h3 class="text-center">Step 2: Found {{rangeData.ui.numCellTypesInRange}} cellular types which are involved on {{rangeData.ui.numAnalysesInRange}} analyses in this range</h3>
 				<h4 class="text-center">Please, select the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 				<div class="col-sm-1 text-center">
+					<div style="margin-bottom:1em">
+						<button class="btn btn-primary" type="button" ng-click="deselectAllVisibleCellTypes(rangeData)" uib-tooltip="Unselect all the cellular types">Clear!</button>
+					</div>
 					<img ng-src="{{rangeData.ui.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.ui.gChro.n}}">
 				</div>
 				<div class="col-sm-11">
-					<treecontrol ng-repeat="ontology in rangeData.treedata" class="col-sm-6 tree-light" tree-model="ontology.root" selected-nodes="ontology.selectedNodes" expanded-nodes="ontology.expandedNodes" on-selection="onTreeSelection(ontology,node,selected)" options="$parent.$parent.commonTreeControlOptions">
+						<treecontrol style="margin-bottom:1em" ng-repeat="ontology in rangeData.treedata" class="col-sm-6 tree-light" tree-model="ontology.root" selected-nodes="ontology.selectedNodes" expanded-nodes="ontology.expandedNodes" on-selection="onTreeSelection(ontology,node,selected,$event)" options="$parent.$parent.commonTreeControlOptions">
 						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined
-					}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}">{{node.name}} ({{node.o}})</span>
+					}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}">{{node.name}} <i class="glyphicon glyphicon-eye-open" ng-show="node.analysisInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Analysis Id" popover-placement="right" uib-popover="{{node.analysisInRangeHtml}}" uib-tooltip="Click to see the analysis ids from this cellular type in this range" tooltip-append-to-body="true"></i> (<a href="{{node.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{node.o}}</a>)</span>
 					</treecontrol>
 				</div>
 			</div>

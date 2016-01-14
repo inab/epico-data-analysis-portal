@@ -31,7 +31,7 @@ angular.module('blueprintApp', [
     'ui.bootstrap',
     'elasticsearch'
   ])
-  .config(function ($routeProvider) {
+  .config(function ($routeProvider,$tooltipProvider) {
     $routeProvider
       .when('/', {
         templateUrl: 'views/main.html',
@@ -45,6 +45,11 @@ angular.module('blueprintApp', [
       .otherwise({
         redirectTo: '/'
       });
+	
+	// This is to programmatically disable tooltips
+	$tooltipProvider.setTriggers({
+		'never': 'mouseleave' // <- This ensures the tooltip will go away on mouseleave
+	});
   });
 
 

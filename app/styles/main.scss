@@ -372,3 +372,8 @@ $blueprint-inactive-tab-color: aliceblue;
 		font-size: 2em;
 	}
 }
+
+.popover-content {
+	overflow-y: auto;
+	max-height: 12em;
+}

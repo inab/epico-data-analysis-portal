@@ -116,14 +116,10 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 							break;
 							
 						case ConstantsService.SAMPLE_CONCEPT:
-							var s = {
-								analyzed_sample_type_other: d._source.analyzed_sample_type_other,
-								sample_id: d._source.sample_id,
-								specimen_id: d._source.specimen_id,
-								ontology: d._source.purified_cell_type,
-								markers: d._source.markers,
-								experiments: [],
-							};
+							var s = d._source;
+							// They are the same
+							s.ontology = s.purified_cell_type;
+							s.experiments = [];
 							
 							localScope.samples.push(s);
 							samplesMap[s.sample_id] = s;
@@ -1438,7 +1434,18 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						if(term.analysisInRange!==undefined && term.analysisInRange.length >0) {
 							term.analysisInRangeHtml = term.analysisInRange.map(function(an) {
 								return an.analysis_id;
-							}).join("\n");
+							}).join("<br>");
+							
+							var uniqueSamples = [];
+							var uniqueSamplesHash = {};
+							term.analysisInRange.forEach(function(an) {
+								var sample_name = an.lab_experiment.sample.sample_name;
+								if(!(sample_name in uniqueSamplesHash)) {
+									uniqueSamples.push(sample_name);
+									uniqueSamplesHash[sample_name] = null;
+								}
+							});
+							term.samplesInRangeHtml = uniqueSamples.sort().join("<br>");
 						}
 						
 					});

@@ -1050,7 +1050,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 													var plotLineLabel = {
 														text: featureRegion.label,
 														style: {
-															fontSize: '0.2em',
+															fontSize: '2mm',
 														}
 													};
 													if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
@@ -1344,19 +1344,38 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 		
 		if(doGenerate || stillLoading) {
-			charts.forEach(function(chart) {
-				$timeout(function() {
-					try {
-						chart.seriesAggregator(chart,doGenerate,stillLoading);
-						chart.options.loading = stillLoading;
-						if(rangeData!==undefined) {
-							rangeData.localScope.$broadcast('highchartsng.reflow');
+			var timeoutFunc = function(charts,iChart) {
+				if(iChart<charts.length) {
+					var chart = charts[iChart];
+					chart.options.loading = true;
+					setTimeout(function() {
+						try {
+							chart.seriesAggregator(chart,doGenerate,stillLoading);
+							chart.options.loading = stillLoading;
+						} catch(e) {
+							console.log(e);
 						}
-					} catch(e) {
-						console.log(e);
-					}
-				});
-			});
+						chart.pendingRedraws = false;
+						timeoutFunc(charts,iChart+1);
+					},10);
+				} else if(rangeData!==undefined) {
+					rangeData.localScope.$applyAsync();
+				}
+			};
+			timeoutFunc(charts,0);
+			//charts.forEach(function(chart) {
+			//	$timeout(function() {
+			//		try {
+			//			chart.seriesAggregator(chart,doGenerate,stillLoading);
+			//			chart.options.loading = stillLoading;
+			//			//if(rangeData!==undefined) {
+			//			//	rangeData.localScope.$broadcast('highchartsng.reflow');
+			//			//}
+			//		} catch(e) {
+			//			console.log(e);
+			//		}
+			//	});
+			//});
 		} else {
 			charts.forEach(function(chart) {
 				try {

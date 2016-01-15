@@ -1424,63 +1424,67 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		}, function(err,resp) {
 			if(resp!==undefined) {
 				if(resp.aggregations!==undefined) {
-					// These are the analysis in the query region
-					resp.aggregations.analyses.buckets.forEach(function(analysisStat) {
-						ChartService.recordAnalysisOnCellType(rangeData,analysisStat.key,analysisStat.doc_count);
-					});
-					
-					// Postprocessing
-					rangeData.termNodes.forEach(function(term) {
-						if(term.analysisInRange!==undefined && term.analysisInRange.length >0) {
-							term.analysisInRangeHtml = term.analysisInRange.map(function(an) {
-								return an.analysis_id;
-							}).join("<br>");
-							
-							var uniqueSamples = [];
-							var uniqueSamplesHash = {};
-							term.analysisInRange.forEach(function(an) {
-								var sample_name = an.lab_experiment.sample.sample_name;
-								if(!(sample_name in uniqueSamplesHash)) {
-									uniqueSamples.push(sample_name);
-									uniqueSamplesHash[sample_name] = null;
-								}
-							});
-							term.samplesInRangeHtml = uniqueSamples.sort().join("<br>");
-						}
+					if(resp.aggregations.analyses.buckets.length > 0) {
+						// These are the analysis in the query region
+						resp.aggregations.analyses.buckets.forEach(function(analysisStat) {
+							ChartService.recordAnalysisOnCellType(rangeData,analysisStat.key,analysisStat.doc_count);
+						});
 						
-					});
-					
-					rangeData.ui.numAnalysesInRange = resp.aggregations.analyses.buckets.length;
-					
-					var clonedTreeData = angular.copy(localScope.fetchedTreeData);
-					var clonedExperimentLabels = angular.copy(localScope.experimentLabels);
-					
-					var experimentLabelsHash = {};
-					clonedExperimentLabels.forEach(function(expLabel,iExpLabel) {
-						expLabel.pos = iExpLabel;
-						if(!(expLabel.experiment_type in experimentLabelsHash)) {
-							experimentLabelsHash[expLabel.experiment_type] = [ expLabel ];
-						} else {
-							experimentLabelsHash[expLabel.experiment_type].push(expLabel);
-						}
-					});
-					
-					rangeData.treedata = [];
-					rangeData.ui.numCellTypesInRange = 0;
-					rangeData.treedata = clonedTreeData.map(function(cloned) {
-						// Patching the tree
-						var nodesReport = prepareTermNodesInTree(cloned,rangeData.termNodesHash);
-						rangeData.ui.numCellTypesInRange += nodesReport.wereSeenNodes.length;
-						return {
-							root: cloned,
-							experiments: clonedExperimentLabels,
-							experimentLabelsHash: experimentLabelsHash,
-							selectedNodes: [],
-							expandedNodes: nodesReport.parentNodes,
-						};
-					});
-					
-					deferred.resolve(localScope);
+						// Postprocessing
+						rangeData.termNodes.forEach(function(term) {
+							if(term.analysisInRange!==undefined && term.analysisInRange.length >0) {
+								term.analysisInRangeHtml = term.analysisInRange.map(function(an) {
+									return an.analysis_id;
+								}).join("<br>");
+								
+								var uniqueSamples = [];
+								var uniqueSamplesHash = {};
+								term.analysisInRange.forEach(function(an) {
+									var sample_name = an.lab_experiment.sample.sample_name;
+									if(!(sample_name in uniqueSamplesHash)) {
+										uniqueSamples.push(sample_name);
+										uniqueSamplesHash[sample_name] = null;
+									}
+								});
+								term.samplesInRangeHtml = uniqueSamples.sort().join("<br>");
+							}
+							
+						});
+						
+						rangeData.ui.numAnalysesInRange = resp.aggregations.analyses.buckets.length;
+						
+						var clonedTreeData = angular.copy(localScope.fetchedTreeData);
+						var clonedExperimentLabels = angular.copy(localScope.experimentLabels);
+						
+						var experimentLabelsHash = {};
+						clonedExperimentLabels.forEach(function(expLabel,iExpLabel) {
+							expLabel.pos = iExpLabel;
+							if(!(expLabel.experiment_type in experimentLabelsHash)) {
+								experimentLabelsHash[expLabel.experiment_type] = [ expLabel ];
+							} else {
+								experimentLabelsHash[expLabel.experiment_type].push(expLabel);
+							}
+						});
+						
+						rangeData.treedata = [];
+						rangeData.ui.numCellTypesInRange = 0;
+						rangeData.treedata = clonedTreeData.map(function(cloned) {
+							// Patching the tree
+							var nodesReport = prepareTermNodesInTree(cloned,rangeData.termNodesHash);
+							rangeData.ui.numCellTypesInRange += nodesReport.wereSeenNodes.length;
+							return {
+								root: cloned,
+								experiments: clonedExperimentLabels,
+								experimentLabelsHash: experimentLabelsHash,
+								selectedNodes: [],
+								expandedNodes: nodesReport.parentNodes,
+							};
+						});
+						
+						deferred.resolve(localScope);
+					} else {
+						deferred.reject('No data returned');
+					}
 				} else {
 					deferred.reject(resp);
 				}
@@ -1552,14 +1556,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					// Now, updating the graphs
 					rangeData.numFetchEntries = total;
 					rangeData.numFetchTotal = resp.hits.total;
-					if(rangeData.state===ConstantsService.STATE_SHOW_DATA) {
-						localScope.searchButtonText = PLOTTING_LABEL;
-						localScope.resultsFetched = total;
-						//var xRange = [rangeData.range.start,rangeData.range.end];
-						
-						// Using the default view
-						ChartService.redrawCharts(rangeData,true,stillLoading);
-					}
 					
 					// Is there any more data?
 					if(stillLoading) {
@@ -1583,6 +1579,14 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						
 						//console.log('All data ('+total+') was fetched');
 						if(resp.hits.total > 0) {
+							if(rangeData.state===ConstantsService.STATE_SHOW_DATA) {
+								localScope.searchButtonText = PLOTTING_LABEL;
+								localScope.resultsFetched = total;
+								//var xRange = [rangeData.range.start,rangeData.range.end];
+								
+								// Using the default view
+								ChartService.redrawCharts(rangeData,true,stillLoading);
+							}
 							deferred.resolve(localScope);
 						} else {
 							deferred.reject('No data returned');
@@ -1608,7 +1612,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		var deferred = $q.defer();
 		var shouldQuery = genShouldQuery(rangeData);
 		
-		localScope.searchButtonText = FETCHING_LABEL;
 		var total = 0;
 		es.search({
 			size: 10000000,

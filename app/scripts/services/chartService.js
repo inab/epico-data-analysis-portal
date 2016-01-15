@@ -4,7 +4,7 @@
 
 angular.
 module('blueprintApp').
-factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d3',function($q,portalConfig,ConstantsService,ColorPalette,d3) {
+factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d3','$timeout',function($q,portalConfig,ConstantsService,ColorPalette,d3,$timeout) {
 	
 	var METHYL_GRAPH = 'methyl';
 	var METHYL_HYPER_GRAPH = METHYL_GRAPH+'_hyper';
@@ -1113,6 +1113,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var origin = rangeData.processedData.all;
 		var dataArray = rangeData.fetchedData.all;
 		var maxI = dataArray.length;
+		
+		var retval = origin<maxI;
 		if(origin<maxI) {
 			var localScope = rangeData.localScope;
 			var chartMaps = getChartMaps(rangeData,VIEW_GENERAL);
@@ -1318,33 +1320,42 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			}
 			rangeData.processedData.all = maxI;
 		}
+		
+		return retval;
 	}
 	
 	
 	function redrawGeneralCharts(charts,doGenerate,stillLoading) {
+		var rangeData;
 		if('ui' in charts) {
-			var rangeData = charts;
+			rangeData = charts;
 			
 			// We have to call here this method, to be sure
 			// we have fulfilled all the preconditions
-			processGeneralChartData(rangeData);
+			var newData = processGeneralChartData(rangeData);
+			if(newData) {
+				console.log('was just here');
+				doGenerate=true;
+			}
 			
 			charts = getCharts(rangeData,VIEW_GENERAL);
-		}
-		if(!Array.isArray(charts)) {
+		} else if(!Array.isArray(charts)) {
 			charts = [ charts ];
 		}
 		
 		if(doGenerate || stillLoading) {
 			charts.forEach(function(chart) {
-				setTimeout(function() {
+				$timeout(function() {
 					try {
 						chart.seriesAggregator(chart,doGenerate,stillLoading);
 						chart.options.loading = stillLoading;
+						if(rangeData!==undefined) {
+							rangeData.localScope.$broadcast('highchartsng.reflow');
+						}
 					} catch(e) {
 						console.log(e);
 					}
-				},0);
+				});
 			});
 		} else {
 			charts.forEach(function(chart) {
@@ -1365,6 +1376,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var origin = rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri];
 		var dataArray = rangeData.fetchedData.byCellType.hash[rangeData.ui.celltypeSelected.o_uri];
 		var maxI = dataArray.length;
+		
+		var retval = origin<maxI;
 		if(origin<maxI) {
 			var localScope = rangeData.localScope;
 			var chartMaps = getChartMaps(rangeData,VIEW_DISEASES);
@@ -1481,6 +1494,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			}
 			rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri] = maxI;
 		}
+		
+		return retval;
 	}
 	
 	// This is almost identical to redrawGeneralCharts
@@ -1490,17 +1505,19 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			
 			// We have to call here this method, to be sure
 			// we have fulfilled all the preconditions
-			processCellTypeDiseaseChartData(rangeData);
+			var newData = processCellTypeDiseaseChartData(rangeData);
+			if(newData) {
+				doGenerate = true;
+			}
 			
 			charts = getCharts(rangeData,VIEW_DISEASES);
-		}
-		if(!Array.isArray(charts)) {
+		} else if(!Array.isArray(charts)) {
 			charts = [ charts ];
 		}
 		
 		if(doGenerate || stillLoading) {
 			charts.forEach(function(chart) {
-				setTimeout(function() {
+				$timeout(function() {
 					try {
 						chart.seriesAggregator(chart,doGenerate,stillLoading);
 						chart.options.loading = stillLoading;
@@ -1528,6 +1545,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var origin = rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri];
 		var dataArray = rangeData.fetchedData.byTissue.hash[rangeData.ui.tissueSelected.o_uri];
 		var maxI = dataArray.length;
+		
+		var retval = origin<maxI;
 		if(origin<maxI) {
 			var localScope = rangeData.localScope;
 			var chartMaps = getChartMaps(rangeData,VIEW_BY_TISSUE);
@@ -1733,6 +1752,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			}
 			rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri] = maxI;
 		}
+		
+		return retval;
 	}
 	
 	// This is almost identical to redrawGeneralCharts
@@ -1742,17 +1763,19 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			
 			// We have to call here this method, to be sure
 			// we have fulfilled all the preconditions
-			processTissueChartData(rangeData);
+			var newData = processTissueChartData(rangeData);
+			if(newData) {
+				doGenerate = true;
+			}
 			
 			charts = getCharts(rangeData,VIEW_BY_TISSUE);
-		}
-		if(!Array.isArray(charts)) {
+		} else if(!Array.isArray(charts)) {
 			charts = [ charts ];
 		}
 		
 		if(doGenerate || stillLoading) {
 			charts.forEach(function(chart) {
-				setTimeout(function() {
+				$timeout(function() {
 					try {
 						chart.seriesAggregator(chart,doGenerate,stillLoading);
 						chart.options.loading = stillLoading;
@@ -2155,7 +2178,10 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var rangeData = {
 			localScope: localScope,
 			state: ConstantsService.STATE_INITIAL,
-			toBeFetched: true,
+			fetchState: ConstantsService.FETCH_STATE_INITIAL,
+			// These two values are arbitrary
+			numFetchEntries: 0,
+			numFetchTotal: 100,
 			fetching: false,
 			heading: (range.label !== undefined) ? range.label : ('Region ' + range.chr + ':' + range.start + '-' + range.end),
 			range: range,

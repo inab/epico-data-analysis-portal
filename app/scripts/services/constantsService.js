@@ -61,10 +61,15 @@ factory('ConstantsService',function() {
 		STATE_INITIAL: 'initial',
 		STATE_SELECT_CELL_TYPES: 'selectCellTypes',
 		STATE_SELECT_CHARTS: 'selectCharts',
-		STATE_FETCH_DATA: 'fetchData',
-		STATE_NO_DATA: 'no_data',
+		STATE_SHOW_DATA: 'showData',
 		STATE_END: 'end',
 		STATE_ERROR: 'error',
+		
+		FETCH_STATE_INITIAL: 'fetch_initial',
+		FETCH_STATE_FETCHING: 'fetching',
+		FETCH_STATE_NO_DATA: 'no_data',
+		FETCH_STATE_ERROR: 'fetch_error',
+		FETCH_STATE_END: 'fetch_end',
 		
 		DEFAULT_SEARCH_URI: DEFAULT_SEARCH_URI,
 		REGION_SEARCH_URI: REGION_SEARCH_URI,

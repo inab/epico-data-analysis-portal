@@ -1550,7 +1550,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					var stillLoading = resp.hits.total > total;
 
 					// Now, updating the graphs
-					if(rangeData.state===ConstantsService.STATE_FETCH_DATA) {
+					rangeData.numFetchEntries = total;
+					rangeData.numFetchTotal = resp.hits.total;
+					if(rangeData.state===ConstantsService.STATE_SHOW_DATA) {
 						localScope.searchButtonText = PLOTTING_LABEL;
 						localScope.resultsFetched = total;
 						//var xRange = [rangeData.range.start,rangeData.range.end];

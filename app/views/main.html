@@ -123,7 +123,7 @@
 -->
 <uib-tabset ng-if="graphData.length &gt; 0">
 	<uib-tab ng-repeat="rangeData in graphData" select="doState(rangeData)">
-		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.toBeFetched || rangeData.fetching,'glyphicon-filter': rangeData.state==='selectCellTypes','glyphicon-download': rangeData.state!=='selectCellTypes' && rangeData.toBeFetched, 'glyphicon-hourglass': rangeData.fetching, 'blink': rangeData.fetching}"></i><i class="hover_red" ng-class="{'glyphicon': !rangeData.fetching,'glyphicon-remove-sign': !rangeData.fetching && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
+		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching','glyphicon-filter': rangeData.state==='selectCellTypes','glyphicon-download': rangeData.state!=='selectCellTypes' && rangeData.fetchState === 'fetch_initial', 'glyphicon-hourglass': rangeData.fetchState === 'fetching', 'blink': rangeData.fetchState === 'fetching'}"></i><i class="hover_red" ng-class="{'glyphicon': rangeData.fetchState === 'fetch_end','glyphicon-remove-sign': rangeData.fetchState === 'fetch_end' && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
 		
 		<!-- Types of analysis -->
 		<div class="no-margin-padding">
@@ -134,7 +134,7 @@
 					 <br>
 					 <span ng-show="rangeData.ui.numCellTypesInRange!==undefined">Found {{rangeData.ui.numCellTypesInRange}} cellular types, involved in {{rangeData.ui.numAnalysesInRange}} analyses</span>
 				 </p>
-			
+				
 				<uib-progressbar class="progress-striped active initial-progressbar" animate="true" value="100" type="info" ng-show="rangeData.state==='initial'"><span>Fetching gene layout and stats</span></uib-progressbar>
 			</div>
 
@@ -164,13 +164,17 @@
 			</div>
 		</div>
 
-		<div class="no-margin-padding text-center" ng-show="rangeData.state==='selectCharts' || rangeData.state==='fetchData' || rangeData.state==='end'">
+		<div class="no-margin-padding" ng-show="rangeData.fetchState === 'fetching' || rangeData.fetchState === 'fetch_error'">
+			<uib-progressbar class="initial-progressbar" value="rangeData.numFetchEntries" max="rangeData.numFetchTotal" type="{{rangeData.fetchState === 'fetching' ? 'info':'error'}}"><span>Fetching &amp; Plotting data</span></uib-progressbar>
+		</div>
+
+		<div class="no-margin-padding text-center" ng-show="rangeData.state==='selectCharts' || rangeData.state==='showData' || rangeData.state==='end'">
 			<div class="btn-group">
-				<label class="btn btn-default" ng-repeat="view in $parent.EXPORTED_VIEWS" ng-model="$parent.rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="$parent.rangeData.fetching || $parent.rangeData.toBeFetched" ng-click="redrawCharts(rangeData)">{{view.viewDesc}}</label>
+				<label class="btn btn-default" ng-repeat="view in $parent.EXPORTED_VIEWS" ng-model="$parent.rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'" ng-click="redrawCharts(rangeData)">{{view.viewDesc}}</label>
 			</div>
 		</div>
 		
-		<div class="no-margin-padding" ng-show="rangeData.state==='fetchData' || rangeData.state==='end'">
+		<div class="no-margin-padding" ng-show="rangeData.state==='showData' || rangeData.state==='end'">
 			<!--
 				General
 			-->
@@ -272,7 +276,7 @@
 				<!-- Single button -->
 				<div class="no-margin-padding text-center">
 					<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.tissueButtonIsOpen">
-						<button id="tissue-button" type="button" class="btn btn-default" style="border:none" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
+						<button id="tissue-button" type="button" class="btn btn-default selector-button" uib-dropdown-toggle ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'">
 							Tissue: <span class="circle" ng-style="{'border-color': rangeData.ui.tissueSelected.color, 'background-color': rangeData.ui.tissueSelected.color }"></span>{{rangeData.ui.tissueSelected.name}} <span class="caret"></span>
 						</button>
 						<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="tissue-button">
@@ -338,7 +342,7 @@
 				<!-- Single button -->
 				<div class="no-margin-padding text-center">
 					<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
-						<button id="celltype-button" type="button" class="btn btn-default" style="border:none" uib-dropdown-toggle ng-disabled="rangeData.fetching || rangeData.toBeFetched">
+						<button id="celltype-button" type="button" class="btn btn-default selector-button" uib-dropdown-toggle ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'">
 							Cellular type: <span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
 						</button>
 						<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="celltype-button">

@@ -415,6 +415,64 @@ angular.module('blueprintApp')
 		},10);
 	};
 	
+	function doRefresh(rangeData) {
+		if(rangeData.fetchState === ConstantsService.FETCH_STATE_INITIAL) {
+			rangeData.fetchState = ConstantsService.FETCH_STATE_FETCHING;
+			
+			var localScope = rangeData.localScope;
+			localScope.queryInProgress = true;
+			localScope.resultsFetched = 0;
+			localScope.maxResultsFetched = 0;
+			localScope.searchButtonText = SEARCHING_LABEL;
+			
+			var deferred = $q.defer();
+			var promise = deferred.promise;
+			promise = promise
+				.then(QueryService.rangeLaunch(QueryService.getChartData,rangeData))
+				// Either the browser or the server gets too stressed with this concurrent query
+				//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
+				.then(QueryService.rangeLaunch(QueryService.getStatsData,rangeData), function(err) {
+					if(typeof err === "string") {
+						rangeData.fetchState = ConstantsService.FETCH_STATE_NO_DATA;
+						//rangeData.state = ConstantsService.STATE_ERROR;
+						openModal(err,'There is no data stored for '+localScope.currentQueryStr);
+					} else {
+						rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
+						openModal('Data error','Error while fetching chart data');
+						console.error('Chart data');
+						console.error(err);
+					}
+				})
+				.then(QueryService.rangeLaunch(QueryService.initTree,rangeData), function(err) {
+					if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
+						rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
+						openModal('Data error','Error while computing stats');
+						console.error('Stats data');
+						console.error(err);
+					}
+				}).
+				then(function(localScope) {
+					rangeData.fetchState = ConstantsService.FETCH_STATE_END;
+					return localScope;
+				},function(err) {
+					if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
+						rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
+						openModal('Data error','Error while initializing stats tree');
+						console.error('Stats tree');
+						console.error(err);
+					}
+				})
+				.finally(function() {
+					localScope.queryInProgress = false;
+					localScope.searchButtonText = SEARCH_LABEL;
+				});
+			 
+			deferred.resolve(localScope);
+		}
+		
+		return '';
+	}
+	
 	function doInitial(rangeData) {
 		var localScope = rangeData.localScope;
 		localScope.queryInProgress = true;
@@ -432,6 +490,10 @@ angular.module('blueprintApp')
 			})
 			.then(function(localScope) {
 				rangeData.state = ConstantsService.STATE_SELECT_CELL_TYPES;
+				
+				// Also, fetch data in an asynchronous way
+				doRefresh(rangeData);
+				
 				return localScope;
 			}, function(err) {
 				if(rangeData.state === ConstantsService.STATE_INITIAL) {
@@ -451,72 +513,21 @@ angular.module('blueprintApp')
 		return '';
 	}
 	
-	function doRefresh(rangeData) {
-		if(rangeData.toBeFetched) {
-			rangeData.fetching = true;
-			rangeData.toBeFetched = false;
-			
-			var localScope = rangeData.localScope;
-			localScope.queryInProgress = true;
-			localScope.resultsFetched = 0;
-			localScope.maxResultsFetched = 0;
-			localScope.searchButtonText = SEARCHING_LABEL;
-			
-			var deferred = $q.defer();
-			var promise = deferred.promise;
-			promise = promise
-				.then(QueryService.rangeLaunch(QueryService.getChartData,rangeData))
-				// Either the browser or the server gets too stressed with this concurrent query
-				//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
-				.then(QueryService.rangeLaunch(QueryService.getStatsData,rangeData), function(err) {
-					if(typeof err === "string") {
-						rangeData.state = ConstantsService.STATE_NO_DATA;
-						openModal(err,'There is no data stored for '+localScope.currentQueryStr);
-					} else {
-						rangeData.state = ConstantsService.STATE_ERROR;
-						openModal('Data error','Error while fetching chart data');
-						console.error('Chart data');
-						console.error(err);
-					}
-				})
-				.then(QueryService.rangeLaunch(QueryService.initTree,rangeData), function(err) {
-					if(rangeData.state === ConstantsService.STATE_FETCH_DATA) {
-						rangeData.state = ConstantsService.STATE_ERROR;
-						openModal('Data error','Error while computing stats');
-						console.error('Stats data');
-						console.error(err);
-					}
-				}).
-				then(function(localScope) {
-					rangeData.state = ConstantsService.STATE_END;
-					return localScope;
-				},function(err) {
-					if(rangeData.state === ConstantsService.STATE_FETCH_DATA) {
-						rangeData.state = ConstantsService.STATE_ERROR;
-						openModal('Data error','Error while initializing stats tree');
-						console.error('Stats tree');
-						console.error(err);
-					}
-				})
-				.finally(function() {
-					rangeData.fetching = false;
-					localScope.queryInProgress = false;
-					localScope.searchButtonText = SEARCH_LABEL;
-				});
-			 
-			deferred.resolve(localScope);
-		}
-		
-		return '';
-	}
-	
 	$scope.doState = function(rangeData) {
 		switch(rangeData.state) {
 			case ConstantsService.STATE_INITIAL:
 				doInitial(rangeData);
 				break;
-			case ConstantsService.STATE_FETCH_DATA:
-				doRefresh(rangeData);
+			case ConstantsService.STATE_SHOW_DATA:
+			//	doRefresh(rangeData);
+				switch(rangeData.fetchState) {
+					case ConstantsService.FETCH_STATE_END:
+						ChartService.redrawCharts(rangeData);
+						break;
+					default:
+						console.log("See range");
+						console.log(rangeData);
+				}
 				break;
 		}
 		
@@ -774,8 +785,8 @@ angular.module('blueprintApp')
 		}
 		
 		// Changing to this state
-		rangeData.state = ConstantsService.STATE_FETCH_DATA;
-		doRefresh(rangeData);
+		rangeData.state = ConstantsService.STATE_SHOW_DATA;
+		$scope.doState(rangeData);
 	};
 	
 	$scope.deselectAllVisibleCellTypes = function(rangeData) {

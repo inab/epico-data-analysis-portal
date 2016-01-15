@@ -1029,7 +1029,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 														text: featureRegion.label,
 														textAlign: 'left',
 														style: {
-															fontSize: '0.2em',
+															fontSize: '2mm',
 														},
 														x: -10,
 														rotation: 90

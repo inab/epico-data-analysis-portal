@@ -30,11 +30,6 @@
 	</div>
 </script>
 
-<div ng-class="{fetching: true, show:queryInProgress, hidden: !queryInProgress}" ng-if="true===false" ng-cloak="">
-	<uib-progressbar ng-class="{progress-striped: resultsFetched==maxResultsFetched; active: resultsFetched==maxResultsFetched;" value="resultsFetched" max="maxResultsFetched" type="info">{{searchButtonText}}</uib-progressbar>
-<h2>Loading</h2>
-</div>
-
 <script type="text/ng-template" id="template/tabs/tab.html">
 	<li ng-class="{active: active, disabled: disabled}">
 		<a ng-click="select()" uib-tab-heading-transclude>{{heading}}</a>
@@ -121,9 +116,9 @@
 <!--
 <p class="text-center" style="margin-bottom:40px;" ng-bind-html="found"></p>
 -->
-<uib-tabset ng-if="graphData.length &gt; 0">
+<uib-tabset id="resultTabs" ng-if="graphData.length &gt; 0">
 	<uib-tab ng-repeat="rangeData in graphData" select="doState(rangeData)">
-		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching','glyphicon-filter': rangeData.state==='selectCellTypes','glyphicon-download': rangeData.state!=='selectCellTypes' && rangeData.fetchState === 'fetch_initial', 'glyphicon-hourglass': rangeData.fetchState === 'fetching', 'blink': rangeData.fetchState === 'fetching'}"></i><i class="hover_red" ng-class="{'glyphicon': rangeData.fetchState === 'fetch_end','glyphicon-remove-sign': rangeData.fetchState === 'fetch_end' && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
+		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.fetchState === 'fetch_initial' || rangeData.state==='selectCellTypes','glyphicon-filter': rangeData.state==='selectCellTypes','glyphicon-download': rangeData.state!=='selectCellTypes' && rangeData.fetchState === 'fetch_initial', 'glyphicon-hourglass': rangeData.fetchState === 'fetching', 'blink': rangeData.fetchState === 'fetching'}"></i><i class="hover_red" ng-class="{'glyphicon': rangeData.fetchState === 'fetch_end','glyphicon-remove-sign': rangeData.fetchState === 'fetch_end' && $parent.graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
 		
 		<!-- Types of analysis -->
 		<div class="no-margin-padding">
@@ -135,7 +130,7 @@
 					 <span ng-show="rangeData.ui.numCellTypesInRange!==undefined">Found {{rangeData.ui.numCellTypesInRange}} cellular types, involved in {{rangeData.ui.numAnalysesInRange}} analyses</span>
 				 </p>
 				
-				<uib-progressbar class="progress-striped active initial-progressbar" animate="true" value="100" type="info" ng-show="rangeData.state==='initial'"><span>Fetching gene layout and stats</span></uib-progressbar>
+				<uib-progressbar class="progress-striped active initial-progressbar" animate="true" value="100" type="{{rangeData.fetchState==='no_data'?'warning':'info'}}" ng-show="rangeData.state==='initial' || rangeData.fetchState==='no_data'"><span>Fetching gene layout and stats</span></uib-progressbar>
 			</div>
 
 			
@@ -164,7 +159,7 @@
 			</div>
 		</div>
 
-		<div class="no-margin-padding" ng-show="rangeData.fetchState === 'fetching' || rangeData.fetchState === 'fetch_error'">
+		<div class="no-margin-padding" style="margin-bottom:1em" ng-show="rangeData.fetchState === 'fetching' || rangeData.fetchState === 'fetch_error'">
 			<uib-progressbar class="initial-progressbar" value="rangeData.numFetchEntries" max="rangeData.numFetchTotal" type="{{rangeData.fetchState === 'fetching' ? 'info':'error'}}"><span>Fetching &amp; Plotting data</span></uib-progressbar>
 		</div>
 

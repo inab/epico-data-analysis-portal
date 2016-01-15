@@ -18,7 +18,7 @@
     "angular-tree-control": "jmfernandez/angular-tree-control#dad854a431f1c17a7a79d3771e71dbaffd97c59a",
     "elasticsearch": "~10.0.1",
     "highcharts-release": "v4.2.1",
-    "highcharts-ng": "~0.0.11",
+    "highcharts-ng": "inab/highcharts-ng#7d0e93f1287841aba70cd1ff42dfec7519025cb0",
     "highcharts-export-csv": "highcharts/export-csv#105281e6a8251fe6eb4e79fd39ee703a01c1a7ea",
     "jalette": "jalette#b9b4108c652baef9d77ef4f32d8f09000c7dc2d8",
     "roboto-fontface": "~0.4.3"

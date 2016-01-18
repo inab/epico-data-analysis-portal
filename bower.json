@@ -21,7 +21,8 @@
     "highcharts-ng": "inab/highcharts-ng#7d0e93f1287841aba70cd1ff42dfec7519025cb0",
     "highcharts-export-csv": "highcharts/export-csv#105281e6a8251fe6eb4e79fd39ee703a01c1a7ea",
     "jalette": "jalette#b9b4108c652baef9d77ef4f32d8f09000c7dc2d8",
-    "roboto-fontface": "~0.4.3"
+    "roboto-fontface": "~0.4.3",
+    "ng-csv": "~0.3.6"
   },
   "overrides": {
     "elasticsearch": {
@@ -36,6 +37,7 @@
     }
   },
   "devDependencies": {
+    "angular-smart-table": "~2.1.6",
     "dagre-d3": "~0.4.11",
     "bower-canvasjs": "inab/bower-canvasjs#~1.7.0",
     "angular-mocks": "~1.4.8",

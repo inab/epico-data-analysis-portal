@@ -1072,6 +1072,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			
 			
 			// Common attributes
+			chart.chartId = gName;
 			chart.type = gData.type;
 			chart.regionFeature = rangeData.regionFeature;
 			chart.allData = [];
@@ -2589,6 +2590,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			doReflow: doReflow,
 			
 			EXPORTED_VIEWS: EXPORTED_VIEWS,
+			VIEW_GENERAL: VIEW_GENERAL,
 			
 			getLegendTitle: getLegendTitle,
 			getSeenSeriesCount: getSeenSeriesCount,

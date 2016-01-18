@@ -193,8 +193,16 @@
 			
 			<!-- Chart selection tree -->
 			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCharts'">
-				<h3 class="text-center">Step 3: There are {{uiFuncs.getChartsWithDataCount(rangeData,'General')}} general charts for the {{uiFuncs.getVisibleSeriesCount(rangeData,'General')}} cellular types initially selected in this range</h3>
-				<h4 class="text-center">Please, select the initial charts and chart sets you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCharts(rangeData)">Fetch and plot</button></h4>
+				<h3 class="text-center">Step 3: There are {{rangeData.ui.numChartsForSelectedCellTypes}} general charts for the {{rangeData.ui.numSelectedCellTypes}} cellular types initially selected in this range</h3>
+				<div class="initial-charts">
+					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes" ng-click="uiFuncs.switchChart($event,chart,rangeData)" uib-tooltip-template="'tooltip/chartSwitch.html'">
+						<span class="glyphicon" ng-class="{'glyphicon-remove-circle': chart.isHidden,'glyphicon-ok-circle': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'red' : 'initial'}"></span>
+						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
+					</div>
+					<br />
+					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of range data</label></div>
+				</div>
+				<h4 class="text-center">Please, (de)select the initial charts you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCharts(rangeData)">Go!</button></h4>
 			</div>
 		</div>
 
@@ -202,7 +210,7 @@
 			<uib-progressbar class="initial-progressbar" value="rangeData.numFetchEntries" max="rangeData.numFetchTotal" type="{{rangeData.fetchState === 'fetching' ? 'info':'error'}}"><span>Fetching &amp; Plotting data</span></uib-progressbar>
 		</div>
 
-		<div class="no-margin-padding text-center" ng-show="rangeData.state==='selectCharts' || rangeData.state==='showData' || rangeData.state==='end'">
+		<div class="no-margin-padding text-center" ng-show="rangeData.state==='showData' || rangeData.state==='end'">
 			<div class="btn-group">
 				<label class="btn btn-default" ng-repeat="view in uiFuncs.EXPORTED_VIEWS" ng-model="rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'" ng-click="uiFuncs.redrawCharts(rangeData)">{{view.viewDesc}}</label>
 			</div>

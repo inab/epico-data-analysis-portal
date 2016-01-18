@@ -650,32 +650,68 @@ angular.module('blueprintApp')
 	
 	$scope.selectVisibleCellTypes = function(rangeData) {
 		var doSelectAll=true;
+		var numSelected = 0;
+		
+		var availableChartIds = [];
+		var availableChartIdsHash = {};
+		
+		var charts = ChartService.uiFuncs.getCharts(rangeData,ChartService.uiFuncs.VIEW_GENERAL);
+		
+		var enableTermNodeFunc = function(termNode) {
+			if(termNode.wasSeen) {
+				numSelected++;
+				termNode.termHidden=false;
+				for(var chartId in termNode.analysisTypes) {
+					if(!(chartId in availableChartIdsHash)) {
+						availableChartIds.push(chartId);
+						availableChartIdsHash[chartId] = null;
+					}
+				}
+			}
+		};
 		
 		rangeData.treedata.forEach(function(ontology) {
-			ontology.selectedNodes.forEach(function(termNode) {
-				if(termNode.wasSeen) {
-					doSelectAll=false;
-					termNode.termHidden=false;
-				}
-			});
+			ontology.selectedNodes.forEach(enableTermNodeFunc);
 		});
 		
 		// Select all when no one was selected
-		if(doSelectAll) {
-			rangeData.termNodes.forEach(function(termNode) {
-				if(termNode.wasSeen) {
-					termNode.termHidden=false;
-				}
-			});
+		if(numSelected===0) {
+			rangeData.termNodes.forEach(enableTermNodeFunc);
 		}
 		
+		// Identify the enabled charts
+		rangeData.ui.numSelectedCellTypes = numSelected;
+		rangeData.ui.numChartsForSelectedCellTypes = availableChartIds.length;
+		
+		var chartsForSelectedCellTypes = [];
+		rangeData.ui.chartsForSelectedCellTypes = chartsForSelectedCellTypes;
+		
+		charts.forEach(function(chart) {
+			if(chart.chartId in availableChartIdsHash) {
+				chartsForSelectedCellTypes.push(chart);
+				chart.isHidden = false;
+			} else {
+				// Already hiding it
+				chart.isHidden = true;
+			}
+		});
+		
 		// Changing to this state
-		rangeData.state = ConstantsService.STATE_SHOW_DATA;
-		//rangeData.state = ConstantsService.STATE_SELECT_CHARTS;
+		//rangeData.state = ConstantsService.STATE_SHOW_DATA;
+		rangeData.state = ConstantsService.STATE_SELECT_CHARTS;
 		$scope.doState(rangeData);
 	};
 	
 	$scope.selectVisibleCharts = function(rangeData) {
+		// Normalizing
+		var initiallyHideMeanSeries = !rangeData.ui.initiallyShowMeanSeries;
+		
+		var charts = ChartService.uiFuncs.getCharts(rangeData,ChartService.uiFuncs.VIEW_GENERAL);
+		
+		charts.forEach(function(chart) {
+			chart.meanSeriesHidden = initiallyHideMeanSeries;
+		});
+		
 		// Changing to this state
 		rangeData.state = ConstantsService.STATE_SHOW_DATA;
 		$scope.doState(rangeData);

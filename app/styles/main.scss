@@ -236,7 +236,7 @@ tr.termItem {
 	vertical-align: top;
 }
 
-.termItem.pointer , i.glyphicon , li.pointer {
+.pointer , i.glyphicon {
 	cursor: pointer;
 	
 	-webkit-touch-callout: none;
@@ -391,6 +391,11 @@ $blueprint-inactive-tab-color: aliceblue;
 		line-height: 2em;
 		font-size: 2em;
 	}
+}
+
+.initial-charts {
+	width: 25%;
+	margin: 0 auto;
 }
 
 .popover-content {

@@ -29,7 +29,9 @@ angular.module('blueprintApp', [
     'ngSanitize',
     'ngTouch',
     'ui.bootstrap',
-    'elasticsearch'
+    'elasticsearch',
+//    'smart-table',
+    'ngCsv'
   ])
   .config(function ($routeProvider,$tooltipProvider) {
     $routeProvider

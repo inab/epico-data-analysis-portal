@@ -129,12 +129,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						
 						default:
 							if(d._source.experiment_id!==undefined && d._source.experiment_type!==undefined) {
-								var lab_experiment = {};
+								var lab_experiment = d._source;
 								lab_experiment._type	= d._type;
-								lab_experiment.sample_id = d._source.analyzed_sample_id;
-								lab_experiment.experiment_id = d._source.experiment_id;
-								lab_experiment.experiment_type = d._source.experiment_type;
-								lab_experiment.features = d._source.features;
 								if(lab_experiment.experiment_type.indexOf('Histone ')===0) {
 									var histoneName = lab_experiment.features.CHIP_ANTIBODY.value;
 									var normalizedHistoneName = histoneName.replace(/[.]/g,'_');
@@ -199,9 +195,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				});
 				
 				localScope.labs.forEach(function(lab_experiment) {
-					if(lab_experiment.sample_id in samplesMap) {
-						samplesMap[lab_experiment.sample_id].experiments.push(lab_experiment);
-						lab_experiment.sample = samplesMap[lab_experiment.sample_id];
+					if(lab_experiment.analyzed_sample_id in samplesMap) {
+						lab_experiment.sample = samplesMap[lab_experiment.analyzed_sample_id];
+						lab_experiment.sample.experiments.push(lab_experiment);
 					}
 				});
 				
@@ -1425,10 +1421,73 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			if(resp!==undefined) {
 				if(resp.aggregations!==undefined) {
 					if(resp.aggregations.analyses.buckets.length > 0) {
+						var table = [];
+						var metaDataGrid = {
+							title: 'Results metadata',
+							columns: [
+								'donor_id',
+								'donor_kind',
+								
+								'specimen_id',
+								'tissue_type',
+								'tissue_type_term',
+								'donor_disease',
+								'donor_disease_term',
+								
+								'sample_name',
+								'purified_cell_type_term',
+								'sample_desc',
+								
+								'experiment_id',
+								'experiment_type',
+								'experiment_ega_id',
+								
+								'analysis_id',
+								'analysis_type',
+								'analysis_num_results',
+							],
+							table: table,
+						};
+						
 						// These are the analysis in the query region
 						resp.aggregations.analyses.buckets.forEach(function(analysisStat) {
-							ChartService.recordAnalysisOnCellType(rangeData,analysisStat.key,analysisStat.doc_count);
+							var analysis_id = analysisStat.key;
+							
+							if(analysis_id in localScope.analysesHash) {
+								ChartService.recordAnalysisOnCellType(rangeData,analysis_id,analysisStat.doc_count);
+								// We are saving selected data
+								var analysis = localScope.analysesHash[analysis_id];
+								var lab_experiment = analysis.lab_experiment;
+								var sample = lab_experiment.sample;
+								var specimen = sample.specimen;
+								var donor = specimen.donor;
+								var row = [
+									donor.donor_id,
+									donor.donor_kind,
+									
+									specimen.specimen_id,
+									specimen.tissue_type,
+									specimen.specimen_term,
+									specimen.donor_disease_text,
+									specimen.donor_disease,
+									
+									sample.sample_name,
+									sample.purified_cell_type,
+									sample.analyzed_sample_type_other,
+									
+									lab_experiment.experiment_id,
+									lab_experiment.experiment_type,
+									lab_experiment.raw_data_accession.accession,
+									
+									analysis.analysis_id,
+									analysis._type,
+									analysisStat.doc_count
+								];
+								table.push(row);
+							}
 						});
+						
+						rangeData.ui.metaDataGrid = metaDataGrid;
 						
 						// Postprocessing
 						rangeData.termNodes.forEach(function(term) {
@@ -1585,7 +1644,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 								//var xRange = [rangeData.range.start,rangeData.range.end];
 								
 								// Using the default view
-								ChartService.redrawCharts(rangeData,true,stillLoading);
+								ChartService.uiFuncs.redrawCharts(rangeData,true,stillLoading);
 							}
 							deferred.resolve(localScope);
 						} else {

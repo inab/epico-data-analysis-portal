@@ -268,7 +268,7 @@ span.rounded-square {
 	padding-bottom: 0.5em;
 }
 
-.datachart ,.datachartContainer {
+.datachart , .datachartContainer {
 	height: 400px;
 }
 
@@ -276,11 +276,31 @@ span.rounded-square {
 	width: 100%;
 }
 
+.zoomed .datachart , .zoomed .datachartContainer {
+	height: 95%;
+}
+
+.zoomed .datachart .highcharts-container {
+	height: 95%;
+}
+
+.modal-body.bp-data-grid {
+	max-width: 100%;
+	max-height: 500px;
+	overflow: auto;
+}
+
+.table.bp-data-grid {
+	font-size: 0.1em;
+}
+
+/*
 @media (min-width: 1170px){
 	.datachart , .datachartContainer {
 		height: 350px !important;
 	}
 }
+*/
 
 div.termItem {
 	display: flex;

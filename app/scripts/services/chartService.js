@@ -1878,7 +1878,13 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	});
 	
 	function getCharts(rangeData,viewClass) {
+		if(rangeData === undefined) {
+			return [];
+		}
 		if(viewClass===undefined) {
+			if(rangeData.viewClass === undefined) {
+				return [];
+			}
 			viewClass = rangeData.viewClass;
 		}
 		
@@ -1903,7 +1909,13 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	}
 	
 	function getSeriesNodes(rangeData,viewClass) {
+		if(rangeData === undefined) {
+			return [];
+		}
 		if(viewClass===undefined) {
+			if(rangeData.viewClass === undefined) {
+				return [];
+			}
 			viewClass = rangeData.viewClass;
 		}
 		
@@ -1918,13 +1930,165 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		return ('groupBySeriesNodesFacet' in RedrawSelector[viewClass]) ? rangeData[RedrawSelector[viewClass].groupBySeriesNodesFacet] : [];
 	}
 	
-	function getLegendTitle(rangeData,viewClass) {
+	function getLegendTitle(viewClass,rangeData) {
 		if(viewClass===undefined) {
+			if(rangeData === undefined || rangeData.viewClass === undefined) {
+				return '';
+			}
 			viewClass = rangeData.viewClass;
 		}
 		
 		return RedrawSelector[viewClass].legendTitle;
 	}
+	
+	function switchSeriesNode(event,theSeriesNode,rangeData,viewClass) {
+		var seriesNodes = getSeriesNodes(rangeData,viewClass);
+		if(event.ctrlKey) {
+			seriesNodes.forEach(function(seriesNode) {
+				seriesNode.termHidden = true;
+			});
+			theSeriesNode.termHidden = false;
+		} else {
+			theSeriesNode.termHidden = !theSeriesNode.termHidden;
+		}
+		
+		// We are not going to redraw in background (this should not happen)
+		if(viewClass===undefined || viewClass === rangeData.viewClass) {
+			redrawCharts(rangeData);
+		}
+	}
+	
+	function switchChart(event,chart,rangeData,viewClass) {
+		var charts = getCharts(rangeData,viewClass);
+		if(event.ctrlKey) {
+			charts.forEach(function(chart) {
+				chart.isHidden = true;
+			});
+			chart.isHidden = false;
+		} else if(event.shiftKey) {
+			chart.meanSeriesHidden = !chart.meanSeriesHidden;
+			
+			// We are not going to redraw in background (this should not happen)
+			if(viewClass===undefined || viewClass === rangeData.viewClass) {
+				redrawCharts(chart);
+			}
+		} else {
+			chart.isHidden = !chart.isHidden;
+		}
+	}
+	
+	function showAllCharts(event,rangeData,viewClass) {
+		var charts = getCharts(rangeData,viewClass);
+		if(event.shiftKey) {
+			charts.forEach(function(chart) {
+				chart.meanSeriesHidden = false;
+			});
+			
+			// We are not going to redraw in background (this should not happen)
+			if(viewClass===undefined || viewClass === rangeData.viewClass) {
+				redrawCharts(rangeData);
+			}
+		} else {
+			charts.forEach(function(chart) {
+				chart.isHidden = false;
+			});
+		}
+	}
+
+	function hideAllCharts(event,rangeData,viewClass) {
+		var charts = getCharts(rangeData,viewClass);
+		if(event.shiftKey) {
+			charts.forEach(function(chart) {
+				chart.meanSeriesHidden = true;
+			});
+			
+			// We are not going to redraw in background (this should not happen)
+			if(viewClass===undefined || viewClass === rangeData.viewClass) {
+				redrawCharts(rangeData);
+			}
+		} else {
+			charts.forEach(function(chart) {
+				chart.isHidden = true;
+			});
+		}
+	}
+	
+	function showAllSeries(rangeData,viewClass) {
+		var seriesNodes = getSeriesNodes(rangeData,viewClass);
+		seriesNodes.forEach(function(seriesNode) {
+			seriesNode.termHidden = false;
+		});
+		
+		redrawCharts(rangeData);
+	}
+
+	function hideAllSeries(rangeData,viewClass) {
+		var seriesNodes = getSeriesNodes(rangeData,viewClass);
+		seriesNodes.forEach(function(seriesNode) {
+			seriesNode.termHidden = true;
+		});
+		
+		redrawCharts(rangeData);
+	}
+	
+	function doReflow(localScope) {
+		setTimeout(function() {
+			localScope.$broadcast('highchartsng.reflow');
+		},10);
+	}
+	
+	function getSeenSeriesCount(rangeData,viewClass) {
+		var count = 0;
+		
+		var seriesNodes = getSeriesNodes(rangeData,viewClass);
+		seriesNodes.forEach(function(seriesNode) {
+			if(seriesNode.wasSeen) {
+				count++;
+			}
+		});
+		
+		return count;
+	}
+	
+	function getVisibleSeriesCount(rangeData,viewClass) {
+		var count = 0;
+		
+		var seriesNodes = getSeriesNodes(rangeData,viewClass);
+		seriesNodes.forEach(function(seriesNode) {
+			if(seriesNode.wasSeen && !seriesNode.termHidden) {
+				count++;
+			}
+		});
+		
+		return count;
+	}
+	
+	function getChartsWithDataCount(rangeData,viewClass) {
+		var count = 0;
+		
+		var charts = getCharts(rangeData,viewClass);
+		charts.forEach(function(chart) {
+			if(!chart.isEmpty) {
+				count++;
+			}
+		});
+		
+		return count;
+	}
+	
+	function getVisibleChartsCount(rangeData,viewClass) {
+		var count = 0;
+		
+		var charts = getCharts(rangeData,viewClass);
+		charts.forEach(function(chart) {
+			if(!chart.isEmpty && !chart.isHidden) {
+				count++;
+			}
+		});
+		
+		return count;
+	}
+	
 	
 	function redrawCharts(charts,doGenerate,stillLoading,viewClass) {
 		if('ui' in charts) {
@@ -2409,7 +2573,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		doRegionFeatureLayout: doRegionFeatureLayout,
 		recordAnalysisOnCellType: recordAnalysisOnCellType,
 		storeFetchedData: storeFetchedData,
-		redrawCharts: redrawCharts,
 		assignCellTypesColorMap: assignCellTypesColorMap,
 		assignMeanSeriesColorMap: assignMeanSeriesColorMap,
 		assignTermsColorMap: assignTermsColorMap,
@@ -2419,12 +2582,30 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		initializeSubtotalsCharts: initializeSubtotalsCharts,
 		linkMeanSeriesToAnalysis: linkMeanSeriesToAnalysis,
 		chooseLabelFromSymbols: chooseLabelFromSymbols,
-		EXPORTED_VIEWS: EXPORTED_VIEWS,
 		storeRange: storeRange,
-		selectGroup: selectGroup,
-		getCharts: getCharts,
-		getSeriesNodes: getSeriesNodes,
-		getGroupBySeriesNodes: getGroupBySeriesNodes,
-		getLegendTitle: getLegendTitle,
+		
+		uiFuncs: {
+			redrawCharts: redrawCharts,
+			doReflow: doReflow,
+			
+			EXPORTED_VIEWS: EXPORTED_VIEWS,
+			
+			getLegendTitle: getLegendTitle,
+			getSeenSeriesCount: getSeenSeriesCount,
+			getVisibleSeriesCount: getVisibleSeriesCount,
+			getChartsWithDataCount: getChartsWithDataCount,
+			getVisibleChartsCount: getVisibleChartsCount,
+			
+			switchSeriesNode: switchSeriesNode,
+			switchChart: switchChart,
+			showAllCharts: showAllCharts,
+			hideAllCharts: hideAllCharts,
+			showAllSeries: showAllSeries,
+			hideAllSeries: hideAllSeries,
+			getCharts: getCharts,
+			getSeriesNodes: getSeriesNodes,
+			getGroupBySeriesNodes: getGroupBySeriesNodes,
+			selectGroup: selectGroup,
+		},
 	};
 }]);

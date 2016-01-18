@@ -67,6 +67,30 @@ angular.module('blueprintApp')
 	$scope.display = 'compact';
 	
 	
+	function openModalDataGrid(dataGrid,size,callback) {
+		if(size===undefined) {
+			size='lg';
+		}
+		var modalInstance = $modal.open({
+			animation: true,
+			templateUrl: 'datagrid.html',
+			controller: 'ModalDataGridInstanceCtrl',
+			//bindToController: true,
+			size: size,
+			resolve: {
+				modalDataGrid: function() { return dataGrid; },
+			}
+		});
+		
+		if(callback!==undefined) {
+			modalInstance.result.then(callback);
+		}
+		//    }, function () {
+		//      $log.info('Modal dismissed at: ' + new Date());
+		//    });
+		
+	}
+	
 	function openModal(state,message,callback,size) {
 		var modalInstance = $modal.open({
 			animation: true,
@@ -411,9 +435,7 @@ angular.module('blueprintApp')
 	};
 	
 	$scope.doReflow = function() {
-		setTimeout(function() {
-			$scope.$broadcast('highchartsng.reflow');
-		},10);
+		ChartService.uiFuncs.doReflow($scope);
 	};
 	
 	function doRefresh(rangeData) {
@@ -524,7 +546,7 @@ angular.module('blueprintApp')
 			//	doRefresh(rangeData);
 				switch(rangeData.fetchState) {
 					case ConstantsService.FETCH_STATE_END:
-						ChartService.redrawCharts(rangeData);
+						ChartService.uiFuncs.redrawCharts(rangeData);
 						break;
 					default:
 						console.log("See range");
@@ -550,149 +572,10 @@ angular.module('blueprintApp')
 		}
 	};
 	
-	$scope.switchSeriesNode = function(event,theSeriesNode,rangeData) {
-		var seriesNodes = ChartService.getSeriesNodes(rangeData);
-		if(event.ctrlKey) {
-			seriesNodes.forEach(function(seriesNode) {
-				seriesNode.termHidden = true;
-			});
-			theSeriesNode.termHidden = false;
-		} else {
-			theSeriesNode.termHidden = !theSeriesNode.termHidden;
-		}
-		
-		ChartService.redrawCharts(rangeData);
-	};
-	
-	$scope.switchChart = function(event,chart,rangeData) {
-		var charts = ChartService.getCharts(rangeData);
-		if(event.ctrlKey) {
-			charts.forEach(function(chart) {
-				chart.isHidden = true;
-			});
-			chart.isHidden = false;
-		} else if(event.shiftKey) {
-			chart.meanSeriesHidden = !chart.meanSeriesHidden;
-			ChartService.redrawCharts(chart);
-		} else {
-			chart.isHidden = !chart.isHidden;
-		}
-	};
-	
-	$scope.showAllCharts = function(event,rangeData) {
-		var charts = ChartService.getCharts(rangeData);
-		if(event.shiftKey) {
-			charts.forEach(function(chart) {
-				chart.meanSeriesHidden = false;
-			});
-			ChartService.redrawCharts(rangeData);
-		} else {
-			charts.forEach(function(chart) {
-				chart.isHidden = false;
-			});
-		}
-	};
-
-	$scope.hideAllCharts = function(event,rangeData) {
-		var charts = ChartService.getCharts(rangeData);
-		if(event.shiftKey) {
-			charts.forEach(function(chart) {
-				chart.meanSeriesHidden = true;
-			});
-			ChartService.redrawCharts(rangeData);
-		} else {
-			charts.forEach(function(chart) {
-				chart.isHidden = true;
-			});
-		}
-	};
-	
-	$scope.showAllSeries = function(rangeData) {
-		var seriesNodes = ChartService.getSeriesNodes(rangeData);
-		seriesNodes.forEach(function(seriesNode) {
-			seriesNode.termHidden = false;
-		});
-		
-		ChartService.redrawCharts(rangeData);
-	};
-
-	$scope.hideAllSeries = function(rangeData) {
-		var seriesNodes = ChartService.getSeriesNodes(rangeData);
-		seriesNodes.forEach(function(seriesNode) {
-			seriesNode.termHidden = true;
-		});
-		
-		ChartService.redrawCharts(rangeData);
-	};
-	
-	$scope.getCharts = ChartService.getCharts;
-	
-	$scope.getSeriesNodes = ChartService.getSeriesNodes;
-	
-	$scope.getGroupBySeriesNodes = ChartService.getGroupBySeriesNodes;
-	
-	$scope.redrawCharts = ChartService.redrawCharts;
-	
-	$scope.selectGroup = ChartService.selectGroup;
-	
-	$scope.getLegendTitle = ChartService.getLegendTitle;
-	
-	$scope.EXPORTED_VIEWS = ChartService.EXPORTED_VIEWS;
+	$scope.uiFuncs = ChartService.uiFuncs;
 	
 	$scope.getDataDesc = function() {
 		return $interpolate($scope.dataDesc)($scope);
-	};
-	
-	$scope.getSeenSeriesCount = function(rangeData) {
-		var count = 0;
-		
-		var seriesNodes = ChartService.getSeriesNodes(rangeData);
-		seriesNodes.forEach(function(seriesNode) {
-			if(seriesNode.wasSeen) {
-				count++;
-			}
-		});
-		
-		return count;
-	};
-	
-	$scope.getVisibleSeriesCount = function(rangeData) {
-		var count = 0;
-		
-		var seriesNodes = ChartService.getSeriesNodes(rangeData);
-		seriesNodes.forEach(function(seriesNode) {
-			if(seriesNode.wasSeen && !seriesNode.termHidden) {
-				count++;
-			}
-		});
-		
-		return count;
-	};
-	
-	$scope.getChartsWithDataCount = function(rangeData) {
-		var count = 0;
-		
-		var charts = ChartService.getCharts(rangeData);
-		charts.forEach(function(chart) {
-			if(!chart.isEmpty) {
-				count++;
-			}
-		});
-		
-		return count;
-	};
-	
-	$scope.getVisibleChartsCount = function(rangeData) {
-		var count = 0;
-		
-		var charts = ChartService.getCharts(rangeData);
-		charts.forEach(function(chart) {
-			if(!chart.isEmpty && !chart.isHidden) {
-				count++;
-			}
-		});
-		
-		return count;
 	};
 	
 	$scope.removeTabResult = function(event,index) {
@@ -788,6 +671,13 @@ angular.module('blueprintApp')
 		
 		// Changing to this state
 		rangeData.state = ConstantsService.STATE_SHOW_DATA;
+		//rangeData.state = ConstantsService.STATE_SELECT_CHARTS;
+		$scope.doState(rangeData);
+	};
+	
+	$scope.selectVisibleCharts = function(rangeData) {
+		// Changing to this state
+		rangeData.state = ConstantsService.STATE_SHOW_DATA;
 		$scope.doState(rangeData);
 	};
 	
@@ -796,6 +686,8 @@ angular.module('blueprintApp')
 			ontology.selectedNodes = [];
 		});
 	};
+	
+	$scope.viewDataGrid = openModalDataGrid;
 	
 	function init($q,$scope) {
 		var deferred = $q.defer();

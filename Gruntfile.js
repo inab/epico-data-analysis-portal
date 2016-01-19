@@ -15,9 +15,10 @@ module.exports = function (grunt) {
   // Time how long tasks take. Can help when optimizing build times
   require('time-grunt')(grunt);
 
+	var bowerConfig = require('./bower.json');
   // Configurable paths for the application
   var appConfig = {
-    app: require('./bower.json').appPath || 'app',
+    app: bowerConfig.appPath || 'app',
     dist: 'dist'
   };
   
@@ -30,6 +31,7 @@ module.exports = function (grunt) {
 	  dataportalConfigFile += extension;
   }
   var dataportalConfig = require(dataportalConfigFile);
+  dataportalConfig.swVersion = bowerConfig.version;
   
   var useminPrepare;
   var buildTasks;

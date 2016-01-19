@@ -328,7 +328,7 @@ span.thick-line {
 }
 
 .table.bp-data-grid {
-	font-size: 0.1em;
+	font-size: 0.7em;
 }
 
 /*
@@ -443,4 +443,8 @@ $blueprint-inactive-tab-color: aliceblue;
 .selector-button {
 	border: none;
 	font-size: 1.4em;
+}
+
+.space-glyphicon {
+	margin-right: 1em;
 }

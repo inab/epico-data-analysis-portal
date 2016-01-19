@@ -36,12 +36,15 @@ angular.module('blueprintApp')
 
     $scope.dataRelease = '[Dev without config]';
     $scope.dataDesc = '[Dev without config]';
-    if(portalConfig.dataRelease) {
-        $scope.dataRelease = portalConfig.dataRelease;
-    }
-    if(portalConfig.dataDesc) {
-        $scope.dataDesc = portalConfig.dataDesc;
-    }
+	if(portalConfig.dataRelease) {
+		$scope.dataRelease = portalConfig.dataRelease;
+	}
+	if(portalConfig.dataDesc) {
+		$scope.dataDesc = portalConfig.dataDesc;
+	}
+	if(portalConfig.swVersion) {
+		$scope.swVersion = portalConfig.swVersion;
+	}
 
     $scope.queryInProgress = false;
     $scope.searchButtonText = SEARCH_LABEL;
@@ -672,6 +675,26 @@ angular.module('blueprintApp')
 	};
 	
 	$scope.viewDataGrid = openModalDataGrid;
+	
+	$scope.viewChartDataGrid = function(viewClass,rangeData,chart) {
+		var table = [];
+		var dataGrid = {
+			columns: [ChartService.uiFuncs.getLegendTitle(viewClass),'chromosome','chromosome_start','chromosome_end',chart.yAxisLabel,'payload','analysis_id'],
+			table: table,
+			title: chart.title,
+		};
+		chart.allData.forEach(function(series) {
+			if(series.series.visible) {
+				var arrayPrefix = [ series.series.name, rangeData.range.chr ];
+				
+				series.seriesValues.forEach(function(value) {
+					table.push(arrayPrefix.concat(value));
+				});
+			}
+		});
+		
+		openModalDataGrid(dataGrid);
+	};
 	
 	function init($q,$scope) {
 		var deferred = $q.defer();

@@ -99,13 +99,15 @@
                 <p>The Blueprint project is providing in this release epigenomic analysis from {{numSamples}} samples to the scientific community. Their associated epigenomes are characterized by: gene and transcript expression (from RNA-Seq experiments), hyper and hypo methylated regions (derived from WGBS experiments), chromatin accessibility (DNAse-Seq), and {{numHistones}} Histone marks binding activity (ChIP-Seq)</p>
                 <p>Use this tool to explore the behaviour of your genes and pathways in the BLUEPRINT analysis for {{termNodes.length}} cellular types and cellular lines</p>
                 <p style="line-height:1.2em">
-				<a tooltip-placement="right" uib-tooltip="{{getDataDesc()}}"><b>Data release - {{dataRelease}}</b></a>
-				<br />
-				EnsEMBL version: <b><a href="http://{{ensemblArchive}}.archive.ensembl.org/" target="_blank">{{ensemblVer}}</a></b>
-				<br />
-				GENCODE version: <b><a href="http://www.gencodegenes.org/releases/{{gencodeVer}}.html" target="_blank">{{gencodeVer}}</a></b>
-				<br />
-				REACTOME version: <b><a href="http://www.reactome.org/" target="_blank">{{reactomeVer}}</a></b>
+			<b>Data Portal software release - {{swVersion}}</b>
+			<br />
+			<a tooltip-placement="right" uib-tooltip="{{getDataDesc()}}"><b>Data release - {{dataRelease}}</b></a>
+			<br />
+			EnsEMBL version: <b><a href="http://{{ensemblArchive}}.archive.ensembl.org/" target="_blank">{{ensemblVer}}</a></b>
+			<br />
+			GENCODE version: <b><a href="http://www.gencodegenes.org/releases/{{gencodeVer}}.html" target="_blank">{{gencodeVer}}</a></b>
+			<br />
+			REACTOME version: <b><a href="http://www.reactome.org/" target="_blank">{{reactomeVer}}</a></b>
                 </p>
             </div>
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
@@ -166,7 +168,7 @@
 				 <p>
 					 <span ng-bind-html="rangeData.found"></span>
 					 <br>
-					 <span ng-show="rangeData.ui.numCellTypesInRange!==undefined">Found {{rangeData.ui.numCellTypesInRange}} cellular types, involved in {{rangeData.ui.numAnalysesInRange}} analyses <i class="glyphicon glyphicon-list-alt" uib-tooltip="Click to see the table of related metadata" ng-click="viewDataGrid(rangeData.ui.metaDataGrid)" tooltip-popup-delay="500" tooltip-popup-close-delay="500" tooltip-placement="top"></i></span>
+					 <span ng-show="rangeData.ui.numCellTypesInRange!==undefined">Found {{rangeData.ui.numCellTypesInRange}} cellular types, involved in {{rangeData.ui.numAnalysesInRange}} analyses <i class="glyphicon glyphicon-list-alt" uib-tooltip="Click to see the table of related metadata" ng-click="viewDataGrid(rangeData.ui.metaDataGrid)" tooltip-popup-delay="500" tooltip-placement="top"></i></span>
 				 </p>
 				
 				<uib-progressbar class="progress-striped active initial-progressbar" animate="true" value="100" type="{{rangeData.fetchState==='no_data'?'warning':'info'}}" ng-show="rangeData.state==='initial' || rangeData.fetchState==='no_data'"><span>Fetching gene layout and stats</span></uib-progressbar>
@@ -195,7 +197,7 @@
 				<h3 class="text-center">Step 3: There are {{rangeData.ui.numChartsForSelectedCellTypes}} general charts available for the {{rangeData.ui.numSelectedCellTypes}} cellular types in this range</h3>
 				<div class="initial-charts">
 					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
-						<span class="glyphicon" ng-class="{'glyphicon-ban-circle': chart.isHidden,'glyphicon-ok-circle': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'red' : 'green'}"></span>
+						<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
 						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 					</div>
 					<br />
@@ -295,15 +297,16 @@
 								<span style="margin-right: 1em;" ng-repeat-end>{{featureName}}</span>
 							</div>
 							<div style="float:right;clear:right;">
-							<!-- Hide button -->
-								<i class="glyphicon glyphicon-eye-close" ng-click="uiFuncs.switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-popup-close-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<!-- Hide chart button -->
+								<i class="glyphicon glyphicon-eye-close space-glyphicon" ng-click="uiFuncs.switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Switch mean series -->
+								<!-- Functional, but unfancy
 								<i class="glyphicon glyphicon-indent-right" ng-style="{'color': chart.meanSeriesHidden ? 'gray' : 'initial'}"ng-click="uiFuncs.switchMeanSeries(chart,true)" uib-tooltip="Hide/show mean series" tooltip-popup-delay="500" tooltip-popup-close-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								-->
 								<!-- Visible, but not yet functional -->
-								<!-- ng-click="viewDataGrid(rangeData.ui.metaDataGrid)"  -->
-								<i class="glyphicon glyphicon-list-alt" uib-tooltip="Inspect the table of related data" tooltip-popup-delay="500" tooltip-popup-close-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon glyphicon-list-alt" ng-click="viewChartDataGrid(view.viewClass,rangeData,chart)" tooltip-popup-delay="500" uib-tooltip="Inspect the data" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Zoom button -->
-								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="chart.isZoomed = !chart.isZoomed;"></i>
+								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="chart.isZoomed = !chart.isZoomed;" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="top"></i>
 							</div>
 							<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
 							<canvasjs class="datachart" ng-if="chart.library==='canvasjs'" config="chart.options"></canvasjs>

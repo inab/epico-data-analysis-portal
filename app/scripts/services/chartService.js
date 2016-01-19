@@ -573,8 +573,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var range = rangeData.range;
 		var rangeStr = range.chr+":"+range.start+"-"+range.end;
 		var rangeStrEx = rangeStr + '';
-		var range_start = rangeData.range.start;
-		var range_end = rangeData.range.end;
+		var range_start = range.start;
+		var range_end = range.end;
 		if(rangeData.flankingWindowSize!==undefined) {
 			rangeStrEx += " \u00B1 "+rangeData.flankingWindowSize+"bp";
 			range_start -= rangeData.flankingWindowSize;
@@ -1081,6 +1081,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 				meanSeries: null
 			};
 			chart.title = title;
+			chart.yAxisLabel = gData.yAxisLabel;
 			// Is this graph initially hidden?
 			if(gData.isInitiallyHidden !== undefined) {
 				chart.isHidden = gData.isInitiallyHidden;
@@ -2543,7 +2544,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 					chromosome_end = range_end;
 				}
 				
-				var sDataS = [chromosome_start,chromosome_end,value,payload];
+				var sDataS = [chromosome_start,chromosome_end,value,payload,analysis_id];
 				var data = {
 					cellTypeSeriesId: cellTypeSeriesId,
 					meanCellTypeSeriesId: meanCellTypeSeriesId,

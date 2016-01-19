@@ -4,5 +4,6 @@ angular.module('blueprintApp.config', [])
 	.constant('portalConfig',{
 		esHost: '<%- esHost %>',
 		dataRelease: '<%- dataRelease %>',
-		dataDesc: "<%- dataDesc %>"
+		dataDesc: "<%- dataDesc %>",
+		swVersion: '<%- swVersion %>'
 	});

@@ -306,7 +306,7 @@
 								<!-- Visible, but not yet functional -->
 								<i class="glyphicon glyphicon-list-alt" ng-click="viewChartDataGrid(view.viewClass,rangeData,chart)" tooltip-popup-delay="500" uib-tooltip="Inspect the data" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Zoom button -->
-								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="chart.isZoomed = !chart.isZoomed;" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="chart.isZoomed = !chart.isZoomed;" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="left" tooltip-popup-delay="500"></i>
 							</div>
 							<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
 							<canvasjs class="datachart" ng-if="chart.library==='canvasjs'" config="chart.options"></canvasjs>

@@ -45,7 +45,7 @@
 # Allow access from all domains for web fonts
 
 <IfModule mod_headers.c>
-    <FilesMatch "\.(eot|font.css|otf|ttc|ttf|woff)$">
+    <FilesMatch "\.(eot|font.css|otf|ttc|ttf|woff|woff2)$">
         Header set Access-Control-Allow-Origin "*"
     </FilesMatch>
 </IfModule>
@@ -91,7 +91,7 @@ ErrorDocument 404 /404.html
     Header set X-UA-Compatible "IE=edge"
     # `mod_headers` can't match based on the content-type, however, we only
     # want to send this header for HTML pages and not for the other resources
-    <FilesMatch "\.(appcache|crx|css|eot|gif|htc|ico|jpe?g|js|m4a|m4v|manifest|mp4|oex|oga|ogg|ogv|otf|pdf|png|safariextz|svg|svgz|ttf|vcf|webapp|webm|webp|woff|xml|xpi)$">
+    <FilesMatch "\.(appcache|crx|css|eot|gif|htc|ico|jpe?g|js|m4a|m4v|manifest|mp4|oex|oga|ogg|ogv|otf|pdf|png|safariextz|svg|svgz|ttf|vcf|webapp|webm|webp|woff|woff2|xml|xpi)$">
         Header unset X-UA-Compatible
     </FilesMatch>
 </IfModule>
@@ -147,6 +147,7 @@ ErrorDocument 404 /404.html
 
   # Web fonts
     AddType application/font-woff                       woff
+    AddType application/font-woff2                      woff2
     AddType application/vnd.ms-fontobject               eot
 
     # Browsers usually ignore the font MIME types and sniff the content,
@@ -278,7 +279,7 @@ AddDefaultCharset utf-8
 
 # <IfModule mod_headers.c>
 #    Header set Content-Security-Policy "script-src 'self'; object-src 'self'"
-#    <FilesMatch "\.(appcache|crx|css|eot|gif|htc|ico|jpe?g|js|m4a|m4v|manifest|mp4|oex|oga|ogg|ogv|otf|pdf|png|safariextz|svg|svgz|ttf|vcf|webapp|webm|webp|woff|xml|xpi)$">
+#    <FilesMatch "\.(appcache|crx|css|eot|gif|htc|ico|jpe?g|js|m4a|m4v|manifest|mp4|oex|oga|ogg|ogv|otf|pdf|png|safariextz|svg|svgz|ttf|vcf|webapp|webm|webp|woff|woff2|xml|xpi)$">
 #        Header unset Content-Security-Policy
 #    </FilesMatch>
 # </IfModule>
@@ -481,6 +482,7 @@ FileETag None
 
   # Web fonts
     ExpiresByType application/font-woff                 "access plus 1 month"
+    ExpiresByType application/font-woff2                "access plus 1 month"
     ExpiresByType application/vnd.ms-fontobject         "access plus 1 month"
     ExpiresByType application/x-font-ttf                "access plus 1 month"
     ExpiresByType font/opentype                         "access plus 1 month"

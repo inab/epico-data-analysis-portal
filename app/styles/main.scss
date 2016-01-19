@@ -220,7 +220,7 @@ div.suggest-container:empty {
 	}
 }
 
-span.circle , span.square, span.rounded-square {
+span.circle , span.square, span.rounded-square, span.thick-line {
 	border-style: solid;
 	border-width: 1px;
 	width: 1em;
@@ -263,6 +263,11 @@ span.rounded-square {
 	-ms-border-radius: $rounded-square-common;
 }
 
+span.thick-line {
+	height: 0.2em;
+	padding-bottom: 0.4em;
+}
+
 .term {
 	line-height: 1em;
 	padding-bottom: 0.5em;
@@ -275,6 +280,38 @@ span.rounded-square {
 .datachart {
 	width: 100%;
 }
+
+.zoomed {
+	position:fixed;
+	height: 96%;
+	width: 96%;
+	left: 2%;
+	top: 2%;
+	margin: 0 auto;
+	padding-top: 1em;
+	padding-bottom: 1em;
+	padding-left: 1.5em;
+	padding-right: 1.5em;
+	z-index: 5;
+	background-color: white;
+}
+
+.unzoomed {
+	padding-top: 1em;
+	padding-bottom: 1.5em;
+/*
+	margin-left: 2px;
+	margin-right: 2px;
+*/
+}
+
+.unzoomed , .zoomed {
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 20px;
+	text-align: right;
+}
+
 
 .zoomed .datachart , .zoomed .datachartContainer {
 	height: 95%;

@@ -649,52 +649,7 @@ angular.module('blueprintApp')
 	};
 	
 	$scope.selectVisibleCellTypes = function(rangeData) {
-		var doSelectAll=true;
-		var numSelected = 0;
-		
-		var availableChartIds = [];
-		var availableChartIdsHash = {};
-		
-		var charts = ChartService.uiFuncs.getCharts(rangeData,ChartService.uiFuncs.VIEW_GENERAL);
-		
-		var enableTermNodeFunc = function(termNode) {
-			if(termNode.wasSeen) {
-				numSelected++;
-				termNode.termHidden=false;
-				for(var chartId in termNode.analysisTypes) {
-					if(!(chartId in availableChartIdsHash)) {
-						availableChartIds.push(chartId);
-						availableChartIdsHash[chartId] = null;
-					}
-				}
-			}
-		};
-		
-		rangeData.treedata.forEach(function(ontology) {
-			ontology.selectedNodes.forEach(enableTermNodeFunc);
-		});
-		
-		// Select all when no one was selected
-		if(numSelected===0) {
-			rangeData.termNodes.forEach(enableTermNodeFunc);
-		}
-		
-		// Identify the enabled charts
-		rangeData.ui.numSelectedCellTypes = numSelected;
-		rangeData.ui.numChartsForSelectedCellTypes = availableChartIds.length;
-		
-		var chartsForSelectedCellTypes = [];
-		rangeData.ui.chartsForSelectedCellTypes = chartsForSelectedCellTypes;
-		
-		charts.forEach(function(chart) {
-			if(chart.chartId in availableChartIdsHash) {
-				chartsForSelectedCellTypes.push(chart);
-				chart.isHidden = false;
-			} else {
-				// Already hiding it
-				chart.isHidden = true;
-			}
-		});
+		ChartService.uiFuncs.selectVisibleCellTypes(rangeData);
 		
 		// Changing to this state
 		//rangeData.state = ConstantsService.STATE_SHOW_DATA;
@@ -703,14 +658,7 @@ angular.module('blueprintApp')
 	};
 	
 	$scope.selectVisibleCharts = function(rangeData) {
-		// Normalizing
-		var initiallyHideMeanSeries = !rangeData.ui.initiallyShowMeanSeries;
-		
-		var charts = ChartService.uiFuncs.getCharts(rangeData,ChartService.uiFuncs.VIEW_GENERAL);
-		
-		charts.forEach(function(chart) {
-			chart.meanSeriesHidden = initiallyHideMeanSeries;
-		});
+		ChartService.uiFuncs.selectVisibleCharts(rangeData);
 		
 		// Changing to this state
 		rangeData.state = ConstantsService.STATE_SHOW_DATA;

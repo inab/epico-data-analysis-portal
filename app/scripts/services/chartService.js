@@ -647,7 +647,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 		var charts = [];
 		var chartsMap = {};
-		rangeData.ui[view.chartsFacet] = charts;
+		rangeData.ui.chartViews[viewClass].charts = charts;
 		rangeData.chartMaps[view.chartMapsFacet] = chartsMap;
 		
 		var HighchartsCommonExportingOptions = {
@@ -1085,6 +1085,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			if(gData.isInitiallyHidden !== undefined) {
 				chart.isHidden = gData.isInitiallyHidden;
 			}
+			chart.meanSeriesHidden = !rangeData.ui.initiallyShowMeanSeries;
 
 			charts.push(chart);
 			
@@ -1103,7 +1104,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	function doInitialChartsLayout(rangeData) {
 		EXPORTED_VIEWS.forEach(function(view) {
 			if('selectGroupMethod' in view) {
-				view.selectGroupMethod(rangeData,0);
+				view.selectGroupMethod(rangeData,view.viewClass,0);
 			} else {
 				doChartLayout(rangeData,view.viewClass);
 			}
@@ -1335,7 +1336,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			// we have fulfilled all the preconditions
 			var newData = processGeneralChartData(rangeData);
 			if(newData) {
-				console.log('was just here');
 				doGenerate=true;
 			}
 			
@@ -1344,7 +1344,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			charts = [ charts ];
 		}
 		
-		if(doGenerate || stillLoading) {
+		//if(doGenerate || stillLoading) {
 			var timeoutFunc = function(charts,iChart) {
 				if(iChart<charts.length) {
 					var chart = charts[iChart];
@@ -1377,6 +1377,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			//		}
 			//	});
 			//});
+		/*
 		} else {
 			charts.forEach(function(chart) {
 				try {
@@ -1389,6 +1390,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			// To force a reflow / redraw
 			//$scope.$broadcast('highchartsng.reflow');
 		}
+		*/
 	}
 	
 	// This is a trimmed version of processGeneralChartData
@@ -1818,20 +1820,33 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 	}
 	
-	function selectCellTypeForDiseases(rangeData,cellTypeIndex) {
-		rangeData.ui.celltypeButtonSelected = cellTypeIndex;
-		rangeData.ui.celltypeSelected = rangeData.termNodes[cellTypeIndex];
-		// Fixing redrawing issue
-		rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri] = 0;
-		doChartLayout(rangeData,VIEW_DISEASES,rangeData.ui.celltypeSelected.name);
+	function selectGeneral(rangeData,viewClass/*,dumbIndex*/) {
+		rangeData.ui.chartViews[viewClass].termNodes = rangeData.termNodes;
+		rangeData.ui.chartViews[viewClass].termNodesHash =rangeData.termNodesHash;
+		
+		doChartLayout(rangeData,viewClass);
 	}
 	
-	function selectTissueForCellTypes(rangeData,tissueIndex) {
+	function selectCellTypeForDiseases(rangeData,viewClass,cellTypeIndex) {
+		rangeData.ui.celltypeButtonSelected = cellTypeIndex;
+		rangeData.ui.celltypeSelected = rangeData.termNodes[cellTypeIndex];
+		
+		rangeData.ui.chartViews[viewClass].termNodes = rangeData.ui.celltypeSelected.termNodes;
+		rangeData.ui.chartViews[viewClass].termNodesHash = rangeData.ui.celltypeSelected.termNodesHash;
+		// Fixing redrawing issue
+		rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri] = 0;
+		doChartLayout(rangeData,viewClass,rangeData.ui.celltypeSelected.name);
+	}
+	
+	function selectTissueForCellTypes(rangeData,viewClass,tissueIndex) {
 		rangeData.ui.tissueButtonSelected = tissueIndex;
 		rangeData.ui.tissueSelected = rangeData.tissueNodes[tissueIndex];
+		
+		rangeData.ui.chartViews[viewClass].termNodes = rangeData.ui.tissueSelected.termNodes;
+		rangeData.ui.chartViews[viewClass].termNodesHash = rangeData.ui.tissueSelected.termNodesHash;
 		// Fixing redrawing issue
 		rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri] = 0;
-		doChartLayout(rangeData,VIEW_BY_TISSUE,rangeData.ui.tissueSelected.name);
+		doChartLayout(rangeData,viewClass,rangeData.ui.tissueSelected.name);
 	}
 	
 	// Filling the exported view array
@@ -1841,33 +1856,31 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewDesc: 'General Charts',
 			seriesNodesFacet: 'termNodes',
 			seriesNodesHashFacet: 'termNodesHash',
+			selectGroupMethod: selectGeneral,
 			legendTitle: 'Cell Types',
 			redrawMethod: redrawGeneralCharts,
-			chartsFacet: 'generalCharts',
 			chartMapsFacet: 'general',
 		},
 		{
 			viewClass: VIEW_BY_TISSUE,
 			viewDesc: 'By tissue Charts',
-			seriesNodesFacet: 'termNodes',
-			seriesNodesHashFacet: 'termNodesHash',
+			seriesNodesFacet: 'tissueTermNodes',
+			seriesNodesHashFacet: 'tissueTermNodesHash',
 			groupBySeriesNodesFacet: 'tissueNodes',
 			selectGroupMethod: selectTissueForCellTypes,
 			legendTitle: 'Cell Types',
 			redrawMethod: redrawTissueCharts,
-			chartsFacet: 'tissueCharts',
 			chartMapsFacet: 'byTissue',
 		},
 		{
 			viewClass: VIEW_DISEASES,
 			viewDesc: 'Diseases by cellular type Charts',
-			seriesNodesFacet: 'diseaseNodes',
-			seriesNodesHashFacet: 'diseaseNodesHash',
+			seriesNodesFacet: 'cellTypeTermNodes',
+			seriesNodesHashFacet: 'cellTypeTermNodesHash',
 			groupBySeriesNodesFacet: 'termNodes',
 			selectGroupMethod: selectCellTypeForDiseases,
 			legendTitle: 'Diseases',
 			redrawMethod: redrawCellTypeDiseaseCharts,
-			chartsFacet: 'celltypeDiseaseCharts',
 			chartMapsFacet: 'celltypeDisease',
 		},
 	];
@@ -1889,7 +1902,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewClass = rangeData.viewClass;
 		}
 		
-		return (RedrawSelector[viewClass].chartsFacet in rangeData.ui) ? rangeData.ui[RedrawSelector[viewClass].chartsFacet] : [];
+		return rangeData.ui.chartViews[viewClass].charts;
 	}
 	
 	
@@ -1906,7 +1919,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewClass = rangeData.viewClass;
 		}
 		
-		return rangeData[RedrawSelector[viewClass].seriesNodesHashFacet];
+		return rangeData.ui.chartViews[viewClass].termNodesHash;
 	}
 	
 	function getSeriesNodes(rangeData,viewClass) {
@@ -1920,7 +1933,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			viewClass = rangeData.viewClass;
 		}
 		
-		return rangeData[RedrawSelector[viewClass].seriesNodesFacet];
+		return rangeData.ui.chartViews[viewClass].termNodes;
 	}
 	
 	function getGroupBySeriesNodes(rangeData,viewClass) {
@@ -1959,6 +1972,14 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 	}
 	
+	function switchMeanSeries(chart,doRedraw) {
+		chart.meanSeriesHidden = !chart.meanSeriesHidden;
+		
+		if(doRedraw) {
+			redrawCharts(chart);
+		}
+	}
+	
 	function switchChart(event,chart,rangeData,viewClass) {
 		var charts = getCharts(rangeData,viewClass);
 		if(event.ctrlKey) {
@@ -1967,12 +1988,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			});
 			chart.isHidden = false;
 		} else if(event.shiftKey) {
-			chart.meanSeriesHidden = !chart.meanSeriesHidden;
-			
 			// We are not going to redraw in background (this should not happen)
-			if(viewClass===undefined || viewClass === rangeData.viewClass) {
-				redrawCharts(chart);
-			}
+			switchMeanSeries(chart,viewClass===undefined || viewClass === rangeData.viewClass);
 		} else {
 			chart.isHidden = !chart.isHidden;
 		}
@@ -2344,6 +2361,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var termNodes = angular.copy(localScope.termNodes);
 		var termNodesHash = {};
 		termNodes.forEach(function(termNode) {
+			termNode.termNodes = [];
+			termNode.termNodesHash = {};
 			termNodesHash[termNode.o_uri] = termNode;
 		});
 		
@@ -2356,7 +2375,18 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var tissueNodes = angular.copy(localScope.tissueNodes);
 		var tissueNodesHash = {};
 		tissueNodes.forEach(function(tissueNode) {
+			tissueNode.termNodes = [];
+			tissueNode.termNodesHash = {};
 			tissueNodesHash[tissueNode.o_uri] = tissueNode;
+		});
+		
+		var chartViews = {};
+		EXPORTED_VIEWS.forEach(function(view) {
+			chartViews[view.viewClass] = {
+				termNodes: [],
+				termNodesHash: {},
+				charts: []
+			};
 		});
 		
 		var rangeData = {
@@ -2396,6 +2426,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			},
 			ui: {
 				gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
+				chartViews: chartViews
 			},
 			// Initially, the default view
 			viewClass: EXPORTED_VIEWS[0].viewClass,
@@ -2413,8 +2444,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		if(viewClass===undefined) {
 			viewClass = rangeData.viewClass;
 		}
-		if('selectGroupMethod' in RedrawSelector[rangeData.viewClass]) {
-			RedrawSelector[viewClass].selectGroupMethod(rangeData,groupIndex);
+		if('selectGroupMethod' in RedrawSelector[viewClass]) {
+			RedrawSelector[viewClass].selectGroupMethod(rangeData,viewClass,groupIndex);
 		}
 		redrawCharts(rangeData,undefined,undefined,viewClass);
 	}
@@ -2524,12 +2555,13 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 				};
 				
 				
-				// Signaling diseases
-				var disease = rangeData.diseaseNodesHash[analysis.lab_experiment.sample.specimen.donor_disease];
-				disease.wasSeen = true;
-				
 				// By default, store all
 				rangeData.fetchedData.all.push(data);
+				
+				// Signaling diseases
+				var diseaseUri = analysis.lab_experiment.sample.specimen.donor_disease;
+				var disease = rangeData.diseaseNodesHash[diseaseUri];
+				disease.wasSeen = true;
 				
 				// By cell type
 				var cellDataArray;
@@ -2547,6 +2579,11 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 					rangeData.fetchedData.byCellType.orderedKeys.push(cellTypeUri);
 					rangeData.processedData.byCellType[cellTypeUri] = 0;
 				}
+				// and signal this disease on the cell_type
+				if(!(diseaseUri in cell_type.termNodesHash)) {
+					cell_type.termNodes.push(disease);
+					cell_type.termNodesHash[diseaseUri] = disease;
+				}
 				cellDataArray.push(data);
 				
 				// By tissue
@@ -2555,7 +2592,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 				// Labelling what we have seen
 				// We need this shared reference
 				var tissue = rangeData.tissueNodesHash[tissueUri];
-				// and signal this cell_type
+				// and signal this tissue
 				tissue.wasSeen = true;
 				if(tissueUri in rangeData.fetchedData.byTissue.hash) {
 					tissueDataArray = rangeData.fetchedData.byTissue.hash[tissueUri];
@@ -2565,11 +2602,75 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 					rangeData.fetchedData.byTissue.orderedKeys.push(tissueUri);
 					rangeData.processedData.byTissue[tissueUri] = 0;
 				}
+				// and signal this cell_type on the tissue
+				if(!(cellTypeUri in tissue.termNodesHash)) {
+					tissue.termNodes.push(cell_type);
+					tissue.termNodesHash[cellTypeUri] = cell_type;
+				}
 				tissueDataArray.push(data);
 			}
 		});
 	}
 		
+	function selectVisibleCellTypes(rangeData) {
+		var numSelected = 0;
+		
+		var availableChartIds = [];
+		var availableChartIdsHash = {};
+		
+		var charts = getCharts(rangeData,VIEW_GENERAL);
+		
+		var enableTermNodeFunc = function(termNode) {
+			if(termNode.wasSeen) {
+				numSelected++;
+				termNode.termHidden=false;
+				for(var chartId in termNode.analysisTypes) {
+					if(!(chartId in availableChartIdsHash)) {
+						availableChartIds.push(chartId);
+						availableChartIdsHash[chartId] = null;
+					}
+				}
+			}
+		};
+		
+		rangeData.treedata.forEach(function(ontology) {
+			ontology.selectedNodes.forEach(enableTermNodeFunc);
+		});
+		
+		// Select all when no one was selected
+		if(numSelected===0) {
+			rangeData.termNodes.forEach(enableTermNodeFunc);
+		}
+		
+		// Identify the enabled charts
+		rangeData.ui.numSelectedCellTypes = numSelected;
+		rangeData.ui.numChartsForSelectedCellTypes = availableChartIds.length;
+		
+		var chartsForSelectedCellTypes = [];
+		rangeData.ui.chartsForSelectedCellTypes = chartsForSelectedCellTypes;
+		
+		charts.forEach(function(chart) {
+			if(chart.chartId in availableChartIdsHash) {
+				chartsForSelectedCellTypes.push(chart);
+				//chart.isHidden = false;
+			} else {
+				// Already hiding it
+				chart.isHidden = true;
+			}
+		});
+	}
+	
+	function selectVisibleCharts(rangeData) {
+		// Normalizing
+		var initiallyHideMeanSeries = !rangeData.ui.initiallyShowMeanSeries;
+		
+		var charts = getCharts(rangeData,VIEW_GENERAL);
+		
+		charts.forEach(function(chart) {
+			chart.meanSeriesHidden = initiallyHideMeanSeries;
+		});
+	}
+	
 	return {
 		doRegionFeatureLayout: doRegionFeatureLayout,
 		recordAnalysisOnCellType: recordAnalysisOnCellType,
@@ -2600,6 +2701,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			
 			switchSeriesNode: switchSeriesNode,
 			switchChart: switchChart,
+			switchMeanSeries: switchMeanSeries,
 			showAllCharts: showAllCharts,
 			hideAllCharts: hideAllCharts,
 			showAllSeries: showAllSeries,
@@ -2608,6 +2710,10 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			getSeriesNodes: getSeriesNodes,
 			getGroupBySeriesNodes: getGroupBySeriesNodes,
 			selectGroup: selectGroup,
+			
+			selectVisibleCellTypes: selectVisibleCellTypes,
+			selectVisibleCharts: selectVisibleCharts,
+			DRAWABLE_REGION_FEATURES: DRAWABLE_REGION_FEATURES,
 		},
 	};
 }]);

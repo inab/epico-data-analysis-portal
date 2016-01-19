@@ -1496,16 +1496,19 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									return an.analysis_id;
 								}).join("<br>");
 								
+								var uniqueSampleNames = [];
 								var uniqueSamples = [];
 								var uniqueSamplesHash = {};
 								term.analysisInRange.forEach(function(an) {
-									var sample_name = an.lab_experiment.sample.sample_name;
-									if(!(sample_name in uniqueSamplesHash)) {
-										uniqueSamples.push(sample_name);
-										uniqueSamplesHash[sample_name] = null;
+									var sample = an.lab_experiment.sample;
+									if(!(sample.sample_id in uniqueSamplesHash)) {
+										uniqueSamples.push(sample);
+										uniqueSampleNames.push(sample.sample_name);
+										uniqueSamplesHash[sample.sample_id] = null;
 									}
 								});
-								term.samplesInRangeHtml = uniqueSamples.sort().join("<br>");
+								term.samplesInRange = uniqueSamples;
+								term.samplesInRangeHtml = uniqueSampleNames.sort().join("<br>");
 							}
 							
 						});

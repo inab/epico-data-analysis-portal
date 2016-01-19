@@ -35,16 +35,18 @@ Then run
 
 2) Install [Ruby](https://www.ruby-lang.org/) and [RubyGems](https://rubygems.org/), either using your operating system / distribution package manager, or by hand. Ruby version 1.9.3 (which can be installed in Ubuntu 14.04 as `ruby` or `ruby1.9.1`) and above should be nice. Depending on your system, RubyGems can be installed along with Ruby (as it happens in Ubuntu), or as a separate package.
 
-3) Install [Compass](http://compass-style.org/) (and its dependencies), either using your operating system / distribution package manager, or by hand. Version 0.12.2 (available in Ubuntu 14.04 as `ruby-compass` package) and above should work. The installation by hand for the current user is made using RubyGems:
+3) Install [Compass](http://compass-style.org/) (and its dependencies), either using your operating system / distribution package manager, or by hand. Version 1.0.3 and above should work. The installation by hand for the current user is made using RubyGems:
 
 ```
-gem install compass
+gem install --user-install compass
 ```
 
 In the scenario of installation by hand you have to assure Compass can be reached from the command-line. This is done with the next lines:
 
 ```bash
-PATH="$(gem env gemdir)/bin:${PATH}"
+for gemdir in $(gem env gempath | tr ':' ' ') ; do
+	PATH="$gemdir/bin:${PATH}"
+done
 export PATH
 ```
 

@@ -2350,7 +2350,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		$scope.subtotals = subtotals;
 		
 		var analysisSubtotals = angular.copy(subtotalsChartTemplate);
-		analysisSubtotals.options.title.text = 'Analysis';
+		analysisSubtotals.options.title.text = 'Stored Analysis Products';
 		analysisSubtotals.options.options.tooltip.headerFormat = '';
 		analysisSubtotals.options.options.tooltip.pointFormat = '{point.desc}<br /><span style="color:{point.color}">\u25CF</span> {point.y}';
 		

@@ -257,50 +257,57 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				
 				resp.hits.hits.forEach(function(d) {
 					var analysis = d._source;
-					analysis._type = d._type;
-					switch(d._type) {
-						case ConstantsService.DLAT_CONCEPT_M:
-							switch(analysis.mr_type) {
-								case 'hyper':
-									numDlatHyper++;
-									break;
-								case 'hypo':
-									numDlatHypo++;
-									break;
-								default:
-									numDlatOther++;
-									break;
-							}
-							
-							break;
-						case ConstantsService.PDNA_CONCEPT_M:
-							if(analysis.analysis_id.indexOf('_broad_')!==-1) {
-								analysis.isBroad = true;
-								numCSbroad++;
-							} else {
-								analysis.isBroad = false;
-								numCSnarrow++;
-							}
-							break;
-						case ConstantsService.EXP_CONCEPT_M:
-							numExpG++;
-							numExpT++;
-							break;
-						case ConstantsService.RREG_CONCEPT_M:
-							numRReg++;
-							break;
-						default:
-							numAnOther++;
-					}
-					localScope.analyses.push(analysis);
-					localScope.analysesHash[analysis.analysis_id] = analysis;
-					
-					// Linking everything
-					if(analysis.experiment_id in localScope.experimentsMap) {
-						var lab_experiment = localScope.experimentsMap[analysis.experiment_id];
+
+					// This is a quirk
+					if(analysis.analysis_id.indexOf('_wiggler')===-1) {
+						analysis._type = d._type;
+						switch(d._type) {
+							case ConstantsService.DLAT_CONCEPT_M:
+								switch(analysis.mr_type) {
+									case 'hyper':
+										numDlatHyper++;
+										break;
+									case 'hypo':
+										numDlatHypo++;
+										break;
+									default:
+										numDlatOther++;
+										break;
+								}
+								
+								break;
+							case ConstantsService.PDNA_CONCEPT_M:
+								if(analysis.analysis_id.indexOf('_broad_')!==-1) {
+									analysis.isBroad = true;
+									numCSbroad++;
+								} else {
+									analysis.isBroad = false;
+									numCSnarrow++;
+								}
+								break;
+							case ConstantsService.EXP_CONCEPT_M:
+								if(analysis.analysis_id.indexOf('_gq_')!==-1) {
+									numExpG++;
+								} else {
+									numExpT++;
+								}
+								break;
+							case ConstantsService.RREG_CONCEPT_M:
+								numRReg++;
+								break;
+							default:
+								numAnOther++;
+						}
+						localScope.analyses.push(analysis);
+						localScope.analysesHash[analysis.analysis_id] = analysis;
 						
-						lab_experiment.analyses.push(analysis);
-						analysis.lab_experiment = lab_experiment;
+						// Linking everything
+						if(analysis.experiment_id in localScope.experimentsMap) {
+							var lab_experiment = localScope.experimentsMap[analysis.experiment_id];
+							
+							lab_experiment.analyses.push(analysis);
+							analysis.lab_experiment = lab_experiment;
+						}
 					}
 				});
 				

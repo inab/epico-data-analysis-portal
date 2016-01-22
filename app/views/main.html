@@ -168,7 +168,7 @@
 				 <p>
 					 <span ng-bind-html="rangeData.found"></span>
 					 <br>
-					 <span ng-show="rangeData.ui.numCellTypesInRange!==undefined">Found {{rangeData.ui.numCellTypesInRange}} cellular types, involved in {{rangeData.ui.numAnalysesInRange}} analyses <i class="glyphicon glyphicon-list-alt" uib-tooltip="Click to see the table of related metadata" ng-click="viewDataGrid(rangeData.ui.metaDataGrid)" tooltip-popup-delay="500" tooltip-placement="top"></i></span>
+					 <span ng-show="rangeData.ui.numCellTypesInRange!==undefined">Found {{rangeData.ui.numCellTypesInRange}} cellular types, involved in {{rangeData.ui.numAnalysesInRange}} analysis products <i class="glyphicon glyphicon-list-alt" uib-tooltip="Click to see the table of related metadata" ng-click="viewDataGrid(rangeData.ui.metaDataGrid)" tooltip-popup-delay="500" tooltip-placement="top"></i></span>
 				 </p>
 				
 				<uib-progressbar class="progress-striped active initial-progressbar" animate="true" value="100" type="{{rangeData.fetchState==='no_data'?'warning':'info'}}" ng-show="rangeData.state==='initial' || rangeData.fetchState==='no_data'"><span>Fetching gene layout and stats</span></uib-progressbar>
@@ -177,7 +177,7 @@
 			
 			<!-- Selection tree -->
 			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCellTypes'">
-				<h3 class="text-center">Step 2: Found {{rangeData.ui.numCellTypesInRange}} cellular types which are involved on {{rangeData.ui.numAnalysesInRange}} analyses in this range</h3>
+				<h3 class="text-center">Step 2: Found {{rangeData.ui.numCellTypesInRange}} cellular types which are involved on {{rangeData.ui.numAnalysesInRange}} analysis products in this range</h3>
 				<h4 class="text-center">Please, select the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 				<div class="col-sm-1 text-center">
 					<div style="margin-bottom:1em">
@@ -190,6 +190,7 @@
 						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}">{{node.name}} <i class="glyphicon glyphicon-eye-open" ng-show="node.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{node.samplesInRange.length}}" popover-placement="right" uib-popover-html="node.samplesInRangeHtml" uib-tooltip="Click to see the sample names from this cellular type in this range" tooltip-placement="left" tooltip-append-to-body="true"></i> (<a href="{{node.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{node.o}}</a>)</span>
 					</treecontrol>
 				</div>
+				<h4 class="text-center">Please, select the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 			</div>
 			
 			<!-- Chart selection tree -->

@@ -178,7 +178,7 @@
 			<!-- Selection tree -->
 			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCellTypes'">
 				<h3 class="text-center">Step 2: Found {{rangeData.ui.numCellTypesInRange}} cellular types which are involved on {{rangeData.ui.numAnalysesInRange}} analysis products in this range</h3>
-				<h4 class="text-center">Please, select the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
+				<h4 class="text-center">Please, select below the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 				<div class="col-sm-1 text-center">
 					<div style="margin-bottom:1em">
 						<button class="btn btn-primary" type="button" ng-click="deselectAllVisibleCellTypes(rangeData)" uib-tooltip="Unselect all the cellular types">Clear!</button>
@@ -190,7 +190,7 @@
 						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}">{{node.name}} <i class="glyphicon glyphicon-eye-open" ng-show="node.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{node.samplesInRange.length}}" popover-placement="right" uib-popover-html="node.samplesInRangeHtml" uib-tooltip="Click to see the sample names from this cellular type in this range" tooltip-placement="left" tooltip-append-to-body="true"></i> (<a href="{{node.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{node.o}}</a>)</span>
 					</treecontrol>
 				</div>
-				<h4 class="text-center">Please, select the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
+				<h4 class="text-center">Please, select above the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 			</div>
 			
 			<!-- Chart selection tree -->
@@ -271,7 +271,7 @@
 							<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 						</div>
 					</uib-accordion-group>
-					<uib-accordion-group is-open="true" heading="&#x25BC; {{uiFuncs.getLegendTitle(view.viewClass)}}: {{uiFuncs.getVisibleSeriesCount(rangeData,view.viewClass)}} of {{rangeData.ui.chartViews[view.viewClass].termNodes.length}} for this range and view" panel-class="panel-info" class="row terms-selector">
+					<uib-accordion-group is-open="true" heading="&#x25BC; {{uiFuncs.getLegendTitle(view.viewClass)}}: {{uiFuncs.getVisibleSeriesCount(rangeData,view.viewClass)}} of {{uiFuncs.getSeenSeriesCount(rangeData,view.viewClass)}} for this range and view" panel-class="panel-info" class="row terms-selector">
 						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="uiFuncs.hideAllSeries(rangeData,view.viewClass)">
 							<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
 							<span class="term">Hide all {{uiFuncs.getLegendTitle(view.viewClass)}}</span>

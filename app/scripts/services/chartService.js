@@ -75,7 +75,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		{
 			name: DNASE_GRAPH,
 			noData: 'regulatory regions',
-			title: 'Regulatory regions (DNAse)',
+			title: 'Regulatory regions (DNaseI)',
 			yAxisLabel: 'z-score',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},

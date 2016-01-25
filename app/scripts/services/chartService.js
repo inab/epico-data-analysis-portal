@@ -154,23 +154,27 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	var experimentLabels = [
 		{
 			label: 'Bisulfite-Seq (covered %)',
+			conceptType: ConstantsService.LAB_WGBS_CONCEPT,
 			experiment_type: ConstantsService.EXPERIMENT_TYPE_DNA_METHYLATION,
 			feature: 'bisulfiteSeqHash',
 			doPercentFixup: true
 		},
 		{
 			label: 'DNase-Seq (covered %)',
+			conceptType: ConstantsService.LAB_CHRO_CONCEPT,
 			experiment_type: ConstantsService.EXPERIMENT_TYPE_CHROMATIN_ACCESSIBILITY,
 			feature: 'dnaseSeqHash',
 			doPercentFixup: true
 		},
 		{
 			label: 'Gene Exp (RNA-Seq)',
+			conceptType: ConstantsService.LAB_MRNA_CONCEPT,
 			experiment_type: ConstantsService.EXPERIMENT_TYPE_MRNA_SEQ,
 			feature: 'rnaSeqGHash'
 		},
 		{
 			label: 'Transcript Exp (RNA-Seq)',
+			conceptType: ConstantsService.LAB_MRNA_CONCEPT,
 			experiment_type: ConstantsService.EXPERIMENT_TYPE_MRNA_SEQ,
 			feature: 'rnaSeqTHash'
 		}
@@ -2270,11 +2274,13 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			// It uses two slots
 			localScope.experimentLabels.push({
 				label: histone.histoneName+' (broad peaks)',
+				conceptType: ConstantsService.LAB_CS_CONCEPT,
 				experiment_type: histone.histoneName,
 				feature: 'broad'
 			});
 			localScope.experimentLabels.push({
 				label: histone.histoneName+' (peaks)',
+				conceptType: ConstantsService.LAB_CS_CONCEPT,
 				experiment_type: histone.histoneName,
 				feature: 'notBroad'
 			});

@@ -1045,13 +1045,14 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 							var experimentLabel;
 							var experimentIndex;
 							var experimentStats;
-							if(lab_experiment.experiment_type in experimentLabelsHash) {
-								experimentLabel = experimentLabelsHash[lab_experiment.experiment_type];
+							if(lab_experiment._type in experimentLabelsHash) {
+								experimentLabel = experimentLabelsHash[lab_experiment._type];
 								experimentIndex = experimentLabel[0].pos;
 								experimentStats = stats[experimentLabel[0].feature];
 							}
-							switch(lab_experiment.experiment_type) {
-								case ConstantsService.EXPERIMENT_TYPE_DNA_METHYLATION:
+							
+							switch(lab_experiment._type) {
+								case ConstantsService.LAB_WGBS_CONCEPT:
 									var methExp = 0;
 									lab_experiment.analyses.forEach(function(analysis) {
 										var v = analysis.analysis_id;
@@ -1070,7 +1071,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									}
 									statistics[experimentIndex] = theStat;
 									break;
-								case ConstantsService.EXPERIMENT_TYPE_CHROMATIN_ACCESSIBILITY:
+								case ConstantsService.LAB_CHRO_CONCEPT:
 									var dnaseSeqExp = 0;
 									lab_experiment.analyses.forEach(function(analysis) {
 										var v = analysis.analysis_id;
@@ -1090,7 +1091,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									}
 									statistics[experimentIndex] = theStat;
 									break;
-								case ConstantsService.EXPERIMENT_TYPE_MRNA_SEQ:
+								case ConstantsService.LAB_MRNA_CONCEPT:
 									experimentLabel.forEach(function(expLabel) {
 										// Expression at Gene or Transcript levels
 										var rnaSeqExp = 0;
@@ -1116,7 +1117,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 										statistics[expIndex] = theStat;
 									});
 									break;
-								default:
+								case ConstantsService.LAB_CS_CONCEPT:
 									if(lab_experiment.experiment_type.indexOf(ConstantsService.EXPERIMENT_TYPE_HISTONE_MARK)===0) {
 										if(lab_experiment.histone!==undefined) {
 											var histone = lab_experiment.histone;
@@ -1142,9 +1143,12 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 										} else {
 											console.log("Unmapped histone "+lab_experiment.experiment_type);
 										}
-									} else {
-										console.log("Unmanaged experiment type: "+lab_experiment.experiment_type);
+									} else if(lab_experiment.experiment_type !== ConstantsService.EXPERIMENT_TYPE_CHIPSEQ_INPUT) {
+										console.log("Unmanaged ChIP-Seq experiment type: ["+lab_experiment._type+"] "+lab_experiment.experiment_type);
 									}
+									break;
+								default:
+									console.log("Unmanaged experiment type: ["+lab_experiment._type+"] "+lab_experiment.experiment_type);
 									break;
 							}
 						});
@@ -1544,10 +1548,10 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						var experimentLabelsHash = {};
 						clonedExperimentLabels.forEach(function(expLabel,iExpLabel) {
 							expLabel.pos = iExpLabel;
-							if(!(expLabel.experiment_type in experimentLabelsHash)) {
-								experimentLabelsHash[expLabel.experiment_type] = [ expLabel ];
+							if(!(expLabel.conceptType in experimentLabelsHash)) {
+								experimentLabelsHash[expLabel.conceptType] = [ expLabel ];
 							} else {
-								experimentLabelsHash[expLabel.experiment_type].push(expLabel);
+								experimentLabelsHash[expLabel.conceptType].push(expLabel);
 							}
 						});
 						

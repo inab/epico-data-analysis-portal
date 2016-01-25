@@ -56,7 +56,13 @@ factory('ConstantsService',function() {
 		EXPERIMENT_TYPE_DNA_METHYLATION: 'DNA Methylation',
 		EXPERIMENT_TYPE_CHROMATIN_ACCESSIBILITY: 'Chromatin Accessibility',
 		EXPERIMENT_TYPE_MRNA_SEQ: 'mRNA-seq',
+		EXPERIMENT_TYPE_CHIPSEQ_INPUT: 'ChIP-Seq Input',
 		EXPERIMENT_TYPE_HISTONE_MARK: 'Histone ',
+		
+		LAB_WGBS_CONCEPT: 'lab.wgbs',
+		LAB_MRNA_CONCEPT: 'lab.mrna',
+		LAB_CHRO_CONCEPT: 'lab.chro',
+		LAB_CS_CONCEPT: 'lab.cs',
 		
 		STATE_INITIAL: 'initial',
 		STATE_SELECT_CELL_TYPES: 'selectCellTypes',

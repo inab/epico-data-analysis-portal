@@ -1147,6 +1147,19 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		
 	}
 	
+	function switchLegend(chart) {
+		switch(chart.type) {
+			case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+			case GRAPH_TYPE_STEP_HIGHCHARTS:
+				chart.options.options.legend.enabled = ! chart.options.options.legend.enabled;
+				break;
+		}
+	}
+	
+	function isLegendEnabled(chart) {
+		return chart.options.options.legend.enabled;
+	}
+	
 	function doInitialChartsLayout(rangeData) {
 		EXPORTED_VIEWS.forEach(function(view) {
 			if('selectGroupMethod' in view) {
@@ -2740,6 +2753,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			VIEW_GENERAL: VIEW_GENERAL,
 			
 			getLegendTitle: getLegendTitle,
+			switchLegend: switchLegend,
+			isLegendEnabled: isLegendEnabled,
 			getSeenSeriesCount: getSeenSeriesCount,
 			getVisibleSeriesCount: getVisibleSeriesCount,
 			getChartsWithDataCount: getChartsWithDataCount,

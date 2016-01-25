@@ -2194,6 +2194,10 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		}
 	}
 	
+	function resetColorMap() {
+		Palette.resetHighColorMark();
+	}
+	
 	function assignCellTypesColorMap(localScope,termNodes) {
 		var cellTypeColors = Palette.getNextColors(termNodes.length);
 		
@@ -2749,6 +2753,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		doRegionFeatureLayout: doRegionFeatureLayout,
 		recordAnalysisOnCellType: recordAnalysisOnCellType,
 		storeFetchedData: storeFetchedData,
+		resetColorMap: resetColorMap,
 		assignCellTypesColorMap: assignCellTypesColorMap,
 		assignMeanSeriesColorMap: assignMeanSeriesColorMap,
 		assignTermsColorMap: assignTermsColorMap,

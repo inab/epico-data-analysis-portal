@@ -41,12 +41,20 @@ function ColorPalette(initialPalette) {
 }
 
 /**
+ * Resets the high color mark to an initial state
+ */
+ColorPalette.prototype.resetHighColorMark = function() {
+	this.highColorMark = -1;
+};
+
+
+/**
  * Resets the programmatic palette to an initial state
  * @param	{Array}	initialPalette	An array with the initial palette colours, in RGB format
  */
 ColorPalette.prototype.reset = function(initialPalette) {
+	this.resetHighColorMark();
 	this.palette = undefined;
-	this.highColorMark = -1;
 	
 	if(Array.isArray(initialPalette)) {
 		initialPalette = angular.copy(initialPalette);

@@ -877,6 +877,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						// Sort by root uri
 						localScope.fetchedTreeData = roots.sort(function(a,b) { return a.o_uri.localeCompare(b.o_uri); });
 						
+						// Resetting on first usage
+						ChartService.resetColorMap();
 						ChartService.assignCellTypesColorMap(localScope,termNodes);
 						ChartService.assignMeanSeriesColorMap(localScope);
 						// Diseases

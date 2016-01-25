@@ -1,12 +1,12 @@
 {
   "name": "blueprint-data-portal",
   "version": "0.9.1",
-  "description": "BLUEPRINT Data Portal",
-  "author": "Víctor de la Torre <vdelatorre@cnio.es>",
+  "description": "BLUEPRINT Data Analysis Portal",
+  "author": "José María Fernández <jmfernandez@cnio.es>",
   "contributors": [
     {
-      "name": "José María Fernández",
-      "email": "jmfernandez@cnio.es"
+      "name": "Víctor de la Torre",
+      "email": "vdelatorre@cnio.es"
     }
   ],
   "devDependencies": {

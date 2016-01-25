@@ -1029,148 +1029,156 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					percentFixupIndexes.push(iExp);
 				}
 			});
+			var sampleChildren = isDetailed ? [] : undefined;
 			samples.forEach(function(s) {
 				if(s.ontology === o.o_uri) {
 				//if(s.ontology === o.o_uri || (s.cell_type.parents && s.cell_type.parents.some(function(op) { return op === o.o_uri; }))) {
-					o.analyzed = true;
 					var statistics = clonedExperimentLabels.map(function() {
-						return 0.0;
+						return NaN;
 					});
-					s.experiments.forEach(function(lab_experiment){
-						//console.log(d);
-						var theStat = 0.0;
-						var experimentLabel;
-						var experimentIndex;
-						var experimentStats;
-						if(lab_experiment.experiment_type in experimentLabelsHash) {
-							experimentLabel = experimentLabelsHash[lab_experiment.experiment_type];
-							experimentIndex = experimentLabel[0].pos;
-							experimentStats = stats[experimentLabel[0].feature];
-						}
-						switch(lab_experiment.experiment_type) {
-							case ConstantsService.EXPERIMENT_TYPE_DNA_METHYLATION:
-								var methExp = 0;
-								lab_experiment.analyses.forEach(function(analysis) {
-									var v = analysis.analysis_id;
-									if(v in experimentStats) {
-										var a = experimentStats[v];
-										theStat += a.stats_meth_level.avg;
-										methExp++;
-									}
-								});
-								if(methExp > 0.0){
-									theStat = theStat/methExp;
-									childrens[experimentIndex]++;
-									experimentLabel[0].visible = true;
-								} else {
-									theStat = NaN;
-								}
-								statistics[experimentIndex] = theStat;
-								break;
-							case ConstantsService.EXPERIMENT_TYPE_CHROMATIN_ACCESSIBILITY:
-								var dnaseSeqExp = 0;
-								lab_experiment.analyses.forEach(function(analysis) {
-									var v = analysis.analysis_id;
-									if(v in experimentStats) {
-										var a = experimentStats[v];
-										theStat += a.peak_size.value;
-										dnaseSeqExp++;
-									}
-								});
-								if(dnaseSeqExp > 0) {
-									var region = range.end - range.start + 1;
-									theStat = theStat/region;
-									childrens[experimentIndex]++;
-									experimentLabel[0].visible = true;
-								} else {
-									theStat = NaN;
-								}
-								statistics[experimentIndex] = theStat;
-								break;
-							case ConstantsService.EXPERIMENT_TYPE_MRNA_SEQ:
-								experimentLabel.forEach(function(expLabel) {
-									// Expression at Gene or Transcript levels
-									var rnaSeqExp = 0;
-									var expIndex = expLabel.pos;
-									var expStats = stats[expLabel.feature];
-									theStat = 0.0;
-									
+					if(s.sample_id in rangeData.uniqueSamplesInRangeHash) {
+						o.analyzed = true;
+					
+						s.experiments.forEach(function(lab_experiment){
+							//console.log(d);
+							var theStat = 0.0;
+							var experimentLabel;
+							var experimentIndex;
+							var experimentStats;
+							if(lab_experiment.experiment_type in experimentLabelsHash) {
+								experimentLabel = experimentLabelsHash[lab_experiment.experiment_type];
+								experimentIndex = experimentLabel[0].pos;
+								experimentStats = stats[experimentLabel[0].feature];
+							}
+							switch(lab_experiment.experiment_type) {
+								case ConstantsService.EXPERIMENT_TYPE_DNA_METHYLATION:
+									var methExp = 0;
 									lab_experiment.analyses.forEach(function(analysis) {
 										var v = analysis.analysis_id;
-										if(v in expStats) {
-											var a = expStats[v];
-											theStat += a.stats_normalized_read_count.avg;
-											rnaSeqExp++;
+										if(v in experimentStats) {
+											var a = experimentStats[v];
+											theStat += a.stats_meth_level.avg;
+											methExp++;
 										}
 									});
-									if(rnaSeqExp > 0) {
-										theStat = theStat/rnaSeqExp;
-										childrens[expIndex]++;
-										expLabel.visible = true;
+									if(methExp > 0.0){
+										theStat = theStat/methExp;
+										childrens[experimentIndex]++;
+										experimentLabel[0].visible = true;
 									} else {
 										theStat = NaN;
 									}
-									statistics[expIndex] = theStat;
-								});
-								break;
-							default:
-								if(lab_experiment.experiment_type.indexOf(ConstantsService.EXPERIMENT_TYPE_HISTONE_MARK)===0) {
-									if(lab_experiment.histone!==undefined) {
-										var histone = lab_experiment.histone;
-										var expIdx = histone.histoneIndex;
-										
-										var histoneStats = getHistoneStatsData(lab_experiment,stats,range);
-										
-										statistics[expIdx] = histoneStats.broad;
-										if(statistics[expIdx]>0) {
-											childrens[expIdx]++;
-											clonedExperimentLabels[expIdx].visible = true;
-										//} else {
-										//	statistics[expIdx] = NaN;
+									statistics[experimentIndex] = theStat;
+									break;
+								case ConstantsService.EXPERIMENT_TYPE_CHROMATIN_ACCESSIBILITY:
+									var dnaseSeqExp = 0;
+									lab_experiment.analyses.forEach(function(analysis) {
+										var v = analysis.analysis_id;
+										if(v in experimentStats) {
+											var a = experimentStats[v];
+											theStat += a.peak_size.value;
+											dnaseSeqExp++;
 										}
+									});
+									if(dnaseSeqExp > 0) {
+										var region = range.end - range.start + 1;
+										theStat = theStat/region;
+										childrens[experimentIndex]++;
+										experimentLabel[0].visible = true;
+									} else {
+										theStat = NaN;
+									}
+									statistics[experimentIndex] = theStat;
+									break;
+								case ConstantsService.EXPERIMENT_TYPE_MRNA_SEQ:
+									experimentLabel.forEach(function(expLabel) {
+										// Expression at Gene or Transcript levels
+										var rnaSeqExp = 0;
+										var expIndex = expLabel.pos;
+										var expStats = stats[expLabel.feature];
+										theStat = 0.0;
+										
+										lab_experiment.analyses.forEach(function(analysis) {
+											var v = analysis.analysis_id;
+											if(v in expStats) {
+												var a = expStats[v];
+												theStat += a.stats_normalized_read_count.avg;
+												rnaSeqExp++;
+											}
+										});
+										if(rnaSeqExp > 0) {
+											theStat = theStat/rnaSeqExp;
+											childrens[expIndex]++;
+											expLabel.visible = true;
+										} else {
+											theStat = NaN;
+										}
+										statistics[expIndex] = theStat;
+									});
+									break;
+								default:
+									if(lab_experiment.experiment_type.indexOf(ConstantsService.EXPERIMENT_TYPE_HISTONE_MARK)===0) {
+										if(lab_experiment.histone!==undefined) {
+											var histone = lab_experiment.histone;
+											var expIdx = histone.histoneIndex;
 											
-										statistics[expIdx+1] = histoneStats.notBroad;
-										if(statistics[expIdx+1]>0) {
-											childrens[expIdx+1]++;
-											clonedExperimentLabels[expIdx+1].visible = true;
-										//} else {
-										//	statistics[expIdx+1] = NaN;
+											var histoneStats = getHistoneStatsData(lab_experiment,stats,range);
+											
+											statistics[expIdx] = histoneStats.broad;
+											if(statistics[expIdx]>0) {
+												childrens[expIdx]++;
+												clonedExperimentLabels[expIdx].visible = true;
+											//} else {
+											//	statistics[expIdx] = NaN;
+											}
+												
+											statistics[expIdx+1] = histoneStats.notBroad;
+											if(statistics[expIdx+1]>0) {
+												childrens[expIdx+1]++;
+												clonedExperimentLabels[expIdx+1].visible = true;
+											//} else {
+											//	statistics[expIdx+1] = NaN;
+											}
+										} else {
+											console.log("Unmapped histone "+lab_experiment.experiment_type);
 										}
 									} else {
-										console.log("Unmapped histone "+lab_experiment.experiment_type);
+										console.log("Unmanaged experiment type: "+lab_experiment.experiment_type);
 									}
-								} else {
-									console.log("Unmanaged experiment type: "+lab_experiment.experiment_type);
-								}
-								break;
-						}
-					});
-					
-					// Translating to the right units
-					percentFixupIndexes.forEach(function(statsI) {
-						if(!isNaN(statistics[statsI]) && statistics[statsI]!==-1) {
-							statistics[statsI] *= 100.0;
-						}
-					});
-					
-					statistics.forEach(function(stat,i) {
-						if(!isNaN(stat) && stat!==-1) {
-							aggregated_statistics[i] += stat;
-						}
-					});
+									break;
+							}
+						});
+						
+						// Translating to the right units
+						percentFixupIndexes.forEach(function(statsI) {
+							if(!isNaN(statistics[statsI]) && statistics[statsI]!==-1) {
+								statistics[statsI] *= 100.0;
+							}
+						});
+						
+						statistics.forEach(function(stat,i) {
+							if(!isNaN(stat) && stat!==-1) {
+								aggregated_statistics[i] += stat;
+							}
+						});
+					}
 					
 					if(isDetailed){
 						var newNode = {
 							expData: statistics,
-							name: s.sample_id,
+							name: s.sample_name+' ('+s.sample_id+')',
 							experimentsCount: s.experiments.length
 						};
 						
-						o.children.push(newNode);
+						sampleChildren.push(newNode);
 						numNodes++;
 					}
 				}
 			});
+			// Samples go before anything
+			if(isDetailed) {
+				o.children = sampleChildren.concat(o.children);
+			}
 			if(! o.expData) {
 				//console.log(o[i]);
 				var expData = [];
@@ -1191,9 +1199,13 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		
 		console.log("initializing stats tree");
 		
-		var lastSearchMode = localScope.display;
+		var lastSearchMode = rangeData.ui.treeDisplay;
 		if(lastSearchMode!=='none') {
 			var isDetailed = lastSearchMode==='detailed';
+			
+			//var availableSamples = localScope.samples.filter(function(sample) {
+			//	return sample.sample_id in rangeData.uniqueSamplesInRangeHash;
+			//});
 			
 			rangeData.treedata.forEach(function(ontology) {
 				ontology.isDetailed = isDetailed;
@@ -1441,6 +1453,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 								'donor_disease',
 								'donor_disease_term',
 								
+								'sample_id',
 								'sample_name',
 								'purified_cell_type_term',
 								'sample_desc',
@@ -1457,6 +1470,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						};
 						
 						// These are the analysis in the query region
+						var uniqueSamplesInRangeHash = {};
 						resp.aggregations.analyses.buckets.forEach(function(analysisStat) {
 							var analysis_id = analysisStat.key;
 							
@@ -1478,6 +1492,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									specimen.donor_disease_text,
 									specimen.donor_disease,
 									
+									sample.sample_id,
 									sample.sample_name,
 									sample.purified_cell_type,
 									sample.analyzed_sample_type_other,
@@ -1490,10 +1505,11 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									analysis._type,
 									analysisStat.doc_count
 								];
+								uniqueSamplesInRangeHash[sample.sample_id] = null;
 								table.push(row);
 							}
 						});
-						
+						rangeData.uniqueSamplesInRangeHash = uniqueSamplesInRangeHash;
 						rangeData.ui.metaDataGrid = metaDataGrid;
 						
 						// Postprocessing

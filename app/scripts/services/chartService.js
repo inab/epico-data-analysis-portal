@@ -2493,6 +2493,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			},
 			ui: {
 				gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
+				treeDisplay: 'compact',
 				chartViews: chartViews
 			},
 			// Initially, the default view

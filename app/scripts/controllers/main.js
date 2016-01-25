@@ -67,9 +67,6 @@ angular.module('blueprintApp')
 	$scope.maxResultsFetched = 0;
     
     
-	$scope.display = 'compact';
-	
-	
 	function openModalDataGrid(dataGrid,size,callback) {
 		if(size===undefined) {
 			size='lg';
@@ -454,33 +451,17 @@ angular.module('blueprintApp')
 			var deferred = $q.defer();
 			var promise = deferred.promise;
 			promise = promise
-				.then(QueryService.rangeLaunch(QueryService.getStatsData,rangeData))
+				.then(QueryService.rangeLaunch(QueryService.getChartData,rangeData))
 				// Either the browser or the server gets too stressed with this concurrent query
 				//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
-				.then(QueryService.rangeLaunch(QueryService.getChartData,rangeData), function(err) {
-					if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
-						rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
-						openModal('Data error','Error while computing stats');
-						console.error('Stats data');
-						console.error(err);
-					}
-				})
-				.then(QueryService.rangeLaunch(QueryService.initTree,rangeData), function(err) {
+				.then(function(localScope) {
+					rangeData.fetchState = ConstantsService.FETCH_STATE_END;
+					return localScope;
+				}, function(err) {
 					rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
 					openModal('Data error','Error while fetching chart data');
 					console.error('Chart data');
 					console.error(err);
-				}).
-				then(function(localScope) {
-					rangeData.fetchState = ConstantsService.FETCH_STATE_END;
-					return localScope;
-				},function(err) {
-					if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
-						rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
-						openModal('Data error','Error while initializing stats tree');
-						console.error('Stats tree');
-						console.error(err);
-					}
 				})
 				.finally(function() {
 					localScope.queryInProgress = false;
@@ -545,15 +526,45 @@ angular.module('blueprintApp')
 			case ConstantsService.STATE_INITIAL:
 				doInitial(rangeData);
 				break;
+			case ConstantsService.STATE_SELECT_CHARTS:
+				$anchorScroll('resultTabs');
+				break;
 			case ConstantsService.STATE_SHOW_DATA:
+				$anchorScroll('resultTabs');
 			//	doRefresh(rangeData);
+				if(rangeData.ui.treeDisplay!=='none') {
+					var deferred = $q.defer();
+					var promise = deferred.promise;
+					promise = promise
+						.then(QueryService.rangeLaunch(QueryService.getStatsData,rangeData))
+						// Either the browser or the server gets too stressed with this concurrent query
+						//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
+						.then(QueryService.rangeLaunch(QueryService.initTree,rangeData), function(err) {
+							if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
+								rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
+								openModal('Data error','Error while computing stats');
+								console.error('Stats data');
+								console.error(err);
+							}
+						})
+						.catch(function(err) {
+							if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
+								rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
+								openModal('Data error','Error while initializing stats tree');
+								console.error('Stats tree');
+								console.error(err);
+							}
+						});
+					 
+					deferred.resolve(rangeData.localScope);
+				}
 				switch(rangeData.fetchState) {
 					case ConstantsService.FETCH_STATE_END:
 						ChartService.uiFuncs.redrawCharts(rangeData);
 						break;
-					default:
-						console.log("See range");
-						console.log(rangeData);
+					//default:
+					//	console.log("See range");
+					//	console.log(rangeData);
 				}
 				break;
 		}

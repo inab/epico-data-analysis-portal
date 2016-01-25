@@ -126,18 +126,6 @@
 		<label>Flanking window size (bp)
 			<input style="font-weight:normal;" type="number" name="flankingWindow" ng-model="flankingWindowSize" ng-disabled="queryInProgress" min="0" required>
 		</label>
-		<div class="form-group">
-			<label>Stats Tree</label>
-			<label style="font-weight:normal;">
-				<input type="radio" name="display" ng-model="display" ng-disabled="queryInProgress" value="compact"> Compact
-			</label>
-			<label style="font-weight:normal;">
-				<input type="radio" name="display" ng-model="display" ng-disabled="queryInProgress" value="detailed"> Detailed
-			</label>
-			<label style="font-weight:normal;">
-				<input type="radio" name="display" ng-model="display" ng-disabled="queryInProgress" value="none"> Hide
-			</label>
-		</div>
 	</div>
           <div class="col-sm-6">
 		<input id="search" type="text" ng-model="query" ng-keypress="enterSearch($event)" ng-disabled="queryInProgress" placeholder="Step 1: Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" uib-typeahead="suggest for suggest in suggestSearch($viewValue)" typeadhead-loading="loadingSuggestions" typeahead-no-results="noSuggestion" typeahead-popup-template-url="suggestionPopupTemplate.html" typeahead-min-length="3" typeahead-on-select="query=label.term;search($label)" typeahead-template-url="suggestionTemplate.html" class="form-control" style="background:#f5f5f5">
@@ -203,6 +191,18 @@
 					</div>
 					<br />
 					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of range data</label></div>
+					<div class="form-group">
+						<label>Stats Tree</label>
+						<label style="font-weight:normal;">
+							<input type="radio" name="display" ng-model="rangeData.ui.treeDisplay" value="compact"> Compact
+						</label>
+						<label style="font-weight:normal;">
+							<input type="radio" name="display" ng-model="rangeData.ui.treeDisplay" value="detailed"> Detailed
+						</label>
+						<label style="font-weight:normal;">
+							<input type="radio" name="display" ng-model="rangeData.ui.treeDisplay" value="none"> Hide
+						</label>
+					</div>
 				</div>
 				<h4 class="text-center">Please, (de)select the initial charts you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCharts(rangeData)">Go!</button></h4>
 			</div>
@@ -296,6 +296,8 @@
 								Chart features: 
 								<span ng-class="{'square': feature.type !== 'plotline', 'thick-line': feature.type === 'plotline'}" ng-style="{'background-color': feature.color}" ng-repeat-start="(featureName,feature) in uiFuncs.DRAWABLE_REGION_FEATURES"></span>
 								<span style="margin-right: 1em;" ng-repeat-end>{{featureName}}</span>
+								<span style="margin-right: 1em;"><b>&#x2013; &#x2013;</b> gene start</span>
+								<span style="margin-right: 1em;"><b>· &#x2013; ·</b> gene end</span>
 							</div>
 							<div style="float:right;clear:right;">
 								<!-- Hide chart button -->
@@ -351,13 +353,13 @@
 				</div>
 				
 				<!-- Single tree for General -->
-				<div class="row" style="clear:both;" ng-show="view.viewClass==='General'">
+				<div class="row" style="clear:both;" ng-show="view.viewClass==='General' && rangeData.ui.treeDisplay!=='none'">
 					<div class="col-sm-1 text-center" style="margin-top:1em;">
 						<img ng-src="{{rangeData.ui.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.ui.gChro.n}}">
 					</div>
 					<div class="col-sm-11">
 						<div ng-repeat="ontology in rangeData.treedata">
-							<d3-tree data="ontology" label="name" tree-style="'display'"></d3-tree>      
+							<d3-tree data="ontology" label="name" tree-style="rangeData.ui.treeDisplay"></d3-tree>      
 						</div>
 					</div>
 				</div>

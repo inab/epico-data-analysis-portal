@@ -183,7 +183,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	var DRAWABLE_REGION_FEATURES = {};
 	DRAWABLE_REGION_FEATURES[ConstantsService.REGION_FEATURE_GENE] = {
 		color: '#ffffcc',
-		type: PLOTBAND_FEATURE,
+		type: BORDERED_PLOTBAND_FEATURE,
+		showLabel: true,
+		showAtBorders: true,
 	};
 	DRAWABLE_REGION_FEATURES[ConstantsService.REGION_FEATURE_START_CODON] = {
 		color: '#008000',
@@ -585,6 +587,17 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		var regionFeature = {};
 		var found = '';
 		var isReactome = ConstantsService.isReactome(range.currentQuery.queryType);
+		var curRegionType = '';
+		var curRegionTypeNum;
+		results.sort(function(a,b) {
+			if(a._source.feature!==b._source.feature) {
+				return a._source.feature.localeCompare(b._source.feature);
+			} else if(a._source.coordinates[0].chromosome_start !== b._source.coordinates[0].chromosome_start) {
+				return a._source.coordinates[0].chromosome_start - b._source.coordinates[0].chromosome_start;
+			} else {
+				return a._source.coordinates[0].chromosome_end - b._source.coordinates[0].chromosome_end;
+			}
+		});
 		results.forEach(function(feature) {
 			var featureRegion = feature._source;
 			var dest = featureRegion.feature;
@@ -599,7 +612,16 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			featureRegion.label = chooseLabelFromSymbols(featureRegion.symbol);
 			
 			if(LABELLED_REGION_FEATURES.some(function(feat) { return dest === feat; })) {
+				if(curRegionType !== dest) {
+					if(found.length > 0) {
+						found += '; ';
+					}
+					curRegionType = dest;
+					curRegionTypeNum = 0;
+					found += curRegionType+'s: ';
+				}
 				var uri = (dest in localScope.SEARCH_URIS) ? localScope.SEARCH_URIS[dest] : localScope.DEFAULT_SEARCH_URI;
+				
 				// Matching the feature_id to its region
 				featureRegion.coordinates.forEach(function(coordinates) {
 					regionFeature[coordinates.feature_id] = featureRegion;
@@ -611,10 +633,11 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 					}
 					
 					// Preparing the label
-					if(found.length > 0) {
+					if(curRegionTypeNum > 0) {
 						found += ', ';
 					}
-					found += dest+" <a href='"+uri+coordinates.feature_id+"' title='"+coordinates.feature_id+"' target='_blank'>"+featureRegion.label+"</a>";
+					curRegionTypeNum++;
+					found += " <a href='"+uri+coordinates.feature_id+"' title='"+coordinates.feature_id+"' target='_blank'>"+featureRegion.label+"</a>";
 				});
 			}
 		});
@@ -1008,7 +1031,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 												break;
 											case BORDERED_PLOTBAND_FEATURE:
 												var borderedPlotBand = {
-													borderColor: drawableFeature.color,
+													//borderColor: drawableFeature.color,
 													//borderColor: {
 													//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
 													//	stops: [
@@ -1016,25 +1039,47 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 													//		[1, '#000000']
 													//	]
 													//},
-													borderWidth: 1,
+													//borderWidth: 0,
 													color: drawableFeature.color,
 													from: coords.chromosome_start,
 													to: coords.chromosome_end,
-													zIndex: 5
+													//zIndex: 5
 												};
 												plotBands.push(borderedPlotBand);
+												
+												var borderedStart = {
+													color: 'gray',
+													dashStyle: 'DashDot',
+													width: 2,
+													value: coords.chromosome_start,
+													zIndex: 6
+												};
+												var borderedStop = {
+													color: 'gray',
+													dashStyle: 'Dash',
+													width: 2,
+													value: coords.chromosome_end,
+													zIndex: 6
+												};
+												plotLines.push(borderedStart,borderedStop);
 												
 												if(drawableFeature.showLabel) {
 													var borderedPlotBandLabel = {
 														text: featureRegion.label,
-														textAlign: 'left',
+														verticalAlign: 'middle',
+														textAlign: 'center',
+														align: 'center',
 														style: {
 															fontSize: '2mm',
 														},
-														x: -10,
 														rotation: 90
 													};
-													borderedPlotBand.label = borderedPlotBandLabel;
+													if(drawableFeature.showAtBorders) {
+														borderedStart.label = borderedPlotBandLabel;
+														borderedStop.label = borderedPlotBandLabel;
+													} else {
+														borderedPlotBand.label = borderedPlotBandLabel;
+													}
 												}
 												break;
 											case PLOTLINE_FEATURE:

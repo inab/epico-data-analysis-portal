@@ -371,7 +371,8 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 			//};
 			
 			// Outliers are available, but they must be injected in a different chart
-			return {label:samp.label, start:samp.start, data:[Wl,Q1,Q2,Q3,Wh]};
+			//return {label:samp.label, start:samp.start, data:[Wl,Q1,Q2,Q3,Wh]};
+			return {label:samp.label, start:samp.start, data:{low: Wl,q1: Q1,median: Q2,q3: Q3,high: Wh, number: samp.series.length}};
 		});
 		
 		//console.log("Orig values");
@@ -840,6 +841,13 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 								},
 								tooltip: {
 									animation: false,
+									pointFormat: '<span style="color:{point.color}">\u25CF</span> <b>{series.name}</b><br/>' + // docs
+										'Number: {point.number}<br/>' +
+										'Maximum: {point.high}<br/>' +
+										'Upper quartile: {point.q3}<br/>' +
+										'Median: {point.median}<br/>' +
+										'Lower quartile: {point.q1}<br/>' +
+										'Minimum: {point.low}<br/>',
 									backgroundColor: '#FFFFFF'
 								},
 								plotOptions: {

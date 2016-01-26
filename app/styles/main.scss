@@ -48,7 +48,7 @@ body{
   background:#00c0e4;
 }
 .header {
-  background:#1c1e20;
+  background:#333;
   padding:10px 0px !important;
   box-shadow: 0 2px 5px rgba(0,0,0,.26);
 }
@@ -374,6 +374,28 @@ $blueprint-inactive-tab-color: aliceblue;
 	border-right-color: $blueprint-inactive-tab-color;
 	background-color: $blueprint-inactive-tab-color;
 	border-bottom-color: $nav-tabs-active-link-hover-border-color;
+}
+
+.navbar.header {
+	margin-bottom: 0px;
+}
+
+.header .navbar-nav > .open {
+	> a , > a:hover , > a:focus {
+		background-color: black;
+	}
+}
+
+.header .nav > li {
+	> a:hover , > a:focus {
+		background-color: black;
+	}
+}
+
+.dropdown-menu.header > li {
+	> a:hover , > a:focus {
+		background-color: black;
+	}
 }
 
 .blink {

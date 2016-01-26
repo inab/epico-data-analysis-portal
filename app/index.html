@@ -31,22 +31,28 @@
 
     <!-- Add your site or application content here -->
     <div id="main-container" class="container-fluid">
-      <div class="header">
+      <header class="navbar navbar-inner header">
         <div class="container">
-          <div class="row">
-            <div class="col-md-12">
               <div class="pull-left"><a href="http://www.blueprint-epigenome.eu/" target="_blank"><img id="logo" src="images/blueprint.png" style="height:50px" alt="BLUEPRINT" title="BLUEPRINT"></a></div>
               <div class="pull-left"><h1>Data Analysis Portal <span class="label label-warning" style="font-size:12px;background-color:#5100ff;position: relative;top:-5px;">Beta4</span></h1></div>
-              <ul class="nav navbar-nav pull-right">
-                <li class="active"><a ng-href="#/">Home</a></li>
-                <li><a ng-href="#/about">About</a></li>
-                <li><a href="http://dcc.blueprint-epigenome.eu/" target="_blank">DCC</a></li>
-              </ul>
+              <nav class="pull-right">
+			<ul class="nav navbar-nav">
+				<li><a ng-href="#/">Home</a></li>
+				<li><a ng-href="#/about">About</a></li>
+				<li class="dropdown" uib-dropdown>
+					<a role="button" class="dropdown-toggle" uib-dropdown-toggle>DCC<b class="caret"></b></a>
+					<ul class="dropdown-menu header">
+						<li><a href="http://dcc.blueprint-epigenome.eu/" target="_blank">DCC Main Page</a></li>
+						<li><a href="http://dcc.blueprint-epigenome.eu/#/experiments" target="_blank">Experiments</a></li>
+						<li><a href="http://dcc.blueprint-epigenome.eu/#/files" target="_blank">Files</a></li>
+						<li><a href="http://dcc.blueprint-epigenome.eu/#/datasets" target="_blank">Datasets</a></li>
+					</ul>
+				</li>
+			</ul>
+              </nav>
               <div class="clearfix"></div>
-            </div>
-          </div>
         </div>
-      </div>
+      </header>
       <div id="content" ng-view="" class="container-fluid"></div>
 
       <div class="footer">
@@ -72,7 +78,7 @@
             <p>This site has been developed at <a href="http://www.cnio.es/">CNIO</a> and hosted by <a href="http://www.bsc.es/">BSC</a></p>
           </div>    
           <div class="col-sm-4 text-center">
-            <p>BLUEPRINT Epigenome © 2014-2015</p>
+            <p>BLUEPRINT Epigenome © 2014-2016</p>
           </div>
         </div>
       </div>

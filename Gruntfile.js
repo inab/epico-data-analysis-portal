@@ -33,6 +33,10 @@ module.exports = function (grunt) {
   var dataportalConfig = require(dataportalConfigFile);
   dataportalConfig.swVersion = bowerConfig.version;
   dataportalConfig.projectName = bowerConfig.description;
+  // Normalizing the value, in case it does not exist
+  if(dataportalConfig.useLocalExportServer===undefined) {
+	dataportalConfig.useLocalExportServer = false;
+  }
   
   var useminPrepare;
   var buildTasks;

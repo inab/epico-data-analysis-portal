@@ -4,7 +4,7 @@
 
 angular.
 module('blueprintApp').
-factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d3','$timeout',function($q,portalConfig,ConstantsService,ColorPalette,d3,$timeout) {
+factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorPalette','d3','$timeout',function($q,$window,portalConfig,ConstantsService,ColorPalette,d3,$timeout) {
 	
 	var METHYL_GRAPH = 'methyl';
 	var METHYL_HYPER_GRAPH = METHYL_GRAPH+'_hyper';
@@ -244,6 +244,41 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 	var VIEW_GENERAL = 'General';
 	var VIEW_BY_TISSUE = 'Tissues';
 	var VIEW_DISEASES = 'Diseases';
+	
+	var HighchartsCommonExportingOptions = {
+		scale: 1,
+		sourceWidth: Math.round(2*2.57*297), // This is needed due a bug with floating coordinates in export server
+		sourceHeight: Math.round(2*2.57*209.9), // This is needed due a bug with floating coordinates in export server
+		chartOptions: {
+			legend: {
+				enabled: true,
+				//itemDistance: 1,
+				//symbolWidth: 4,
+				itemStyle: {
+				//	fontSize: '1.5mm',
+					fontWeight: 'normal'
+				}
+			},
+			// To render a watermark
+			//chart: {
+			//	events: {
+			//		load: function() {
+			//			this.renderer.image('http://highsoft.com/images/media/Highsoft-Solutions-143px.png', 80, 40, 143, 57);
+			//		}
+			//	}
+			//}
+		}
+	};
+	
+	if(typeof(portalConfig.useLocalExportServer) === 'string' && portalConfig.useLocalExportServer!=='false') {
+		if(portalConfig.useLocalExportServer==='true') {
+			// Derive from the server
+			HighchartsCommonExportingOptions.url = $window.location.protocol + '//' + $window.location.host + '/export-server/index.php';
+		} else {
+			// Blindly use the server
+			HighchartsCommonExportingOptions.url = portalConfig.useLocalExportServer;
+		}
+	}
 	
 	function getXG(d) {
 		return d.x;
@@ -678,31 +713,6 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 		rangeData.ui.chartViews[viewClass].charts = charts;
 		rangeData.chartMaps[view.chartMapsFacet] = chartsMap;
 		
-		var HighchartsCommonExportingOptions = {
-			scale: 1,
-			sourceWidth: Math.round(2*2.57*297), // This is needed due a bug with floating coordinates in export server
-			sourceHeight: Math.round(2*2.57*209.9), // This is needed due a bug with floating coordinates in export server
-			chartOptions: {
-				legend: {
-					enabled: true,
-					//itemDistance: 1,
-					//symbolWidth: 4,
-					itemStyle: {
-					//	fontSize: '1.5mm',
-						fontWeight: 'normal'
-					}
-				},
-				// To render a watermark
-				//chart: {
-				//	events: {
-				//		load: function() {
-				//			this.renderer.image('http://highsoft.com/images/media/Highsoft-Solutions-143px.png', 80, 40, 143, 57);
-				//		}
-				//	}
-				//}
-			}
-		};
-		
 		var range_start = rangeData.range.start;
 		var range_end = rangeData.range.end;
 		if(rangeData.flankingWindowSize!==undefined) {
@@ -960,6 +970,9 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 							},
 							series: [],
 							loading: true,
+							exporting: {
+								url: 'http://blueprint-dev.bioinfo.cnio.es/export-server/index.php',
+							},
 							//func: function(chart) {
 							//	// This is needed to reflow the chart
 							//	// to its final width
@@ -2396,6 +2409,7 @@ factory('ChartService',['$q','portalConfig','ConstantsService','ColorPalette','d
 							//center: ['50%', '50%']
 						}
 					},
+					exporting: HighchartsCommonExportingOptions,
 				},
 				title: {
 					//text: 'Donors & Samples',

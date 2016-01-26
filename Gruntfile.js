@@ -32,6 +32,7 @@ module.exports = function (grunt) {
   }
   var dataportalConfig = require(dataportalConfigFile);
   dataportalConfig.swVersion = bowerConfig.version;
+  dataportalConfig.projectName = bowerConfig.description;
   
   var useminPrepare;
   var buildTasks;

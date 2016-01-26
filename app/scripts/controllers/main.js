@@ -10,7 +10,7 @@
  * Controller of the blueprintApp
  */
 angular.module('blueprintApp')
-  .controller('MainCtrl', ['$scope','$sce','$location','$q','portalConfig','QueryService','ChartService','ConstantsService','$timeout','$uibModal','$interpolate','$anchorScroll',function($scope,$sce,$location,$q, portalConfig, QueryService, ChartService, ConstantsService, $timeout,$modal,$interpolate,$anchorScroll) {
+  .controller('MainCtrl', ['$rootScope','$scope','$sce','$location','$q','portalConfig','QueryService','ChartService','ConstantsService','$timeout','$uibModal','$interpolate','$anchorScroll',function($rootScope,$scope,$sce,$location,$q, portalConfig, QueryService, ChartService, ConstantsService, $timeout,$modal,$interpolate,$anchorScroll) {
 	
 	var SEARCHING_LABEL = "Searching...";
 	var PROCESSING_LABEL = "Processing...";
@@ -36,12 +36,18 @@ angular.module('blueprintApp')
 
     $scope.dataRelease = '[Dev without config]';
     $scope.dataDesc = '[Dev without config]';
+    $scope.projectName = 'BLUEPRINT Data Portal';
 	if(portalConfig.dataRelease) {
 		$scope.dataRelease = portalConfig.dataRelease;
 	}
 	if(portalConfig.dataDesc) {
 		$scope.dataDesc = portalConfig.dataDesc;
 	}
+	
+	if(portalConfig.projectName) {
+		$scope.projectName = portalConfig.projectName;
+	}
+
 	if(portalConfig.swVersion) {
 		$scope.swVersion = portalConfig.swVersion;
 	}
@@ -707,7 +713,49 @@ angular.module('blueprintApp')
 		openModalDataGrid(dataGrid);
 	};
 	
-	function init($q,$scope) {
+	function init(/*$q,$scope,$rootScope*/) {
+		var titlePrefix =  $scope.projectName + ' ' + $scope.swVersion;
+		$rootScope.title = titlePrefix;
+		
+		$scope.$on('$locationChangeStart', function(event) {
+			//console.log("He visto algo");
+			if($scope.searchInProgress) {
+				event.preventDefault();
+			}
+		});
+		$scope.$on('$locationChangeSuccess', function(/*event*/) {
+			//console.log("Lo vi!!!!!");
+			var query;
+			var w;
+			if('w' in $location.search()) {
+				w = parseInt($location.search().w);
+				if(isNaN(w) || w < 0) {
+					w = 0;
+				}
+			}
+			if('q' in $location.search()) {
+				query = $location.search().q;
+				if(w!==undefined) {
+					$scope.flankingWindowSize = w;
+				}
+				$scope.query = query;
+				
+				$rootScope.title = 'Search '+query + ' - ' + titlePrefix;
+			} else {
+				$rootScope.title = titlePrefix;
+			}
+			
+			if(preventLocationChange) {
+				preventLocationChange = false;
+			} else if(query!==undefined) {
+				$scope.search();
+			}
+		});
+		
+		$scope.$on('$destroy',function() {
+			$rootScope.title = titlePrefix;
+		});
+		
 		var deferred = $q.defer();
 		var promise = deferred.promise;
 		promise = promise
@@ -782,42 +830,13 @@ angular.module('blueprintApp')
 					localScope.flankingWindowSize = w;
 				}
 				localScope.query = query;
+				
+				$rootScope.title = 'Search '+query + ' - ' + titlePrefix;
 				localScope.search();
 			});
 		}
 		
 		deferred.resolve($scope);
-		$scope.$on('$locationChangeStart', function(event) {
-			//console.log("He visto algo");
-			if($scope.searchInProgress) {
-				event.preventDefault();
-			}
-		});
-		$scope.$on('$locationChangeSuccess', function(/*event*/) {
-			//console.log("Lo vi!!!!!");
-			var query;
-			var w;
-			if('w' in $location.search()) {
-				w = parseInt($location.search().w);
-				if(isNaN(w) || w < 0) {
-					w = 0;
-				}
-			}
-			if('q' in $location.search()) {
-				query = $location.search().q;
-				if(w!==undefined) {
-					$scope.flankingWindowSize = w;
-				}
-				$scope.query = query;
-			}
-			
-			if(preventLocationChange) {
-				preventLocationChange = false;
-			} else if(query!==undefined) {
-				$scope.search();
-			}
-		});
 	}
-	
-	init($q,$scope);
+	init(/*$q,$scope,$rootScope*/);
 }]);

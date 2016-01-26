@@ -5,5 +5,6 @@ angular.module('blueprintApp.config', [])
 		esHost: '<%- esHost %>',
 		dataRelease: '<%- dataRelease %>',
 		dataDesc: "<%- dataDesc %>",
+		projectName: '<%- projectName %>',
 		swVersion: '<%- swVersion %>'
 	});

@@ -1,7 +1,7 @@
-About BLUEPRINT Data Portal
----------------------------
+About BLUEPRINT Data Analysis Portal
+--------------------------------
 
-The main goal of this project is to create the [BLUEPRINT](http://www.blueprint-epigenome.eu/) data portal software to provide answers beyond the metadata, primary and secondary analysis from the project. 
+The main goal of this project is to create the [BLUEPRINT](http://www.blueprint-epigenome.eu/) data analysis portal software to provide answers beyond the metadata, primary and secondary analysis from the project. 
 
 Wiki
 ----
@@ -76,4 +76,4 @@ mkdir -p dist
 grunt build
 ```
 
-8) Congratulations! The [DocumentRoot](http://httpd.apache.org/docs/current/mod/core.html#documentroot) of BLUEPRINT Data Portal is available at the `dist` subdirectory.
+8) Congratulations! The [DocumentRoot](http://httpd.apache.org/docs/current/mod/core.html#documentroot) of BLUEPRINT Data Analysis Portal is available at the `dist` subdirectory.

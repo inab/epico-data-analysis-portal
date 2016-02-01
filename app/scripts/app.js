@@ -44,6 +44,14 @@ angular.module('blueprintApp', [
         templateUrl: 'views/about.html',
         controller: 'AboutCtrl'
       })
+      .when('/first-steps', {
+        templateUrl: 'views/first-steps.html',
+        controller: 'AboutCtrl'
+      })
+      .when('/doing-a-search', {
+        templateUrl: 'views/doing-a-search.html',
+        controller: 'AboutCtrl'
+      })
       .otherwise({
         redirectTo: '/'
       });

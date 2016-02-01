@@ -52,7 +52,7 @@ body{
   padding:10px 0px !important;
   box-shadow: 0 2px 5px rgba(0,0,0,.26);
 }
-.header h1{
+.header h1 , h1.help {
   margin-top:10px;
   margin-bottom:10px;
   color:#FFF;
@@ -61,6 +61,11 @@ body{
   font-weight:300;
   -webkit-font-smoothing: antialiased;
 }
+
+h1.help {
+	color: black;
+}
+
 .header a{
   color:#FFF!important;
   font-family: $blueprint-data-portal-font-family;
@@ -76,7 +81,7 @@ body{
   background: #f9f9f9;
   border-bottom: 1px solid #f5f5f5;
 }
-.info h2{
+.info h2 , h2.help {
   color:#444;
   line-height:130%;
   font-family: $blueprint-data-portal-font-family;
@@ -100,6 +105,14 @@ body{
   background: #f9f9f9;
   border-top: 1px solid #f5f5f5;
   padding: 50px 0px !important;
+}
+
+.help {
+	font-family: $blueprint-data-portal-font-family;
+	h3 {
+		font-weight: 100;
+		font-size: 1.5em;
+	}
 }
 
 .footer p{

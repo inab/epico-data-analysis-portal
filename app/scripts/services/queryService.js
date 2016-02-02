@@ -26,6 +26,122 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		'T-cell acute leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023449',
 	};
 	
+	function getColumn(conceptDomainName, conceptName, columnName) {
+		var column;
+		
+		// First, get the column metadata
+		if(conceptDomainName in this.domains) {
+			var conceptDomain = this.domains[conceptDomainName];
+			if(conceptName in conceptDomain.concepts) {
+				var concept = conceptDomain.concepts[conceptName];
+				if(columnName in concept.columns) {
+					column = concept.columns[columnName];
+				}
+			}
+		}
+		
+		return column;
+	}
+	
+	function getCVIds(column) {
+		var retval = [];
+		
+		if(column!==undefined) {
+			if('restrictions' in column && 'cv' in column.restrictions) {
+				var cv = this.cvHash[column.restrictions.cv];
+				
+				if('includes' in cv) {
+					retval = cv.includes;
+				} else {
+					retval.push(column.restrictions.cv);
+				}
+			}
+		}
+		
+		return retval;
+	}
+	
+	
+	function fetchCVTermsForColumn(localScope,conceptDomainName,conceptName,columnName, dest, /*optional*/callback) {
+		if(dest in localScope) {
+			return localScope;
+		}
+		
+		var column = this.getColumn(conceptDomainName,conceptName,columnName);
+		var conceptNamePlural = conceptName + 's';
+		
+		// Let's calculate the unique terms
+		var theUris=[];
+		var theUrisHash = {};
+		localScope[conceptNamePlural].forEach(function(conceptInstance) {
+			var d = conceptInstance[columnName];
+			if(!(d in theUrisHash)) {
+				theUris.push(d);
+				theUrisHash[d]=1;
+			}
+		});
+		
+		var theCVs = this.getCVIds(column);
+		//var diseaseCVs = ['cv:PATO','cv:EFO','cv:NCIMetathesaurus'];
+		
+		var deferred = $q.defer();
+        
+		es.search({
+			index: ConstantsService.METADATA_MODEL_INDEX,
+			type: ConstantsService.CVTERM_CONCEPT,
+			size: 10000,
+			body: {
+				query: {
+					filtered: {
+						query: {
+							match_all: {}
+						},
+						filter: {
+							and: {
+								filters: [{
+									//term: {
+									//	ont: 'cv:CellOntology'
+									//}
+									terms: {
+										ont: theCVs
+									}
+								},{
+									terms: {
+										alt_id: theUris
+									}
+								}]
+							}
+						}
+					}
+				},
+				fields: ['term','term_uri','name','ont']
+			}
+		}, function(err,resp) {
+			if(resp.hits.total > 0) {
+				localScope[dest] = resp.hits.hits.map(function(v) {
+					var n = v.fields;
+					var theNode = {
+						name: n.name[0],
+						o: n.term[0],
+						o_uri: n.term_uri[0],
+						ont: n.ont[0],
+					};
+					
+					return theNode;
+				});
+				
+				if(typeof(callback) === 'function') {
+					return callback(localScope,deferred);
+				} else {
+					deferred.resolve(localScope);
+				}
+			} else {
+				return deferred.reject(err);
+			}
+		});
+		return deferred.promise;
+	}
+	
 	function getDataModel(localScope) {
 		if(localScope.dataModel!==undefined) {
 			return localScope;
@@ -33,12 +149,31 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		
 		return es.search({
 			index: ConstantsService.METADATA_MODEL_INDEX,
-			type: ConstantsService.DATA_MODEL_CONCEPT,
-			size: 100,
+			type: [ConstantsService.DATA_MODEL_CONCEPT,ConstantsService.CV_CONCEPT],
+			size: 1000,
 			body: {},
 		}).then(function(resp) {
 			if(typeof(resp.hits.hits) !== undefined) {
-				localScope.dataModel = resp.hits.hits[0]._source;
+				var cvHash = {};
+				resp.hits.hits.forEach(function(entry) {
+					switch(entry._type) {
+						case ConstantsService.DATA_MODEL_CONCEPT:
+							localScope.dataModel = entry._source;
+							break;
+						case ConstantsService.CV_CONCEPT:
+							var cventry = entry._source;
+							cventry._id = entry._id;
+							cvHash[cventry._id] = cventry;
+							break;
+					}
+				});
+				
+				// These are needed to seek in the model
+				localScope.dataModel.cvHash = cvHash;
+				
+				localScope.dataModel.getColumn = getColumn;
+				localScope.dataModel.getCVIds = getCVIds;
+				localScope.dataModel.fetchCVTermsForColumn = fetchCVTermsForColumn;
 			}
 			
 			return localScope;
@@ -381,143 +516,11 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	}
 	
 	function fetchDiseaseTerms(localScope) {
-		if(localScope.diseaseNodes!==undefined) {
-			return localScope;
-		}
-		
-		var deferred = $q.defer();
-        
-		// Let's calculate the unique terms
-		var theUris=[];
-		var theUrisHash = {};
-		localScope.specimens.forEach(function(specimen) {
-			var d = specimen.donor_disease;
-			if(!(d in theUrisHash)) {
-				theUris.push(d);
-				theUrisHash[d]=1;
-			}
-		});
-		
-		es.search({
-			index: ConstantsService.METADATA_MODEL_INDEX,
-			type: ConstantsService.CVTERM_CONCEPT,
-			size: 10000,
-			body: {
-				query: {
-					filtered: {
-						query: {
-							match_all: {}
-						},
-						filter: {
-							and: {
-								filters: [{
-									//term: {
-									//	ont: 'cv:CellOntology'
-									//}
-									terms: {
-										ont: ['cv:PATO','cv:EFO','cv:NCIMetathesaurus']
-									}
-								},{
-									terms: {
-										alt_id: theUris
-									}
-								}]
-							}
-						}
-					}
-				},
-				fields: ['term','term_uri','name','ont']
-			}
-		}, function(err,resp) {
-			if(resp.hits.total > 0) {
-				localScope.diseaseNodes = resp.hits.hits.map(function(v) {
-					var n = v.fields;
-					var diseaseNode = {
-						name: n.name[0],
-						o: n.term[0],
-						o_uri: n.term_uri[0],
-						ont: n.ont[0],
-					};
-					
-					return diseaseNode;
-				});
-				
-				deferred.resolve(localScope);
-			} else {
-				return deferred.reject(err);
-			}
-		});
-		return deferred.promise;
+		return localScope.dataModel.fetchCVTermsForColumn(localScope,'sdata','specimen','donor_disease','diseaseNodes');
 	}
 	
 	function fetchTissueTerms(localScope) {
-		if(localScope.tissueNodes!==undefined) {
-			return localScope;
-		}
-		
-		var deferred = $q.defer();
-        
-		// Let's calculate the unique terms
-		var theUris=[];
-		var theUrisHash = {};
-		localScope.specimens.forEach(function(specimen) {
-			var d = specimen.specimen_term;
-			if(!(d in theUrisHash)) {
-				theUris.push(d);
-				theUrisHash[d]=1;
-			}
-		});
-		
-		es.search({
-			index: ConstantsService.METADATA_MODEL_INDEX,
-			type: ConstantsService.CVTERM_CONCEPT,
-			size: 10000,
-			body: {
-				query: {
-					filtered: {
-						query: {
-							match_all: {}
-						},
-						filter: {
-							and: {
-								filters: [{
-									//term: {
-									//	ont: 'cv:CellOntology'
-									//}
-									terms: {
-										ont: ['cv:UBERON','cv:EFO','cv:CellLineOntology']
-									}
-								},{
-									terms: {
-										alt_id: theUris
-									}
-								}]
-							}
-						}
-					}
-				},
-				fields: ['term','term_uri','name','ont']
-			}
-		}, function(err,resp) {
-			if(resp.hits.total > 0) {
-				localScope.tissueNodes = resp.hits.hits.map(function(v) {
-					var n = v.fields;
-					var tissueNode = {
-						name: n.name[0],
-						o: n.term[0],
-						o_uri: n.term_uri[0],
-						ont: n.ont[0],
-					};
-					
-					return tissueNode;
-				});
-				
-				deferred.resolve(localScope);
-			} else {
-				return deferred.reject(err);
-			}
-		});
-		return deferred.promise;
+		return localScope.dataModel.fetchCVTermsForColumn(localScope,'sdata','specimen','specimen_term','tissueNodes');
 	}
 	
 	function fetchCellTerms(localScope) {
@@ -525,14 +528,13 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			return localScope;
 		}
 		
-		
 		var deferred = $q.defer();
         
 		// Let's calculate the unique terms
 		var theUris=[];
 		var theUrisHash = {};
 		localScope.samples.forEach(function(s) {
-			var d = s.ontology;
+			var d = s.purified_cell_type;
 			if(!(d in theUrisHash)) {
 				theUris.push(d);
 				theUrisHash[d]=1;
@@ -545,7 +547,10 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		*/
 		// Freeing the variable, as it is not needed, can cost time
 		// theUrisHash=undefined;
-        
+		
+		// var cellTermsCVs = ['cv:CellOntology','cv:EFO','cv:CellLineOntology'];
+		var cellTermsCVs = localScope.dataModel.getCVIds(localScope.dataModel.getColumn('sdata','sample','purified_cell_type'));
+		
 		es.search({
 			index: ConstantsService.METADATA_MODEL_INDEX,
 			type: ConstantsService.CVTERM_CONCEPT,
@@ -563,7 +568,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									//	ont: 'cv:CellOntology'
 									//}
 									terms: {
-										ont: ['cv:CellOntology','cv:EFO','cv:CellLineOntology']
+										ont: cellTermsCVs
 									}
 								},{
 									terms: {
@@ -888,7 +893,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						
 						// At last, linking analysis to their corresponding cell types and the mean series
 						localScope.samples.forEach(function(sample) {
-							var term = termNodesHash[sample.ontology];
+							var term = termNodesHash[sample.purified_cell_type];
 							sample.cell_type = term;
 							sample.experiments.forEach(function(experiment) {
 								experiment.analyses.forEach(function(analysis) {
@@ -1033,8 +1038,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			});
 			var sampleChildren = isDetailed ? [] : undefined;
 			samples.forEach(function(s) {
-				if(s.ontology === o.o_uri) {
-				//if(s.ontology === o.o_uri || (s.cell_type.parents && s.cell_type.parents.some(function(op) { return op === o.o_uri; }))) {
+				if(s.purified_cell_type === o.o_uri) {
+				//if(s.purified_cell_type === o.o_uri || (s.cell_type.parents && s.cell_type.parents.some(function(op) { return op === o.o_uri; }))) {
 					var statistics = clonedExperimentLabels.map(function() {
 						return NaN;
 					});

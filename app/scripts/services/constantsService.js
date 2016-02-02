@@ -33,12 +33,13 @@ factory('ConstantsService',function() {
 		SAMPLE_TRACKING_DATA_INDEX: 'sample-tracking-data',
 		EXTERNAL_DATA_INDEX: 'external',
 		
+		DATA_MODEL_CONCEPT: 'model',
+		CV_CONCEPT: 'cv',
+		CVTERM_CONCEPT: 'cvterm',
+		
 		DONOR_CONCEPT: 'sdata.donor',
 		SPECIMEN_CONCEPT: 'sdata.specimen',
 		SAMPLE_CONCEPT: 'sdata.sample',
-		
-		DATA_MODEL_CONCEPT: 'model',
-		CVTERM_CONCEPT: 'cvterm',
 		
 		EXTERNAL_FEATURES_CONCEPT: 'external.features',
 		
@@ -90,7 +91,7 @@ factory('ConstantsService',function() {
 		REGION_FEATURES: REGION_FEATURES,
 		
 		isReactome: function(queryType) {
-			return ( queryType === 'reaction' || queryType === 'pathway');
+			return ( queryType === REGION_FEATURE_REACTION || queryType === REGION_FEATURE_PATHWAY);
 		}
 	};
 });

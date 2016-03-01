@@ -62,6 +62,7 @@ angular.module('blueprintApp', [
 	});
 	
 	// This is to provide a graphical feedback on Highcharts y axes breaks
+	// From http://jsfiddle.net/gh/get/jquery/1.7.2/highslide-software/highcharts.com/tree/master/samples/highcharts/axisbreak/break-visualized/
 	/**
 	 * Extend the Axis.getLinePath method in order to visualize breaks with two parallel
 	 * slanted lines. For each break, the slanted lines are inserted into the line path.

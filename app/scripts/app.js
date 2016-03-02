@@ -33,7 +33,7 @@ angular.module('blueprintApp', [
 //    'smart-table',
     'ngCsv'
   ])
-  .config(function ($routeProvider,$tooltipProvider) {
+  .config(function ($routeProvider,$uibTooltipProvider) {
     $routeProvider
       .when('/', {
         templateUrl: 'views/main.html',
@@ -57,7 +57,7 @@ angular.module('blueprintApp', [
       });
 	
 	// This is to programmatically disable tooltips
-	$tooltipProvider.setTriggers({
+	$uibTooltipProvider.setTriggers({
 		'never': 'mouseleave' // <- This ensures the tooltip will go away on mouseleave
 	});
 	

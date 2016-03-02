@@ -229,7 +229,7 @@
 						<button id="tissue-button" type="button" class="btn btn-default selector-button" uib-dropdown-toggle ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'">
 							Tissue: <span class="circle" ng-style="{'border-color': rangeData.ui.tissueSelected.color, 'background-color': rangeData.ui.tissueSelected.color }"></span>{{rangeData.ui.tissueSelected.name}} <span class="caret"></span>
 						</button>
-						<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="tissue-button">
+						<ul uib-dropdown-menu class="celltype-menu" aria-labelledby="tissue-button">
 							<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': rangeData.ui.tissueButtonSelected === $index}" ng-repeat="tissueNode in uiFuncs.getGroupBySeriesNodes(rangeData,view.viewClass)"><a ng-click="uiFuncs.selectGroup(rangeData,$index);"><span class="circle" ng-style="{'border-color': tissueNode.color, 'background-color': tissueNode.color }"></span>{{tissueNode.name}}</a></li>
 							<!--
 							<li class="divider"></li>
@@ -244,7 +244,7 @@
 						<button id="celltype-button" type="button" class="btn btn-default selector-button" uib-dropdown-toggle ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'">
 							Cellular type: <span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
 						</button>
-						<ul class="uib-dropdown-menu celltype-menu" role="menu" aria-labelledby="celltype-button">
+						<ul uib-dropdown-menu class="celltype-menu" aria-labelledby="celltype-button">
 							<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in uiFuncs.getGroupBySeriesNodes(rangeData,view.viewClass)" ng-if="termNode.wasSeen"><a ng-click="uiFuncs.selectGroup(rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
 							<!--
 							<li class="divider"></li>
@@ -281,7 +281,7 @@
 							<span class="term">Show all {{uiFuncs.getLegendTitle(view.viewClass)}}</span>
 						</div>
 						<div class="col-xs-1 col-sm-12">&nbsp;</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="uiFuncs.switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-popup-delay="500">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="uiFuncs.switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
 							<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
 							<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
 							<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>

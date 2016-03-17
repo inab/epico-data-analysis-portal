@@ -46,7 +46,7 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="row in modalDataGrid.table | limitTo:modalDataGrid.limit track by $index">
-					<td ng-repeat="cell in row track by $index">{{cell}}</td>
+					<td ng-repeat="cell in row track by $index" ng-bind-html="cellFormatter(cell)"></td>
 				</tr>
 			</tbody>
 			<!--

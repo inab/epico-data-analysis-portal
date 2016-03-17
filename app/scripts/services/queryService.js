@@ -1934,12 +1934,32 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 																}
 															},
 															{
-																query: {
-																	match: {
-																		symbol: query 
+																nested: {
+																	path: "symbol",
+																	filter: {
+																		term: {
+																			"symbol.value": query
+																		}
 																	}
 																}
-															}
+															},
+															//{
+															//	nested: {
+															//		path: "symbol",
+															//		query: {
+															//			match: {
+															//				"symbol.value": query
+															//			}
+															//		}
+															//	}
+															//},
+															//{
+															//	query: {
+															//		match: {
+															//			symbol: query 
+															//		}
+															//	}
+															//}
 														]
 													}
 												}
@@ -1961,11 +1981,13 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									
 									return false;
 								}) || match._source.symbol.some(function(symbol) {
-									if(symbol.toUpperCase() === theTerm) {
-										return true;
-									}
-									
-									return false;
+									return symbol.value.some(function(symbolValue) {
+										if(symbolValue.toUpperCase() === theTerm) {
+											return true;
+										}
+										
+										return false;
+									});
 								});
 								
 								if(found) {
@@ -1979,7 +2001,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 								currentQuery.gotRanges = true;
 								currentQuery.queryType = theMatch._source.feature;
 								currentQuery.queryTypeStr = theMatch._source.feature;
-								currentQuery.ensemblGeneId = theMatch._source.feature_cluster_id;
+								currentQuery.ensemblGeneId = theMatch._source.feature_cluster_id[theMatch._source.feature_cluster_id.length-1];
 								
 								var featureLabel = currentQuery.featureLabel = ChartService.chooseLabelFromSymbols(theMatch._source.symbol);
 								var isReactome = ConstantsService.isReactome(currentQuery.queryType);
@@ -2009,14 +2031,17 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 	var my_feature_ranking = {
 		gene: 1,
 		pathway: 2,
-		transcript: 3,
-		exon: 4,
-		reaction: 5,
-		CDS: 6,
-		UTR: 7,
-		start_codon: 8,
-		stop_codon: 9,
-		Selenocysteine: 10
+		"direct_complex": 3,
+		"indirect_complex": 4,
+		transcript: 5,
+		exon: 6,
+		reaction: 7,
+		"neighbouring_reaction": 8,
+		start_codon: 9,
+		stop_codon: 10,
+		Selenocysteine: 11,
+		UTR: 12,
+		CDS: 13,
 	};
 	
 	function suggestSearch(typedQuery) {
@@ -2032,7 +2057,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			//query = query.toLowerCase();
 			var theFilter = {
 				prefix: {
-					symbol: query
+					keyword: query
 				}
 			};
 			var sugLimit;
@@ -2075,17 +2100,19 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					var theSecondTerm;
 					var isFirst = 0;
 					
-					sug._source.symbol.forEach(function(term) {
-						var termpos = term.toLowerCase().indexOf(query);
-						if(termpos===0) {
-							if(theTerm===undefined || term.length < theTerm.length) {
-								theTerm = term;
+					sug._source.symbol.forEach(function(symbol) {
+						symbol.value.forEach(function(term) {
+							var termpos = term.toLowerCase().indexOf(query);
+							if(termpos===0) {
+								if(theTerm===undefined || term.length < theTerm.length) {
+									theTerm = term;
+								}
+							} else if(termpos!==-1) {
+								if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
+									theSecondTerm = term;
+								}
 							}
-						} else if(termpos!==-1) {
-							if(theSecondTerm===undefined || term.length < theSecondTerm.length) {
-								theSecondTerm = term;
-							}
-						}
+						});
 					});
 					
 					// A backup default
@@ -2095,12 +2122,12 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 							theTerm = theSecondTerm;
 						} else {
 							isFirst = 2;
-							theTerm = sug._source.symbol[0];
+							theTerm = sug._source.symbol[0].value[0];
 						}
 					}
 					var feature = sug._source.feature;
 					var featureScore = (feature in my_feature_ranking) ? my_feature_ranking[feature] : 255;
-					resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug._source.symbol.join(", ")+')', id:sug._id, coordinates:sug._source.coordinates, feature:feature,featureScore:featureScore, feature_cluster_id:sug._source.feature_cluster_id, symbols: sug._source.symbol});
+					resultsSearch.push({term:theTerm, pos:i, isFirst: isFirst, fullTerm: theTerm+' ('+sug._source.symbol.map(function(symbol) { return symbol.value[0]; }).join(", ")+')', id:sug._id, coordinates:sug._source.coordinates, feature:feature, feature_id: sug._source.feature_id, featureScore:featureScore, feature_cluster_id:sug._source.feature_cluster_id, symbols: sug._source.symbol});
 				});
 				
 				resultsSearch.sort(function(a,b) {

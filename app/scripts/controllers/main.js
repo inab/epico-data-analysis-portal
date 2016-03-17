@@ -294,10 +294,10 @@ angular.module('blueprintApp')
 		if(localScope.suggestedQuery.length > 0) {
 			localScope.suggestedQuery.forEach(function(suggestedQuery) {
 				var currentQuery = {
-					query: suggestedQuery.term,
+					query: suggestedQuery.feature_id,
 					queryType: suggestedQuery.feature,
 					queryTypeStr: suggestedQuery.feature,
-					ensemblGeneId: suggestedQuery.feature_cluster_id,
+					ensemblGeneId: suggestedQuery.feature_cluster_id[suggestedQuery.feature_cluster_id.length-1],
 					gotRanges: true,
 					flankingWindowSize: parseInt((suggestedQuery.flankingWindowSize!==undefined) ? suggestedQuery.flankingWindowSize : localScope.flankingWindowSize),
 					additivity: (suggestedQuery.additivity!==undefined) ? suggestedQuery.additivity : UNION_ADDITIVITY
@@ -306,7 +306,7 @@ angular.module('blueprintApp')
 				if(!(suggestedQuery.feature in topFeatures)) {
 					currentQuery.queryTypeStr += ' from gene,';
 				}
-				var featureLabel = ChartService.chooseLabelFromSymbols(suggestedQuery.symbols);
+				var featureLabel = currentQuery.featureLabel = ChartService.chooseLabelFromSymbols(suggestedQuery.symbols);
 				var isReactome = ConstantsService.isReactome(currentQuery.queryType);
 				suggestedQuery.coordinates.forEach(function(range) {
 					var theRange = { chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end, currentQuery: currentQuery };

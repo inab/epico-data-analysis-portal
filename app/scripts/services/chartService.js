@@ -89,7 +89,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Narrow Histone Peaks',
 			floor: 0.0,
 			yAxisLabel: '-Log10(q-value)',
-			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+			type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
 		},
 		{
 			name: CSEQ_BROAD_GRAPH,
@@ -97,7 +97,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Broad Histone Peaks',
 			floor: 0.0,
 			yAxisLabel: '-Log10(q-value)',
-			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+			type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
 		},
 	];
 	
@@ -302,7 +302,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				case "HGNC":
 					featureSymbol = symbol;
 					return true;
-					break;
 			}
 			return false;
 		});
@@ -578,7 +577,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var prevPos = 0;
 		
 		values.forEach(function(point) {
-			if(prevPos!=point[0]) {
+			if(prevPos!==point[0]) {
 				if(numPos!==0) {
 					var mean = sumPosVal  / numPos;
 					meanValues.push({x: prevPos,y: mean},{x: point[0],y: mean});
@@ -618,6 +617,91 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	function genMeanSeriesHighcharts(origValues) {
 		return genMeanSeries(origValues).map(function(meanValue) {
 			return [meanValue.x,meanValue.y];
+		});
+	}
+	
+	function dataSeriesValueComparator(segment1,segment2) {
+		return segment1[2] - segment2[2];
+	}
+	
+	function genAreaRangeSeries(origValues) {
+		var minMaxValues = [];
+		
+		// Pre-processing the original values
+		var values = [];
+		origValues.forEach(function(data) {
+			var diff = data[1] - data[0];
+			var sDataS = [data[0],data,diff];
+			values.push(sDataS);
+			if(diff!==0) {
+				var sDataE = [data[1],data,-1];
+				values.push(sDataE);
+			}
+		});
+		values.sort(dataSeriesComparator);
+		
+		var currSegments = [];
+		var toRemove = [];
+
+		var prevPos = 0;
+		var toBeSorted = false;
+		values.forEach(function(point) {
+			if(prevPos!==point[0]) {
+				if(currSegments.length > 0) {
+					if(toBeSorted) {
+						currSegments.sort(dataSeriesValueComparator);
+						toBeSorted = false;
+					}
+					
+					minMaxValues.push({x: prevPos , min: currSegments[0][2] , max: currSegments[currSegments.length-1][2]});
+					
+					// Now, time to remove, which keeps order
+					if(toRemove.length > 0) {
+						if(toRemove.length === currSegments.length) {
+							currSegments = [];
+							// Dealing with the corner case of a hole
+							minMaxValues.push({x: prevPos , min: null , max: null});
+						} else {
+							toRemove.forEach(function(point) {
+								currSegments.splice(currSegments.indexOf(point),1);
+							});
+						}
+						toRemove = [];
+					}
+				}
+				prevPos = point[0];
+			}
+			
+			if(point[2] !== -1) {
+				// Add a point. Label it as to be sorted (if needed)
+				toBeSorted = true;
+				currSegments.push(point[1]);
+				if(currSegments.length > 1) {
+					toBeSorted = true;
+				}
+			}
+			if(point[2] === -1 || point[2] === 0) {
+				// Schedule point removal
+				toRemove.push(point[1]);
+			}
+		});
+		
+		// Last iteration
+		if(currSegments.length > 0) {
+			if(toBeSorted) {
+				currSegments.sort(dataSeriesValueComparator);
+				toBeSorted = false;
+			}
+			
+			minMaxValues.push({x: prevPos , min: currSegments[0][2] , max: currSegments[currSegments.length-1][2]});
+		}
+		
+		return minMaxValues;
+	}
+	
+	function genAreaRangeSeriesHighcharts(origValues) {
+		return genAreaRangeSeries(origValues).map(function(rangeValue) {
+			return [rangeValue.x,rangeValue.min,rangeValue.max];
 		});
 	}
 	
@@ -1528,6 +1612,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											series: {
 												name: graph.bpSideData.meanSeries.name,
 												color: graph.bpSideData.meanSeries.color,
+												fillOpacity: 0.3,
 												shadow: false,
 												connectNulls: false,
 												marker: {
@@ -1645,6 +1730,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											series: {
 												name: seriesName,
 												color: seriesColor,
+												fillOpacity: 0.3,
 												shadow: false,
 												connectNulls: false,
 												marker: {
@@ -1863,6 +1949,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											series: {
 												name: seriesName,
 												color: seriesColor,
+												fillOpacity: 0.3,
 												shadow: false,
 												connectNulls: false,
 												marker: {
@@ -2048,6 +2135,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											series: {
 												name: graph.bpSideData.meanSeries.name,
 												color: graph.bpSideData.meanSeries.color,
+												fillOpacity: 0.3,
 												shadow: false,
 												connectNulls: false,
 												marker: {
@@ -2165,6 +2253,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											series: {
 												name: seriesName,
 												color: seriesColor,
+												fillOpacity: 0.3,
 												shadow: false,
 												connectNulls: false,
 												marker: {

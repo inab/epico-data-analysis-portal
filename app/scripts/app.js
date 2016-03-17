@@ -1,4 +1,5 @@
 'use strict';
+/* globals Highcharts */
 /**
  * @ngdoc overview
  * @name blueprintApp

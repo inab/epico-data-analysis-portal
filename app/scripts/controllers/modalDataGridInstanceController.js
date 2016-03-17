@@ -25,13 +25,12 @@ angular.module('blueprintApp').controller('ModalDataGridInstanceCtrl', function 
 	};
 	
 	$scope.cellFormatter = function(text) {
-		var sanText = document.createTextNode(text);
 		var result = text;
-		if(typeof text === 'string' && (text.indexOf('http://')==0 || text.indexOf('https://')==0)) {
+		if(typeof text === 'string' && (text.indexOf('http://')===0 || text.indexOf('https://')===0)) {
 			result = $sce.trustAsHtml('<a href="'+text+'" target="_blank">'+text+'</a>');
 		}
 		return result;
 		// 
 		// return (typeof text === 'string' && text.indexOf('http://')==0 || text.indexOf('https://')==0) ? $sce.trustAsUrl(text) : text;
-	}
+	};
 });

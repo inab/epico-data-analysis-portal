@@ -47,7 +47,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		var retval = [];
 		
 		if(column!==undefined) {
-			if('restrictions' in column && 'cv' in column.restrictions) {
+			if(('restrictions' in column) && ('cv' in column.restrictions)) {
 				var cv = this.cvHash[column.restrictions.cv];
 				
 				if('includes' in cv) {

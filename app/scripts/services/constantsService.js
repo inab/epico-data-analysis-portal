@@ -7,21 +7,36 @@ module('blueprintApp').
 factory('ConstantsService',function() {
 	var DEFAULT_SEARCH_URI = 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
 	var REGION_SEARCH_URI = 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Homo_sapiens/Location/View?r=';
+	var REACTOME_SEARCH_URI = 'http://www.reactome.org/content/detail/';
 	var SEARCH_URIS = {
 		gene: 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Homo_sapiens/Gene/Summary?db=core&g=',
-		pathway: 'http://www.reactome.org/content/detail/',
 		transcript: 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Homo_sapiens/Transcript/Summary?db=core&t=',
-		reaction: 'http://www.reactome.org/content/detail/',
+		"direct_complex": REACTOME_SEARCH_URI,
+		"indirect_complex": REACTOME_SEARCH_URI,
+		reaction: REACTOME_SEARCH_URI,
+		"neighbouring_reaction": REACTOME_SEARCH_URI,
+		pathway: REACTOME_SEARCH_URI,
 		region: REGION_SEARCH_URI,
 	};
 	
 	var REGION_FEATURE_GENE = 'gene';
 	var REGION_FEATURE_TRANSCRIPT = 'transcript';
-	var REGION_FEATURE_REACTION = 'reaction';
-	var REGION_FEATURE_PATHWAY = 'pathway';
 	var REGION_FEATURE_START_CODON = 'start_codon';
 	var REGION_FEATURE_STOP_CODON = 'stop_codon';
+	var REGION_FEATURE_REACTION = 'reaction';
+	var REGION_FEATURE_PATHWAY = 'pathway';
+	var REGION_FEATURE_NEIGHBOURING_REACTION = 'neighbouring_reaction';
+	var REGION_FEATURE_INDIRECT_COMPLEX = 'indirect_complex';
+	var REGION_FEATURE_DIRECT_COMPLEX = 'direct_complex';
+	
 	var REGION_FEATURES = [ REGION_FEATURE_GENE , REGION_FEATURE_TRANSCRIPT, REGION_FEATURE_START_CODON, REGION_FEATURE_STOP_CODON ];
+	
+	var REACTOME_FEATURES = {};
+	REACTOME_FEATURES[REGION_FEATURE_REACTION] = null;
+	REACTOME_FEATURES[REGION_FEATURE_PATHWAY] = null;
+	REACTOME_FEATURES[REGION_FEATURE_NEIGHBOURING_REACTION] = null;
+	REACTOME_FEATURES[REGION_FEATURE_INDIRECT_COMPLEX] = null;
+	REACTOME_FEATURES[REGION_FEATURE_DIRECT_COMPLEX] = null;
 	
 	return {
 		DEFAULT_FLANKING_WINDOW_SIZE: 500,
@@ -86,12 +101,17 @@ factory('ConstantsService',function() {
 		REGION_FEATURE_TRANSCRIPT: REGION_FEATURE_TRANSCRIPT,
 		REGION_FEATURE_START_CODON: REGION_FEATURE_START_CODON,
 		REGION_FEATURE_STOP_CODON: REGION_FEATURE_STOP_CODON,
+		
 		REGION_FEATURE_REACTION: REGION_FEATURE_REACTION,
 		REGION_FEATURE_PATHWAY: REGION_FEATURE_PATHWAY,
+		REGION_FEATURE_DIRECT_COMPLEX: REGION_FEATURE_DIRECT_COMPLEX,
+		REGION_FEATURE_INDIRECT_COMPLEX: REGION_FEATURE_INDIRECT_COMPLEX,
+		REGION_FEATURE_NEIGHBOURING_REACTION: REGION_FEATURE_NEIGHBOURING_REACTION,
+		
 		REGION_FEATURES: REGION_FEATURES,
 		
 		isReactome: function(queryType) {
-			return ( queryType === REGION_FEATURE_REACTION || queryType === REGION_FEATURE_PATHWAY);
+			return ( queryType in REACTOME_FEATURES);
 		}
 	};
 });

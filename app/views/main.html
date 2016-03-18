@@ -187,7 +187,7 @@
 				<div class="initial-charts">
 					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
 						<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
-						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
+						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
 					</div>
 					<br />
 					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of range data</label></div>

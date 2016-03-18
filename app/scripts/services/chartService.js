@@ -40,25 +40,53 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				breakSize: 0.025
 			}],
 			yAxisLabel: 'Methylation level',
-			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+			views: [
+				{
+					type: GRAPH_TYPE_STEP_HIGHCHARTS,
+					subtitle: 'mean series'
+				},
+				{
+					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+					subtitle: 'min / max'
+				}
+			],
 		},
 		{
 			name: METHYL_HYPER_GRAPH,
 			noData: 'hyper-methylated regions',
 			title: 'Hyper-methylated regions',
 			ceiling: 1.0,
-			floor: 0.0,
+			floor: 0.75,
 			yAxisLabel: 'Methylation level',
-			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+			views: [
+				{
+					type: GRAPH_TYPE_STEP_HIGHCHARTS,
+					subtitle: 'mean series'
+				},
+				{
+					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+					subtitle: 'min / max'
+				}
+			],
 			isInitiallyHidden: true,
 		},
 		{
 			name: METHYL_HYPO_GRAPH,
 			noData: 'hypo-methylated regions',
 			title: 'Hypo-methylated regions',
-			ceiling: 1.0,
+			ceiling: 0.25,
 			floor: 0.0,
 			yAxisLabel: 'Methylation level',
+			views: [
+				{
+					type: GRAPH_TYPE_STEP_HIGHCHARTS,
+					subtitle: 'mean series'
+				},
+				{
+					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+					subtitle: 'min / max'
+				}
+			],
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 			isInitiallyHidden: true,
 		},
@@ -68,7 +96,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Gene Expression',
 			floor: 0.0,
 			yAxisLabel: 'FPKM',
-			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+			views: [
+				{
+					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+				},
+			],
 		},
 		{
 			name: EXP_T_GRAPH,
@@ -76,14 +108,27 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Transcript Expression',
 			floor: 0.0,
 			yAxisLabel: 'FPKM',
-			type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+			views: [
+				{
+					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+				},
+			],
 		},
 		{
 			name: DNASE_GRAPH,
 			noData: 'regulatory regions',
-			title: 'Regulatory regions (DNaseI)',
+			title: 'Regulatory regions (DNaseI) (mean series)',
 			yAxisLabel: 'z-score',
-			type: GRAPH_TYPE_STEP_HIGHCHARTS,
+			views: [
+				{
+					type: GRAPH_TYPE_STEP_HIGHCHARTS,
+					subtitle: 'mean series'
+				},
+				{
+					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+					subtitle: 'min / max'
+				}
+			],
 		},
 	];
 	
@@ -94,7 +139,16 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Narrow Histone Peaks',
 			floor: 0.0,
 			yAxisLabel: '-Log10(q-value)',
-			type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+			views: [
+				{
+					type: GRAPH_TYPE_STEP_HIGHCHARTS,
+					subtitle: 'mean series'
+				},
+				{
+					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+					subtitle: 'min / max'
+				}
+			],
 		},
 		{
 			name: CSEQ_BROAD_GRAPH,
@@ -102,7 +156,16 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Broad Histone Peaks',
 			floor: 0.0,
 			yAxisLabel: '-Log10(q-value)',
-			type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+			views: [
+				{
+					type: GRAPH_TYPE_STEP_HIGHCHARTS,
+					subtitle: 'mean series'
+				},
+				{
+					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+					subtitle: 'min / max'
+				}
+			],
 		},
 	];
 	
@@ -829,13 +892,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var histoneInstance;
 		
 		var GraphPrepare = function(gData) {
-			var chart;
-			
 			var title = gData.title;
 			var legendTitle = view.legendTitle;
 			var noData = gData.noData;
 			var gName = gData.name;
-	
+			
 			if(histoneInstance!==undefined) {
 				title += ' ' + histoneInstance.histoneName;
 				noData += ' ' + histoneInstance.histoneName;
@@ -845,669 +906,676 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				title += ' on ' + postTitle;
 			}
 			
-			switch(gData.type) {
-				case GRAPH_TYPE_STEP_NVD3:
-					chart = {
-						options: {
-							chart: {
-								type: 'lineChart',
-								x: getXG,
-								y: getYG,
-								useInteractiveGuideline: true,
-								interpolate: 'step',
-								noData: "Fetching "+noData+" from "+rangeData.rangeStr,
-								showLegend: false,
-								transitionDuration: 0,
+			var chartViews = gData.views.map(function(gDataView) {
+				var chart;
+				
+				switch(gDataView.type) {
+					case GRAPH_TYPE_STEP_NVD3:
+						chart = {
+							options: {
+								chart: {
+									type: 'lineChart',
+									x: getXG,
+									y: getYG,
+									useInteractiveGuideline: true,
+									interpolate: 'step',
+									noData: "Fetching "+noData+" from "+rangeData.rangeStr,
+									showLegend: false,
+									transitionDuration: 0,
+									xAxis: {
+										axisLabel: 'Coordinates (at '+rangeData.rangeStrEx+')'
+									},
+									yAxis: {
+										axisLabel: gData.yAxisLabel,
+										tickFormat: d3.format('.3g')
+									}
+								},
+								title: {
+									text: title
+								},
+							},
+							data: [],
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_NVD3,
+						};
+						break;
+					case GRAPH_TYPE_STEP_CHARTJS:
+						// Unfinished
+						chart = {
+							options: {
+								type: 'line',
+								options: {
+									responsive: true,
+									scales: {
+										xAxes: [
+											{
+												display: true
+											}
+										],
+										yAxes: [
+											{
+												display: true
+											}
+										]
+									}
+								},
+								title: {
+									text: title,
+								},
+								toolTip: {
+									shared: true,
+								},
+								animationEnabled: true,
+								zoomEnabled: true,
+								exportEnabled: true,
+								data: {
+									datasets: []
+								}
+							},
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_CHARTJS,
+						};
+						break;
+					case GRAPH_TYPE_STEP_CANVASJS:
+						chart = {
+							options: {
+								title: {
+									text: title,
+								},
+								toolTip: {
+									shared: true,
+								},
+								animationEnabled: true,
+								zoomEnabled: true,
+								exportEnabled: true,
+								data: []
+							},
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_CANVASJS,
+						};
+						break;
+					case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+						chart = {
+							options: {
+								options: {
+									chart: {
+										type: 'boxplot',
+										backgroundColor: null,
+										events: {
+											// reflowing after load and redraw events led to blank drawings
+											addSeries: function() {
+												var chart = this;
+												//this.reflow();
+												setTimeout(function() {
+													chart.reflow();
+												},0);
+											}
+										},
+										animation: false,
+										zoomType: 'y',
+										panning: true,
+										panKey: 'shift'
+									},
+									legend: {
+										enabled: false,
+										title: {
+											text: legendTitle
+										}
+									},
+									tooltip: {
+										animation: false,
+										pointFormat: '<span style="color:{point.color}">\u25CF</span> <b>{series.name}</b><br/>' + // docs
+											'Number: {point.number}<br/>' +
+											'Maximum: {point.high}<br/>' +
+											'Upper quartile: {point.q3}<br/>' +
+											'Median: {point.median}<br/>' +
+											'Lower quartile: {point.q1}<br/>' +
+											'Minimum: {point.low}<br/>',
+										backgroundColor: '#FFFFFF'
+									},
+									plotOptions: {
+										series: {
+											animation: false
+										}
+									},
+									exporting: HighchartsCommonExportingOptions,
+								},
+								title: {
+									text: title
+								},
 								xAxis: {
-									axisLabel: 'Coordinates (at '+rangeData.rangeStrEx+')'
+									title: {
+										text: 'Ensembl Ids (at '+rangeData.rangeStrEx+')'
+									},
+									categories: []
 								},
 								yAxis: {
-									axisLabel: gData.yAxisLabel,
-									tickFormat: d3.format('.3g')
-								}
-							},
-							title: {
-								text: title
-							},
-						},
-						data: [],
-						seriesAggregator: defaultSeriesAggregator,
-						library: LIBRARY_NVD3,
-					};
-					break;
-				case GRAPH_TYPE_STEP_CHARTJS:
-					// Unfinished
-					chart = {
-						options: {
-							type: 'line',
-							options: {
-								responsive: true,
-								scales: {
-									xAxes: [
-										{
-											display: true
-										}
-									],
-									yAxes: [
-										{
-											display: true
-										}
-									]
-								}
-							},
-							title: {
-								text: title,
-							},
-							toolTip: {
-								shared: true,
-							},
-							animationEnabled: true,
-							zoomEnabled: true,
-							exportEnabled: true,
-							data: {
-								datasets: []
-							}
-						},
-						seriesAggregator: defaultSeriesAggregator,
-						library: LIBRARY_CHARTJS,
-					};
-					break;
-				case GRAPH_TYPE_STEP_CANVASJS:
-					chart = {
-						options: {
-							title: {
-								text: title,
-							},
-							toolTip: {
-								shared: true,
-							},
-							animationEnabled: true,
-							zoomEnabled: true,
-							exportEnabled: true,
-							data: []
-						},
-						seriesAggregator: defaultSeriesAggregator,
-						library: LIBRARY_CANVASJS,
-					};
-					break;
-				case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-					chart = {
-						options: {
-							options: {
-								chart: {
-									type: 'boxplot',
-									backgroundColor: null,
-									events: {
-										// reflowing after load and redraw events led to blank drawings
-										addSeries: function() {
-											var chart = this;
-											//this.reflow();
-											setTimeout(function() {
-												chart.reflow();
-											},0);
-										}
-									},
-									animation: false,
-									zoomType: 'y',
-									panning: true,
-									panKey: 'shift'
-								},
-								legend: {
-									enabled: false,
 									title: {
-										text: legendTitle
+										text: gData.yAxisLabel
 									}
 								},
-								tooltip: {
-									animation: false,
-									pointFormat: '<span style="color:{point.color}">\u25CF</span> <b>{series.name}</b><br/>' + // docs
-										'Number: {point.number}<br/>' +
-										'Maximum: {point.high}<br/>' +
-										'Upper quartile: {point.q3}<br/>' +
-										'Median: {point.median}<br/>' +
-										'Lower quartile: {point.q1}<br/>' +
-										'Minimum: {point.low}<br/>',
-									backgroundColor: '#FFFFFF'
-								},
-								plotOptions: {
-									series: {
-										animation: false
-									}
-								},
-								exporting: HighchartsCommonExportingOptions,
+								series: [],
+								loading: true,
+								//func: function(chart) {
+								//	// This is needed to reflow the chart
+								//	// to its final width
+								//	$timeout(function() {
+								//		chart.reflow();
+								//	},0);
+								//},
 							},
-							title: {
-								text: title
-							},
-							xAxis: {
-								title: {
-									text: 'Ensembl Ids (at '+rangeData.rangeStrEx+')'
-								},
-								categories: []
-							},
-							yAxis: {
-								title: {
-									text: gData.yAxisLabel
-								}
-							},
-							series: [],
-							loading: true,
-							//func: function(chart) {
-							//	// This is needed to reflow the chart
-							//	// to its final width
-							//	$timeout(function() {
-							//		chart.reflow();
-							//	},0);
-							//},
-						},
-						seriesAggregator: highchartsBoxPlotAggregator,
-						library: LIBRARY_HIGHCHARTS,
-					};
-					
-					// Setting the floor and ceiling when available
-					if(gData.floor!==undefined) {
-						chart.options.yAxis.floor = gData.floor;
-					}
-					
-					if(gData.ceiling!==undefined) {
-						chart.options.yAxis.ceiling = gData.ceiling;
-					}
-					
-					if(gData.breaks!==undefined) {
-						chart.options.yAxis.breaks = gData.breaks;
-						//chart.options.yAxis.lineColor = 'black';
-						chart.options.yAxis.lineWidth = 1;
-					}
-					break;
-				case GRAPH_TYPE_STEP_HIGHCHARTS:
-					var plotBands = [];
-					var plotLines = [];
-					chart = {
-						options: {
-							options: {
-								chart: {
-									type: 'line',
-									backgroundColor: null,
-									events: {
-										// reflowing after load and redraw events led to blank drawings
-										addSeries: function() {
-											var chart = this;
-											//this.reflow();
-											setTimeout(function() {
-												chart.reflow();
-											},0);
-										}
-									},
-									animation: false,
-									zoomType: 'x',
-									panning: true,
-									panKey: 'shift'
-								},
-								legend: {
-									enabled: false,
-									title: {
-										text: legendTitle
-									}
-								},
-								tooltip: {
-									animation: false,
-									shared: true,
-									backgroundColor: '#FFFFFF'
-								},
-								plotOptions: {
-									series: {
-										animation: false
-									}
-								},
-								exporting: HighchartsCommonExportingOptions,
-							},
-							title: {
-								text: title
-							},
-							xAxis: {
-								title: {
-									text: 'Coordinates (at '+rangeData.rangeStrEx+')'
-								},
-								min: range_start,
-								max: range_end,
-								allowDecimals: false,
-								plotBands: plotBands,
-								plotLines: plotLines,
-							},
-							yAxis: {
-								title: {
-									text: gData.yAxisLabel
-								}
-							},
-							series: [],
-							loading: true,
-							//func: function(chart) {
-							//	// This is needed to reflow the chart
-							//	// to its final width
-							//	$timeout(function() {
-							//		chart.reflow();
-							//	},0);
-							//},
-						},
-						seriesAggregator: defaultSeriesAggregator,
-						library: LIBRARY_HIGHCHARTS,
-					};
-					
-					// Setting the floor and ceiling when available
-					if(gData.floor!==undefined) {
-						chart.options.yAxis.floor = gData.floor;
-					}
-					
-					if(gData.ceiling!==undefined) {
-						chart.options.yAxis.ceiling = gData.ceiling;
-					}
-					
-					if(gData.breaks!==undefined) {
-						chart.options.yAxis.breaks = gData.breaks;
-						//chart.options.yAxis.lineColor = 'black';
-						chart.options.yAxis.lineWidth = 1;
-					}
-					
-					// Adding the gene and transcript regions
-					ConstantsService.REGION_FEATURES.forEach(function(featureType) {
-						if(featureType in DRAWABLE_REGION_FEATURES) {
-							var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
-							
-							// Consolidating the declared feature regions
-							var consolidatedFeatureRegions = [];
-							var consolidatedHash = {};
-							if(featureType in rangeData.regionLayout) {
-								rangeData.regionLayout[featureType].forEach(function(featureRegion) {
-									var uKey = '';
-									featureRegion.coordinates.forEach(function(coords) {
-										uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
-									});
-									var feaRegion;
-									if(uKey in consolidatedHash) {
-										feaRegion = consolidatedHash[uKey];
-										feaRegion.label += ', ' + featureRegion.label;
-									} else {
-										feaRegion = {
-											label: featureRegion.label,
-											coordinates: featureRegion.coordinates,
-										};
-										consolidatedFeatureRegions.push(feaRegion);
-										consolidatedHash[uKey] = feaRegion;
-									}
-								});
-								
-								consolidatedFeatureRegions.forEach(function(featureRegion) {
-									featureRegion.coordinates.forEach(function(coords) {
-										switch(drawableFeature.type) {
-											case PLOTBAND_FEATURE:
-												var plotBand = {
-													//borderColor: drawableFeature.color,
-													//borderColor: {
-													//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-													//	stops: [
-													//		[0, drawableFeature.color],
-													//		[1, '#000000']
-													//	]
-													//},
-													//borderWidth: 1,
-													color: drawableFeature.color,
-													from: coords.chromosome_start,
-													to: coords.chromosome_end,
-													//zIndex: zIndex+5
-												};
-												plotBands.push(plotBand);
-												
-												if(drawableFeature.showLabel) {
-													var plotBandLabel = {
-														text: featureRegion.label,
-														style: {
-															fontSize: '8px',
-														},
-														rotation: 330
-													};
-													plotBand.label = plotBandLabel;
-												}
-												break;
-											case BORDERED_PLOTBAND_FEATURE:
-												var borderedPlotBand = {
-													//borderColor: drawableFeature.color,
-													//borderColor: {
-													//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-													//	stops: [
-													//		[0, drawableFeature.color],
-													//		[1, '#000000']
-													//	]
-													//},
-													//borderWidth: 0,
-													color: drawableFeature.color,
-													from: coords.chromosome_start,
-													to: coords.chromosome_end,
-													//zIndex: 5
-												};
-												plotBands.push(borderedPlotBand);
-												
-												var borderedStart = {
-													color: 'gray',
-													dashStyle: 'DashDot',
-													width: 2,
-													value: coords.chromosome_start,
-													zIndex: 6
-												};
-												var borderedStop = {
-													color: 'gray',
-													dashStyle: 'Dash',
-													width: 2,
-													value: coords.chromosome_end,
-													zIndex: 6
-												};
-												plotLines.push(borderedStart,borderedStop);
-												
-												if(drawableFeature.showLabel) {
-													var borderedPlotBandLabel = {
-														text: featureRegion.label,
-														verticalAlign: 'middle',
-														textAlign: 'center',
-														align: 'center',
-														style: {
-															fontSize: '2mm',
-														},
-														rotation: 90
-													};
-													if(drawableFeature.showAtBorders) {
-														borderedStart.label = borderedPlotBandLabel;
-														borderedStop.label = borderedPlotBandLabel;
-													} else {
-														borderedPlotBand.label = borderedPlotBandLabel;
-													}
-												}
-												break;
-											case PLOTLINE_FEATURE:
-												var plotLine = {
-													color: drawableFeature.color,
-													width: 2,
-													value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
-													zIndex: 5
-												};
-												plotLines.push(plotLine);
-												
-												if(drawableFeature.showLabel) {
-													var plotLineLabel = {
-														text: featureRegion.label,
-														style: {
-															fontSize: '2mm',
-														}
-													};
-													if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
-														plotLineLabel.rotation = 270;
-														plotLineLabel.textAlign = 'right';
-														plotLineLabel.x = 10;
-													}
-													plotLine.label = plotLineLabel;
-												}
-												break;
-										}
-									});
-								});
-							}
+							seriesAggregator: highchartsBoxPlotAggregator,
+							library: LIBRARY_HIGHCHARTS,
+						};
+						
+						// Setting the floor and ceiling when available
+						if(gData.floor!==undefined) {
+							chart.options.yAxis.floor = gData.floor;
 						}
-					});
-					break;
-				case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-					var plotBands = [];
-					var plotLines = [];
-					chart = {
-						options: {
+						
+						if(gData.ceiling!==undefined) {
+							chart.options.yAxis.ceiling = gData.ceiling;
+						}
+						
+						if(gData.breaks!==undefined) {
+							chart.options.yAxis.breaks = gData.breaks;
+							//chart.options.yAxis.lineColor = 'black';
+							chart.options.yAxis.lineWidth = 1;
+						}
+						break;
+					case GRAPH_TYPE_STEP_HIGHCHARTS:
+						var plotBands = [];
+						var plotLines = [];
+						chart = {
 							options: {
-								chart: {
-									type: 'arearange',
-									backgroundColor: null,
-									events: {
-										// reflowing after load and redraw events led to blank drawings
-										addSeries: function() {
-											var chart = this;
-											//this.reflow();
-											setTimeout(function() {
-												chart.reflow();
-											},0);
+								options: {
+									chart: {
+										type: 'line',
+										backgroundColor: null,
+										events: {
+											// reflowing after load and redraw events led to blank drawings
+											addSeries: function() {
+												var chart = this;
+												//this.reflow();
+												setTimeout(function() {
+													chart.reflow();
+												},0);
+											}
+										},
+										animation: false,
+										zoomType: 'x',
+										panning: true,
+										panKey: 'shift'
+									},
+									legend: {
+										enabled: false,
+										title: {
+											text: legendTitle
 										}
 									},
-									animation: false,
-									zoomType: 'x',
-									panning: true,
-									panKey: 'shift'
+									tooltip: {
+										animation: false,
+										shared: true,
+										backgroundColor: '#FFFFFF'
+									},
+									plotOptions: {
+										series: {
+											animation: false
+										}
+									},
+									exporting: HighchartsCommonExportingOptions,
 								},
-								legend: {
-									enabled: false,
+								title: {
+									text: title
+								},
+								xAxis: {
 									title: {
-										text: legendTitle
+										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
+									},
+									min: range_start,
+									max: range_end,
+									allowDecimals: false,
+									plotBands: plotBands,
+									plotLines: plotLines,
+								},
+								yAxis: {
+									title: {
+										text: gData.yAxisLabel
 									}
 								},
-								tooltip: {
-									animation: false,
-									shared: true,
-									backgroundColor: '#FFFFFF'
-								},
-								plotOptions: {
-									series: {
-										animation: false
-									}
-								},
-								exporting: HighchartsCommonExportingOptions,
+								series: [],
+								loading: true,
+								//func: function(chart) {
+								//	// This is needed to reflow the chart
+								//	// to its final width
+								//	$timeout(function() {
+								//		chart.reflow();
+								//	},0);
+								//},
 							},
-							title: {
-								text: title
-							},
-							xAxis: {
-								title: {
-									text: 'Coordinates (at '+rangeData.rangeStrEx+')'
-								},
-								min: range_start,
-								max: range_end,
-								allowDecimals: false,
-								plotBands: plotBands,
-								plotLines: plotLines,
-							},
-							yAxis: {
-								title: {
-									text: gData.yAxisLabel
-								}
-							},
-							series: [],
-							loading: true,
-							//func: function(chart) {
-							//	// This is needed to reflow the chart
-							//	// to its final width
-							//	$timeout(function() {
-							//		chart.reflow();
-							//	},0);
-							//},
-						},
-						seriesAggregator: defaultSeriesAggregator,
-						library: LIBRARY_HIGHCHARTS,
-					};
-					
-					// Setting the floor and ceiling when available
-					if(gData.floor!==undefined) {
-						chart.options.yAxis.floor = gData.floor;
-					}
-					
-					if(gData.ceiling!==undefined) {
-						chart.options.yAxis.ceiling = gData.ceiling;
-					}
-					
-					if(gData.breaks!==undefined) {
-						chart.options.yAxis.breaks = gData.breaks;
-						//chart.options.yAxis.lineColor = 'black';
-						chart.options.yAxis.lineWidth = 1;
-					}
-					
-					// Adding the gene and transcript regions
-					ConstantsService.REGION_FEATURES.forEach(function(featureType) {
-						if(featureType in DRAWABLE_REGION_FEATURES) {
-							var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
-							
-							// Consolidating the declared feature regions
-							var consolidatedFeatureRegions = [];
-							var consolidatedHash = {};
-							if(featureType in rangeData.regionLayout) {
-								rangeData.regionLayout[featureType].forEach(function(featureRegion) {
-									var uKey = '';
-									featureRegion.coordinates.forEach(function(coords) {
-										uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
-									});
-									var feaRegion;
-									if(uKey in consolidatedHash) {
-										feaRegion = consolidatedHash[uKey];
-										feaRegion.label += ', ' + featureRegion.label;
-									} else {
-										feaRegion = {
-											label: featureRegion.label,
-											coordinates: featureRegion.coordinates,
-										};
-										consolidatedFeatureRegions.push(feaRegion);
-										consolidatedHash[uKey] = feaRegion;
-									}
-								});
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_HIGHCHARTS,
+						};
+						
+						// Setting the floor and ceiling when available
+						if(gData.floor!==undefined) {
+							chart.options.yAxis.floor = gData.floor;
+						}
+						
+						if(gData.ceiling!==undefined) {
+							chart.options.yAxis.ceiling = gData.ceiling;
+						}
+						
+						if(gData.breaks!==undefined) {
+							chart.options.yAxis.breaks = gData.breaks;
+							//chart.options.yAxis.lineColor = 'black';
+							chart.options.yAxis.lineWidth = 1;
+						}
+						
+						// Adding the gene and transcript regions
+						ConstantsService.REGION_FEATURES.forEach(function(featureType) {
+							if(featureType in DRAWABLE_REGION_FEATURES) {
+								var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
 								
-								consolidatedFeatureRegions.forEach(function(featureRegion) {
-									featureRegion.coordinates.forEach(function(coords) {
-										switch(drawableFeature.type) {
-											case PLOTBAND_FEATURE:
-												var plotBand = {
-													//borderColor: drawableFeature.color,
-													//borderColor: {
-													//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-													//	stops: [
-													//		[0, drawableFeature.color],
-													//		[1, '#000000']
-													//	]
-													//},
-													//borderWidth: 1,
-													color: drawableFeature.color,
-													from: coords.chromosome_start,
-													to: coords.chromosome_end,
-													//zIndex: zIndex+5
-												};
-												plotBands.push(plotBand);
-												
-												if(drawableFeature.showLabel) {
-													var plotBandLabel = {
-														text: featureRegion.label,
-														style: {
-															fontSize: '8px',
-														},
-														rotation: 330
-													};
-													plotBand.label = plotBandLabel;
-												}
-												break;
-											case BORDERED_PLOTBAND_FEATURE:
-												var borderedPlotBand = {
-													//borderColor: drawableFeature.color,
-													//borderColor: {
-													//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-													//	stops: [
-													//		[0, drawableFeature.color],
-													//		[1, '#000000']
-													//	]
-													//},
-													//borderWidth: 0,
-													color: drawableFeature.color,
-													from: coords.chromosome_start,
-													to: coords.chromosome_end,
-													//zIndex: 5
-												};
-												plotBands.push(borderedPlotBand);
-												
-												var borderedStart = {
-													color: 'gray',
-													dashStyle: 'DashDot',
-													width: 2,
-													value: coords.chromosome_start,
-													zIndex: 6
-												};
-												var borderedStop = {
-													color: 'gray',
-													dashStyle: 'Dash',
-													width: 2,
-													value: coords.chromosome_end,
-													zIndex: 6
-												};
-												plotLines.push(borderedStart,borderedStop);
-												
-												if(drawableFeature.showLabel) {
-													var borderedPlotBandLabel = {
-														text: featureRegion.label,
-														verticalAlign: 'middle',
-														textAlign: 'center',
-														align: 'center',
-														style: {
-															fontSize: '2mm',
-														},
-														rotation: 90
-													};
-													if(drawableFeature.showAtBorders) {
-														borderedStart.label = borderedPlotBandLabel;
-														borderedStop.label = borderedPlotBandLabel;
-													} else {
-														borderedPlotBand.label = borderedPlotBandLabel;
-													}
-												}
-												break;
-											case PLOTLINE_FEATURE:
-												var plotLine = {
-													color: drawableFeature.color,
-													width: 2,
-													value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
-													zIndex: 5
-												};
-												plotLines.push(plotLine);
-												
-												if(drawableFeature.showLabel) {
-													var plotLineLabel = {
-														text: featureRegion.label,
-														style: {
-															fontSize: '2mm',
-														}
-													};
-													if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
-														plotLineLabel.rotation = 270;
-														plotLineLabel.textAlign = 'right';
-														plotLineLabel.x = 10;
-													}
-													plotLine.label = plotLineLabel;
-												}
-												break;
+								// Consolidating the declared feature regions
+								var consolidatedFeatureRegions = [];
+								var consolidatedHash = {};
+								if(featureType in rangeData.regionLayout) {
+									rangeData.regionLayout[featureType].forEach(function(featureRegion) {
+										var uKey = '';
+										featureRegion.coordinates.forEach(function(coords) {
+											uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
+										});
+										var feaRegion;
+										if(uKey in consolidatedHash) {
+											feaRegion = consolidatedHash[uKey];
+											feaRegion.label += ', ' + featureRegion.label;
+										} else {
+											feaRegion = {
+												label: featureRegion.label,
+												coordinates: featureRegion.coordinates,
+											};
+											consolidatedFeatureRegions.push(feaRegion);
+											consolidatedHash[uKey] = feaRegion;
 										}
 									});
-								});
+									
+									consolidatedFeatureRegions.forEach(function(featureRegion) {
+										featureRegion.coordinates.forEach(function(coords) {
+											switch(drawableFeature.type) {
+												case PLOTBAND_FEATURE:
+													var plotBand = {
+														//borderColor: drawableFeature.color,
+														//borderColor: {
+														//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+														//	stops: [
+														//		[0, drawableFeature.color],
+														//		[1, '#000000']
+														//	]
+														//},
+														//borderWidth: 1,
+														color: drawableFeature.color,
+														from: coords.chromosome_start,
+														to: coords.chromosome_end,
+														//zIndex: zIndex+5
+													};
+													plotBands.push(plotBand);
+													
+													if(drawableFeature.showLabel) {
+														var plotBandLabel = {
+															text: featureRegion.label,
+															style: {
+																fontSize: '8px',
+															},
+															rotation: 330
+														};
+														plotBand.label = plotBandLabel;
+													}
+													break;
+												case BORDERED_PLOTBAND_FEATURE:
+													var borderedPlotBand = {
+														//borderColor: drawableFeature.color,
+														//borderColor: {
+														//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+														//	stops: [
+														//		[0, drawableFeature.color],
+														//		[1, '#000000']
+														//	]
+														//},
+														//borderWidth: 0,
+														color: drawableFeature.color,
+														from: coords.chromosome_start,
+														to: coords.chromosome_end,
+														//zIndex: 5
+													};
+													plotBands.push(borderedPlotBand);
+													
+													var borderedStart = {
+														color: 'gray',
+														dashStyle: 'DashDot',
+														width: 2,
+														value: coords.chromosome_start,
+														zIndex: 6
+													};
+													var borderedStop = {
+														color: 'gray',
+														dashStyle: 'Dash',
+														width: 2,
+														value: coords.chromosome_end,
+														zIndex: 6
+													};
+													plotLines.push(borderedStart,borderedStop);
+													
+													if(drawableFeature.showLabel) {
+														var borderedPlotBandLabel = {
+															text: featureRegion.label,
+															verticalAlign: 'middle',
+															textAlign: 'center',
+															align: 'center',
+															style: {
+																fontSize: '2mm',
+															},
+															rotation: 90
+														};
+														if(drawableFeature.showAtBorders) {
+															borderedStart.label = borderedPlotBandLabel;
+															borderedStop.label = borderedPlotBandLabel;
+														} else {
+															borderedPlotBand.label = borderedPlotBandLabel;
+														}
+													}
+													break;
+												case PLOTLINE_FEATURE:
+													var plotLine = {
+														color: drawableFeature.color,
+														width: 2,
+														value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
+														zIndex: 5
+													};
+													plotLines.push(plotLine);
+													
+													if(drawableFeature.showLabel) {
+														var plotLineLabel = {
+															text: featureRegion.label,
+															style: {
+																fontSize: '2mm',
+															}
+														};
+														if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
+															plotLineLabel.rotation = 270;
+															plotLineLabel.textAlign = 'right';
+															plotLineLabel.x = 10;
+														}
+														plotLine.label = plotLineLabel;
+													}
+													break;
+											}
+										});
+									});
+								}
 							}
+						});
+						break;
+					case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
+						var plotBands = [];
+						var plotLines = [];
+						chart = {
+							options: {
+								options: {
+									chart: {
+										type: 'arearange',
+										backgroundColor: null,
+										events: {
+											// reflowing after load and redraw events led to blank drawings
+											addSeries: function() {
+												var chart = this;
+												//this.reflow();
+												setTimeout(function() {
+													chart.reflow();
+												},0);
+											}
+										},
+										animation: false,
+										zoomType: 'x',
+										panning: true,
+										panKey: 'shift'
+									},
+									legend: {
+										enabled: false,
+										title: {
+											text: legendTitle
+										}
+									},
+									tooltip: {
+										animation: false,
+										shared: true,
+										backgroundColor: '#FFFFFF'
+									},
+									plotOptions: {
+										series: {
+											animation: false
+										}
+									},
+									exporting: HighchartsCommonExportingOptions,
+								},
+								title: {
+									text: title
+								},
+								xAxis: {
+									title: {
+										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
+									},
+									min: range_start,
+									max: range_end,
+									allowDecimals: false,
+									plotBands: plotBands,
+									plotLines: plotLines,
+								},
+								yAxis: {
+									title: {
+										text: gData.yAxisLabel
+									}
+								},
+								series: [],
+								loading: true,
+								//func: function(chart) {
+								//	// This is needed to reflow the chart
+								//	// to its final width
+								//	$timeout(function() {
+								//		chart.reflow();
+								//	},0);
+								//},
+							},
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_HIGHCHARTS,
+						};
+						
+						// Setting the floor and ceiling when available
+						if(gData.floor!==undefined) {
+							chart.options.yAxis.floor = gData.floor;
 						}
-					});
-					break;
-			}
+						
+						if(gData.ceiling!==undefined) {
+							chart.options.yAxis.ceiling = gData.ceiling;
+						}
+						
+						if(gData.breaks!==undefined) {
+							chart.options.yAxis.breaks = gData.breaks;
+							//chart.options.yAxis.lineColor = 'black';
+							chart.options.yAxis.lineWidth = 1;
+						}
+						
+						// Adding the gene and transcript regions
+						ConstantsService.REGION_FEATURES.forEach(function(featureType) {
+							if(featureType in DRAWABLE_REGION_FEATURES) {
+								var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
+								
+								// Consolidating the declared feature regions
+								var consolidatedFeatureRegions = [];
+								var consolidatedHash = {};
+								if(featureType in rangeData.regionLayout) {
+									rangeData.regionLayout[featureType].forEach(function(featureRegion) {
+										var uKey = '';
+										featureRegion.coordinates.forEach(function(coords) {
+											uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
+										});
+										var feaRegion;
+										if(uKey in consolidatedHash) {
+											feaRegion = consolidatedHash[uKey];
+											feaRegion.label += ', ' + featureRegion.label;
+										} else {
+											feaRegion = {
+												label: featureRegion.label,
+												coordinates: featureRegion.coordinates,
+											};
+											consolidatedFeatureRegions.push(feaRegion);
+											consolidatedHash[uKey] = feaRegion;
+										}
+									});
+									
+									consolidatedFeatureRegions.forEach(function(featureRegion) {
+										featureRegion.coordinates.forEach(function(coords) {
+											switch(drawableFeature.type) {
+												case PLOTBAND_FEATURE:
+													var plotBand = {
+														//borderColor: drawableFeature.color,
+														//borderColor: {
+														//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+														//	stops: [
+														//		[0, drawableFeature.color],
+														//		[1, '#000000']
+														//	]
+														//},
+														//borderWidth: 1,
+														color: drawableFeature.color,
+														from: coords.chromosome_start,
+														to: coords.chromosome_end,
+														//zIndex: zIndex+5
+													};
+													plotBands.push(plotBand);
+													
+													if(drawableFeature.showLabel) {
+														var plotBandLabel = {
+															text: featureRegion.label,
+															style: {
+																fontSize: '8px',
+															},
+															rotation: 330
+														};
+														plotBand.label = plotBandLabel;
+													}
+													break;
+												case BORDERED_PLOTBAND_FEATURE:
+													var borderedPlotBand = {
+														//borderColor: drawableFeature.color,
+														//borderColor: {
+														//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+														//	stops: [
+														//		[0, drawableFeature.color],
+														//		[1, '#000000']
+														//	]
+														//},
+														//borderWidth: 0,
+														color: drawableFeature.color,
+														from: coords.chromosome_start,
+														to: coords.chromosome_end,
+														//zIndex: 5
+													};
+													plotBands.push(borderedPlotBand);
+													
+													var borderedStart = {
+														color: 'gray',
+														dashStyle: 'DashDot',
+														width: 2,
+														value: coords.chromosome_start,
+														zIndex: 6
+													};
+													var borderedStop = {
+														color: 'gray',
+														dashStyle: 'Dash',
+														width: 2,
+														value: coords.chromosome_end,
+														zIndex: 6
+													};
+													plotLines.push(borderedStart,borderedStop);
+													
+													if(drawableFeature.showLabel) {
+														var borderedPlotBandLabel = {
+															text: featureRegion.label,
+															verticalAlign: 'middle',
+															textAlign: 'center',
+															align: 'center',
+															style: {
+																fontSize: '2mm',
+															},
+															rotation: 90
+														};
+														if(drawableFeature.showAtBorders) {
+															borderedStart.label = borderedPlotBandLabel;
+															borderedStop.label = borderedPlotBandLabel;
+														} else {
+															borderedPlotBand.label = borderedPlotBandLabel;
+														}
+													}
+													break;
+												case PLOTLINE_FEATURE:
+													var plotLine = {
+														color: drawableFeature.color,
+														width: 2,
+														value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
+														zIndex: 5
+													};
+													plotLines.push(plotLine);
+													
+													if(drawableFeature.showLabel) {
+														var plotLineLabel = {
+															text: featureRegion.label,
+															style: {
+																fontSize: '2mm',
+															}
+														};
+														if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
+															plotLineLabel.rotation = 270;
+															plotLineLabel.textAlign = 'right';
+															plotLineLabel.x = 10;
+														}
+														plotLine.label = plotLineLabel;
+													}
+													break;
+											}
+										});
+									});
+								}
+							}
+						});
+						break;
+				}
+				
+				
+				// Common attributes
+				chart.chartId = gName;
+				chart.type = gDataView.type;
+				chart.regionFeature = rangeData.regionFeature;
+				chart.allData = [];
+				chart.bpSideData = {
+					seriesToIndex: {},
+					meanSeries: null
+				};
+				chart.title = title;
+				chart.subtitle = (gDataView.subtitle!==undefined) ? gDataView.subtitle : null;
+				chart.yAxisLabel = gData.yAxisLabel;
+				// Is this graph initially hidden?
+				if(gData.isInitiallyHidden !== undefined) {
+					chart.isHidden = gData.isInitiallyHidden;
+				}
+				chart.meanSeriesHidden = !rangeData.ui.initiallyShowMeanSeries;
+				
+				charts.push(chart);
+				
+				return chart;
+			});
 			
-			
-			// Common attributes
-			chart.chartId = gName;
-			chart.type = gData.type;
-			chart.regionFeature = rangeData.regionFeature;
-			chart.allData = [];
-			chart.bpSideData = {
-				seriesToIndex: {},
-				meanSeries: null
-			};
-			chart.title = title;
-			chart.yAxisLabel = gData.yAxisLabel;
-			// Is this graph initially hidden?
-			if(gData.isInitiallyHidden !== undefined) {
-				chart.isHidden = gData.isInitiallyHidden;
-			}
-			chart.meanSeriesHidden = !rangeData.ui.initiallyShowMeanSeries;
-
-			charts.push(chart);
-			
-			chartsMap[gName] = chart;
+			chartsMap[gName] = chartViews;
 		};
 		
 		GRAPHS.forEach(GraphPrepare);
@@ -1561,239 +1629,249 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					for(var iChart=0;iChart<chartIds.length;iChart++) {
 						var chartId = chartIds[iChart];
 						if(chartId in chartMaps) {
-							var graph = chartMaps[chartId];
+							var graphViews = chartMaps[chartId];
 							
-							var meanSeriesValues;
-							if(data.meanCellTypeSeriesId in graph.bpSideData.seriesToIndex) {
-								meanSeriesValues = graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId];
-							} else {
-								meanSeriesValues = [];
-								var meanSeries;
-								
-								graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data.meanCellTypeSeriesId];
-								switch(graph.type) {
-									case GRAPH_TYPE_STEP_CHARTJS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'data',
-											series: {
-												label: graph.bpSideData.meanSeries.name,
-												strokeColor: graph.bpSideData.meanSeries.color
-											}
-										};
-										graph.options.data.datasets.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_STEP_CANVASJS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'dataPoints',
-											series: {
-												type: "stepLine",
-												name: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color
-											}
-										};
-										graph.options.data.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genBoxPlotSeries,
-											seriesDest: 'data',
-											series: {
-												name: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color
-											}
-										};
-										graph.options.series.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_STEP_HIGHCHARTS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genMeanSeriesHighcharts,
-											seriesDest: 'data',
-											series: {
-												name: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+							graphViews.forEach(function(graph) {
+								var meanSeriesValues;
+								if(data.meanCellTypeSeriesId in graph.bpSideData.seriesToIndex) {
+									meanSeriesValues = graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId];
+								} else {
+									meanSeriesValues = [];
+									var meanSeries;
+									
+									graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data.meanCellTypeSeriesId];
+									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CHARTJS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'data',
+												series: {
+													label: graph.bpSideData.meanSeries.name,
+													strokeColor: graph.bpSideData.meanSeries.color
+												}
+											};
+											graph.options.data.datasets.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_STEP_CANVASJS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'dataPoints',
+												series: {
+													type: "stepLine",
+													name: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color
+												}
+											};
+											graph.options.data.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genBoxPlotSeries,
+												seriesDest: 'data',
+												series: {
+													name: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color,
+													type: 'boxplot',
+												}
+											};
+											graph.options.series.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_STEP_HIGHCHARTS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeriesHighcharts,
+												seriesDest: 'data',
+												series: {
+													name: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color,
+													type: 'step',
 													shadow: false,
-												},
-												turboThreshold: 0,
-												step: 'left',
-											}
-										};
-										graph.options.series.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genAreaRangeSeriesHighcharts,
-											seriesDest: 'data',
-											series: {
-												name: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color,
-												fillOpacity: 0.3,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 0,
+													step: 'left',
+												}
+											};
+											graph.options.series.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genAreaRangeSeriesHighcharts,
+												seriesDest: 'data',
+												series: {
+													name: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color,
+													type: 'arearange',
+													fillOpacity: 0.3,
+													lineWidth: 0,
 													shadow: false,
-												},
-												turboThreshold: 0,
-											}
-										};
-										graph.options.series.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_STEP_NVD3:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'values',
-											series: {
-												type: 'area',
-												key: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color
-											}
-										};
-										graph.data.push(meanSeries.series);
-										break;
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 0,
+												}
+											};
+											graph.options.series.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_STEP_NVD3:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'values',
+												series: {
+													type: 'area',
+													key: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color
+												}
+											};
+											graph.data.push(meanSeries.series);
+											break;
+									}
+									meanSeries.series[meanSeries.seriesDest] = [];
+									graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
+									graph.allData.push(meanSeries);
 								}
-								meanSeries.series[meanSeries.seriesDest] = [];
-								graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
-								graph.allData.push(meanSeries);
-							}
-							
-							var seriesValues;
-							if(data.cellTypeSeriesId in graph.bpSideData.seriesToIndex) {
-								seriesValues = graph.bpSideData.seriesToIndex[data.cellTypeSeriesId];
-							} else {
-								seriesValues = [];
-								var series;
 								
-								// We need this shared reference
-								var term_type = seriesNodesHash[data.analysis.cell_type.o_uri];
-								
-								var seriesName = data.analysis.cell_type.name;
-								var seriesColor = data.analysis.cell_type.color;
-								switch(graph.type) {
-									case GRAPH_TYPE_STEP_CHARTJS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'data',
-											series: {
-												label: seriesName,
-												strokeColor: seriesColor,
-											}
-										};
-										graph.options.data.datasets.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_CANVASJS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'dataPoints',
-											series: {
-												type: "stepLine",
-												name: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.options.data.push(series.series);
-										break;
-									case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genBoxPlotSeries,
-											seriesDest: 'data',
-											term_type: term_type,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeriesHighcharts,
-											seriesDest: 'data',
-											term_type: term_type,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+								var seriesValues;
+								if(data.cellTypeSeriesId in graph.bpSideData.seriesToIndex) {
+									seriesValues = graph.bpSideData.seriesToIndex[data.cellTypeSeriesId];
+								} else {
+									seriesValues = [];
+									var series;
+									
+									// We need this shared reference
+									var term_type = seriesNodesHash[data.analysis.cell_type.o_uri];
+									
+									var seriesName = data.analysis.cell_type.name;
+									var seriesColor = data.analysis.cell_type.color;
+									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CHARTJS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'data',
+												series: {
+													label: seriesName,
+													strokeColor: seriesColor,
+												}
+											};
+											graph.options.data.datasets.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_CANVASJS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'dataPoints',
+												series: {
+													type: "stepLine",
+													name: seriesName,
+													color: seriesColor,
+												}
+											};
+											graph.options.data.push(series.series);
+											break;
+										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genBoxPlotSeries,
+												seriesDest: 'data',
+												term_type: term_type,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'boxplot',
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeriesHighcharts,
+												seriesDest: 'data',
+												term_type: term_type,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'step',
 													shadow: false,
-												},
-												turboThreshold: 1000,
-												step: 'left',
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genAreaRangeSeriesHighcharts,
-											seriesDest: 'data',
-											term_type: term_type,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-												fillOpacity: 0.3,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 1000,
+													step: 'left',
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genAreaRangeSeriesHighcharts,
+												seriesDest: 'data',
+												term_type: term_type,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'arearange',
+													fillOpacity: 0.3,
+													lineWidth: 0,
 													shadow: false,
-												},
-												turboThreshold: 1000,
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_NVD3:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'values',
-											term_type: term_type,
-											series: {
-												key: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.data.push(series.series);
-										break;
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 1000,
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_NVD3:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'values',
+												term_type: term_type,
+												series: {
+													key: seriesName,
+													color: seriesColor,
+												}
+											};
+											graph.data.push(series.series);
+											break;
+									}
+									series.series[series.seriesDest] = [];
+									graph.bpSideData.seriesToIndex[data.cellTypeSeriesId] = seriesValues;
+									graph.allData.push(series);
 								}
-								series.series[series.seriesDest] = [];
-								graph.bpSideData.seriesToIndex[data.cellTypeSeriesId] = seriesValues;
-								graph.allData.push(series);
-							}
-							
-							meanSeriesValues.push(data.sDataS);
-							seriesValues.push(data.sDataS);
+								
+								meanSeriesValues.push(data.sDataS);
+								seriesValues.push(data.sDataS);
+							});
 						}
 					}
 				}
@@ -1891,127 +1969,133 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					for(var iChart=0;iChart<chartIds.length;iChart++) {
 						var chartId = chartIds[iChart];
 						if(chartId in chartMaps) {
-							var graph = chartMaps[chartId];
+							var graphViews = chartMaps[chartId];
 							
-							var seriesValues;
-							if(data.diseaseSeriesId in graph.bpSideData.seriesToIndex) {
-								seriesValues = graph.bpSideData.seriesToIndex[data.diseaseSeriesId];
-							} else {
-								seriesValues = [];
-								var series;
-								
-								// We need this shared reference
-								var disease = seriesNodesHash[data.analysis.lab_experiment.sample.specimen.donor_disease];
-								
-								var seriesName = disease.name;
-								var seriesColor = disease.color;
-								switch(graph.type) {
-									case GRAPH_TYPE_STEP_CHARTJS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'data',
-											series: {
-												label: seriesName,
-												strokeColor: seriesColor,
-											}
-										};
-										graph.options.data.datasets.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_CANVASJS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'dataPoints',
-											series: {
-												type: "stepLine",
-												name: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.options.data.push(series.series);
-										break;
-									case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genBoxPlotSeries,
-											seriesDest: 'data',
-											term_type: disease,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeriesHighcharts,
-											seriesDest: 'data',
-											term_type: disease,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+							graphViews.forEach(function(graph) {
+								var seriesValues;
+								if(data.diseaseSeriesId in graph.bpSideData.seriesToIndex) {
+									seriesValues = graph.bpSideData.seriesToIndex[data.diseaseSeriesId];
+								} else {
+									seriesValues = [];
+									var series;
+									
+									// We need this shared reference
+									var disease = seriesNodesHash[data.analysis.lab_experiment.sample.specimen.donor_disease];
+									
+									var seriesName = disease.name;
+									var seriesColor = disease.color;
+									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CHARTJS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'data',
+												series: {
+													label: seriesName,
+													strokeColor: seriesColor,
+												}
+											};
+											graph.options.data.datasets.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_CANVASJS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'dataPoints',
+												series: {
+													type: "stepLine",
+													name: seriesName,
+													color: seriesColor,
+												}
+											};
+											graph.options.data.push(series.series);
+											break;
+										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genBoxPlotSeries,
+												seriesDest: 'data',
+												term_type: disease,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'boxplot',
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeriesHighcharts,
+												seriesDest: 'data',
+												term_type: disease,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'step',
 													shadow: false,
-												},
-												turboThreshold: 1000,
-												step: 'left',
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genAreaRangeSeriesHighcharts,
-											seriesDest: 'data',
-											term_type: disease,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-												fillOpacity: 0.3,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 1000,
+													step: 'left',
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genAreaRangeSeriesHighcharts,
+												seriesDest: 'data',
+												term_type: disease,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'arearange',
+													fillOpacity: 0.3,
+													lineWidth: 0,
 													shadow: false,
-												},
-												turboThreshold: 1000,
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_NVD3:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'values',
-											term_type: disease,
-											series: {
-												key: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.data.push(series.series);
-										break;
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 1000,
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_NVD3:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'values',
+												term_type: disease,
+												series: {
+													key: seriesName,
+													color: seriesColor,
+												}
+											};
+											graph.data.push(series.series);
+											break;
+									}
+									series.series[series.seriesDest] = [];
+									graph.bpSideData.seriesToIndex[data.diseaseSeriesId] = seriesValues;
+									graph.allData.push(series);
 								}
-								series.series[series.seriesDest] = [];
-								graph.bpSideData.seriesToIndex[data.diseaseSeriesId] = seriesValues;
-								graph.allData.push(series);
-							}
-							
-							seriesValues.push(data.sDataS);
+								
+								seriesValues.push(data.sDataS);
+							});
 						}
 					}
 				}
@@ -2084,239 +2168,249 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					for(var iChart=0;iChart<chartIds.length;iChart++) {
 						var chartId = chartIds[iChart];
 						if(chartId in chartMaps) {
-							var graph = chartMaps[chartId];
+							var graphViews = chartMaps[chartId];
 							
-							var meanSeriesValues;
-							if(data.meanCellTypeSeriesId in graph.bpSideData.seriesToIndex) {
-								meanSeriesValues = graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId];
-							} else {
-								meanSeriesValues = [];
-								var meanSeries;
-								
-								graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data.meanCellTypeSeriesId];
-								switch(graph.type) {
-									case GRAPH_TYPE_STEP_CHARTJS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'data',
-											series: {
-												label: graph.bpSideData.meanSeries.name,
-												strokeColor: graph.bpSideData.meanSeries.color
-											}
-										};
-										graph.options.data.datasets.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_STEP_CANVASJS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'dataPoints',
-											series: {
-												type: "stepLine",
-												name: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color
-											}
-										};
-										graph.options.data.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genBoxPlotSeries,
-											seriesDest: 'data',
-											series: {
-												name: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color
-											}
-										};
-										graph.options.series.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_STEP_HIGHCHARTS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genMeanSeriesHighcharts,
-											seriesDest: 'data',
-											series: {
-												name: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+							graphViews.forEach(function(graph) {
+								var meanSeriesValues;
+								if(data.meanCellTypeSeriesId in graph.bpSideData.seriesToIndex) {
+									meanSeriesValues = graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId];
+								} else {
+									meanSeriesValues = [];
+									var meanSeries;
+									
+									graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data.meanCellTypeSeriesId];
+									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CHARTJS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'data',
+												series: {
+													label: graph.bpSideData.meanSeries.name,
+													strokeColor: graph.bpSideData.meanSeries.color
+												}
+											};
+											graph.options.data.datasets.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_STEP_CANVASJS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'dataPoints',
+												series: {
+													type: "stepLine",
+													name: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color
+												}
+											};
+											graph.options.data.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genBoxPlotSeries,
+												seriesDest: 'data',
+												series: {
+													name: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color,
+													type: 'boxplot',
+												}
+											};
+											graph.options.series.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_STEP_HIGHCHARTS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeriesHighcharts,
+												seriesDest: 'data',
+												series: {
+													name: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color,
+													type: 'step',
 													shadow: false,
-												},
-												turboThreshold: 0,
-												step: 'left',
-											}
-										};
-										graph.options.series.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genAreaRangeSeriesHighcharts,
-											seriesDest: 'data',
-											series: {
-												name: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color,
-												fillOpacity: 0.3,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 0,
+													step: 'left',
+												}
+											};
+											graph.options.series.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genAreaRangeSeriesHighcharts,
+												seriesDest: 'data',
+												series: {
+													name: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color,
+													type: 'arearange',
+													fillOpacity: 0.3,
+													lineWidth: 0,
 													shadow: false,
-												},
-												turboThreshold: 0,
-											}
-										};
-										graph.options.series.push(meanSeries.series);
-										break;
-									case GRAPH_TYPE_STEP_NVD3:
-										meanSeries = {
-											seriesValues: meanSeriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'values',
-											series: {
-												type: 'area',
-												key: graph.bpSideData.meanSeries.name,
-												color: graph.bpSideData.meanSeries.color
-											}
-										};
-										graph.data.push(meanSeries.series);
-										break;
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 0,
+												}
+											};
+											graph.options.series.push(meanSeries.series);
+											break;
+										case GRAPH_TYPE_STEP_NVD3:
+											meanSeries = {
+												seriesValues: meanSeriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'values',
+												series: {
+													type: 'area',
+													key: graph.bpSideData.meanSeries.name,
+													color: graph.bpSideData.meanSeries.color
+												}
+											};
+											graph.data.push(meanSeries.series);
+											break;
+									}
+									meanSeries.series[meanSeries.seriesDest] = [];
+									graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
+									graph.allData.push(meanSeries);
 								}
-								meanSeries.series[meanSeries.seriesDest] = [];
-								graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
-								graph.allData.push(meanSeries);
-							}
-							
-							var seriesValues;
-							if(data.cellTypeSeriesId in graph.bpSideData.seriesToIndex) {
-								seriesValues = graph.bpSideData.seriesToIndex[data.cellTypeSeriesId];
-							} else {
-								seriesValues = [];
-								var series;
 								
-								// We need this shared reference
-								var term_type = seriesNodesHash[data.analysis.cell_type.o_uri];
-								
-								var seriesName = data.analysis.cell_type.name;
-								var seriesColor = data.analysis.cell_type.color;
-								switch(graph.type) {
-									case GRAPH_TYPE_STEP_CHARTJS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'data',
-											series: {
-												label: seriesName,
-												strokeColor: seriesColor,
-											}
-										};
-										graph.options.data.datasets.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_CANVASJS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'dataPoints',
-											series: {
-												type: "stepLine",
-												name: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.options.data.push(series.series);
-										break;
-									case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genBoxPlotSeries,
-											seriesDest: 'data',
-											term_type: term_type,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeriesHighcharts,
-											seriesDest: 'data',
-											term_type: term_type,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+								var seriesValues;
+								if(data.cellTypeSeriesId in graph.bpSideData.seriesToIndex) {
+									seriesValues = graph.bpSideData.seriesToIndex[data.cellTypeSeriesId];
+								} else {
+									seriesValues = [];
+									var series;
+									
+									// We need this shared reference
+									var term_type = seriesNodesHash[data.analysis.cell_type.o_uri];
+									
+									var seriesName = data.analysis.cell_type.name;
+									var seriesColor = data.analysis.cell_type.color;
+									switch(graph.type) {
+										case GRAPH_TYPE_STEP_CHARTJS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'data',
+												series: {
+													label: seriesName,
+													strokeColor: seriesColor,
+												}
+											};
+											graph.options.data.datasets.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_CANVASJS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'dataPoints',
+												series: {
+													type: "stepLine",
+													name: seriesName,
+													color: seriesColor,
+												}
+											};
+											graph.options.data.push(series.series);
+											break;
+										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genBoxPlotSeries,
+												seriesDest: 'data',
+												term_type: term_type,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'boxplot',
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeriesHighcharts,
+												seriesDest: 'data',
+												term_type: term_type,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'step',
 													shadow: false,
-												},
-												turboThreshold: 1000,
-												step: 'left',
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genAreaRangeSeriesHighcharts,
-											seriesDest: 'data',
-											term_type: term_type,
-											series: {
-												name: seriesName,
-												color: seriesColor,
-												fillOpacity: 0.3,
-												shadow: false,
-												connectNulls: false,
-												marker: {
-													enabled: false
-												},
-												tooltip: {
-													shared: true,
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 1000,
+													step: 'left',
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genAreaRangeSeriesHighcharts,
+												seriesDest: 'data',
+												term_type: term_type,
+												series: {
+													name: seriesName,
+													color: seriesColor,
+													type: 'arearange',
+													fillOpacity: 0.3,
+													lineWidth: 0,
 													shadow: false,
-												},
-												turboThreshold: 1000,
-											}
-										};
-										graph.options.series.push(series.series);
-										break;
-									case GRAPH_TYPE_STEP_NVD3:
-										series = {
-											seriesValues: seriesValues,
-											seriesGenerator: genMeanSeries,
-											seriesDest: 'values',
-											term_type: term_type,
-											series: {
-												key: seriesName,
-												color: seriesColor,
-											}
-										};
-										graph.data.push(series.series);
-										break;
+													connectNulls: false,
+													marker: {
+														enabled: false
+													},
+													tooltip: {
+														shared: true,
+														shadow: false,
+													},
+													turboThreshold: 1000,
+												}
+											};
+											graph.options.series.push(series.series);
+											break;
+										case GRAPH_TYPE_STEP_NVD3:
+											series = {
+												seriesValues: seriesValues,
+												seriesGenerator: genMeanSeries,
+												seriesDest: 'values',
+												term_type: term_type,
+												series: {
+													key: seriesName,
+													color: seriesColor,
+												}
+											};
+											graph.data.push(series.series);
+											break;
+									}
+									series.series[series.seriesDest] = [];
+									graph.bpSideData.seriesToIndex[data.cellTypeSeriesId] = seriesValues;
+									graph.allData.push(series);
 								}
-								series.series[series.seriesDest] = [];
-								graph.bpSideData.seriesToIndex[data.cellTypeSeriesId] = seriesValues;
-								graph.allData.push(series);
-							}
-							
-							meanSeriesValues.push(data.sDataS);
-							seriesValues.push(data.sDataS);
+								
+								meanSeriesValues.push(data.sDataS);
+								seriesValues.push(data.sDataS);
+							});
 						}
 					}
 				}

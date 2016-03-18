@@ -266,7 +266,7 @@
 							<span class="term">Show all charts / mean series</span>
 						</div>
 						<div class="col-xs-1 col-sm-12">&nbsp;</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="uiFuncs.switchChart($event,chart,rangeData)" ng-hide="chart.isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="uiFuncs.switchChart($event,chart,rangeData)" ng-hide="chart.isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 							<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
 							<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 						</div>

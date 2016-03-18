@@ -571,8 +571,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 		var numPos = 0;
 		var sumPosVal = 0.0;
-		var numEq = 0;
-		var sumEqVal = 0.0;
+		var numNeg = 0;
+		var sumNegVal = 0.0;
 		
 		var prevPos = 0;
 		
@@ -580,35 +580,40 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			if(prevPos!==point[0]) {
 				if(numPos!==0) {
 					var mean = sumPosVal  / numPos;
-					meanValues.push({x: prevPos,y: mean},{x: point[0],y: mean});
-					//meanValues.push({x: prevPos,y: mean},{x: point[0],y: mean},{x: point[0],y: null});
+					meanValues.push({x: prevPos,y: mean});
+					
+					// Now, time to remove, which keeps order
+					if(numNeg > 0) {
+						if(numNeg === numPos) {
+							meanValues.push({x: prevPos,y:null});
+							numPos = 0;
+							sumPosVal = 0.0;
+						} else {
+							numPos -= numNeg;
+							sumPosVal -= sumNegVal;
+						}
+						numNeg = 0;
+						sumNegVal = 0.0;
+					}
 				}
 				prevPos = point[0];
-				if(numEq!==0) {
-					var meanEq = (sumPosVal + sumEqVal) / (numPos+numEq);
-					meanValues.push({x: prevPos,y:null},{x: prevPos,y: meanEq},{x: prevPos,y: null});
-					//meanValues.push({x: prevPos,y: meanEq},{x: prevPos,y: null});
-					numEq = 0;
-					sumEqVal = 0.0;
-				}
 			}
-			if(point[2] === 0) {
-				numEq++;
-				sumEqVal += point[1];
-				
-			} else if(point[2] > 0) {
+			
+			if(point[2] !== -1) {
+				// Add a point
 				numPos++;
 				sumPosVal += point[1];
-			} else {
-				numPos--;
-				sumPosVal -= point[1];
+			}
+			if(point[2] === -1 || point[2] === 0) {
+				// Schedule point removal
+				numNeg++;
+				sumNegVal += point[1];
 			}
 		});
 		// Corner case
-		if(numEq!==0) {
-			var meanEq = (sumPosVal + sumEqVal) / (numPos+numEq);
-			meanValues.push({x: prevPos,y: null},{x: prevPos,y: meanEq},{x: prevPos,y: null});
-			//meanValues.push({x: prevPos,y: meanEq},{x: prevPos,y: null});
+		if(numPos!==0) {
+			var mean = sumPosVal  / numPos;
+			meanValues.push({x: prevPos,y: mean});
 		}
 		
 		return meanValues;

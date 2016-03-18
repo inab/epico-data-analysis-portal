@@ -34,6 +34,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Methylated regions',
 			ceiling: 1.0,
 			floor: 0.0,
+			breaks: [{
+				from: 0.25,
+				to: 0.75,
+				breakSize: 0.025
+			}],
 			yAxisLabel: 'Methylation level',
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 		},
@@ -1007,6 +1012,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					if(gData.ceiling!==undefined) {
 						chart.options.yAxis.ceiling = gData.ceiling;
 					}
+					
+					if(gData.breaks!==undefined) {
+						chart.options.yAxis.breaks = gData.breaks;
+						//chart.options.yAxis.lineColor = 'black';
+						chart.options.yAxis.lineWidth = 1;
+					}
 					break;
 				case GRAPH_TYPE_STEP_HIGHCHARTS:
 					var plotBands = [];
@@ -1089,6 +1100,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					
 					if(gData.ceiling!==undefined) {
 						chart.options.yAxis.ceiling = gData.ceiling;
+					}
+					
+					if(gData.breaks!==undefined) {
+						chart.options.yAxis.breaks = gData.breaks;
+						//chart.options.yAxis.lineColor = 'black';
+						chart.options.yAxis.lineWidth = 1;
 					}
 					
 					// Adding the gene and transcript regions
@@ -1316,6 +1333,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					
 					if(gData.ceiling!==undefined) {
 						chart.options.yAxis.ceiling = gData.ceiling;
+					}
+					
+					if(gData.breaks!==undefined) {
+						chart.options.yAxis.breaks = gData.breaks;
+						//chart.options.yAxis.lineColor = 'black';
+						chart.options.yAxis.lineWidth = 1;
 					}
 					
 					// Adding the gene and transcript regions

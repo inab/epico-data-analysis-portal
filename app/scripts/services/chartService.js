@@ -1610,16 +1610,295 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 	}
 	
-	function processGeneralChartData(rangeData) {
-		var origin = rangeData.processedData.all;
-		var dataArray = rangeData.fetchedData.all;
+	
+	// Next functions corresponds to processGeneralChartData refactoring
+	function getDataArray(rangeData,view) {
+		var dataArray;
+		switch(view) {
+			case VIEW_GENERAL:
+				dataArray = rangeData.fetchedData.all;
+				break;
+			case VIEW_DISEASES:
+				dataArray = rangeData.fetchedData.byCellType.hash[rangeData.ui.celltypeSelected.o_uri];
+				break;
+			case VIEW_BY_TISSUE:
+				dataArray = rangeData.fetchedData.byTissue.hash[rangeData.ui.tissueSelected.o_uri];
+				break;
+		}
+		
+		return dataArray;
+	}
+	
+	function getOrigin(rangeData,view) {
+		var origin;
+		switch(view) {
+			case VIEW_GENERAL:
+				origin = rangeData.processedData.all;
+				break;
+			case VIEW_DISEASES:
+				origin = rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri];
+				break;
+			case VIEW_BY_TISSUE:
+				origin = rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri];
+				break;
+		}
+		
+		return origin;
+	}
+	
+	function setOrigin(rangeData,view,origin) {
+		switch(view) {
+			case VIEW_GENERAL:
+				rangeData.processedData.all = origin;
+				break;
+			case VIEW_DISEASES:
+				rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri] = origin;
+				break;
+			case VIEW_BY_TISSUE:
+				rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri] = origin;
+				break;
+		}
+	}
+	
+	function getMeanSeriesIdFacet(view) {
+		var meanSeriesIdFacet;
+		
+		switch(view) {
+			case VIEW_GENERAL:
+				meanSeriesIdFacet = 'meanCellTypeSeriesId';
+				break;
+			case VIEW_DISEASES:
+				// We don't want mean series
+				break;
+			case VIEW_BY_TISSUE:
+				meanSeriesIdFacet = 'meanCellTypeSeriesId';
+				break;
+		}
+		
+		return meanSeriesIdFacet;
+	}
+	
+	function getSeriesIdFacet(view) {
+		var seriesIdFacet;
+		switch(view) {
+			case VIEW_GENERAL:
+				seriesIdFacet = 'cellTypeSeriesId';
+				break;
+			case VIEW_DISEASES:
+				seriesIdFacet = 'diseaseSeriesId';
+				break;
+			case VIEW_BY_TISSUE:
+				seriesIdFacet = 'cellTypeSeriesId';
+				break;
+		}
+		
+		return seriesIdFacet;
+	}
+	
+	function getTermType(data,seriesNodesHash,view) {
+		var term_type;
+		
+		switch(view) {
+			case VIEW_GENERAL:
+				term_type = seriesNodesHash[data.analysis.cell_type.o_uri];
+				break;
+			case VIEW_DISEASES:
+				term_type = seriesNodesHash[data.analysis.lab_experiment.sample.specimen.donor_disease];
+				break;
+			case VIEW_BY_TISSUE:
+				term_type = seriesNodesHash[data.analysis.cell_type.o_uri];
+				break;
+		}
+		
+		return term_type;
+	}
+	
+	function getSeriesName(data,term_type,view) {
+		var seriesName;
+		
+		switch(view) {
+			case VIEW_GENERAL:
+				seriesName = data.analysis.cell_type.name;
+				break;
+			case VIEW_DISEASES:
+				seriesName = term_type.name;
+				break;
+			case VIEW_BY_TISSUE:
+				seriesName = data.analysis.cell_type.name;
+				break;
+		}
+		
+		return seriesName;
+	}
+	
+	function getSeriesColor(data,term_type,view) {
+		var seriesColor;
+		
+		switch(view) {
+			case VIEW_GENERAL:
+				seriesColor = data.analysis.cell_type.color;
+				break;
+			case VIEW_DISEASES:
+				seriesColor = term_type.color;
+				break;
+			case VIEW_BY_TISSUE:
+				seriesColor = data.analysis.cell_type.color;
+				break;
+		}
+		
+		return seriesColor;
+	}
+	
+	// This is almost identical to processGeneralChartData
+	function abstractProcessChartData(rangeData,view) {
+		var dataArray = getDataArray(rangeData,view);
+		var origin = getOrigin(rangeData,view);
 		var maxI = dataArray.length;
 		
 		var retval = origin<maxI;
-		if(origin<maxI) {
+		if(retval) {
 			var localScope = rangeData.localScope;
-			var chartMaps = getChartMaps(rangeData,VIEW_GENERAL);
-			var seriesNodesHash = getSeriesNodesHash(rangeData,VIEW_GENERAL);
+			var chartMaps = getChartMaps(rangeData,view);
+			var seriesNodesHash = getSeriesNodesHash(rangeData,view);
+			var meanSeriesIdFacet = getMeanSeriesIdFacet(view);
+			var seriesIdFacet = getSeriesIdFacet(view);
+			
+			var getSeriesValues = function(graph,data,seriesIdFacet,isMeanSeries) {
+				var seriesValues;
+				
+				if(data[seriesIdFacet] in graph.bpSideData.seriesToIndex) {
+					seriesValues = graph.bpSideData.seriesToIndex[data[seriesIdFacet]];
+				} else {
+					seriesValues = [];
+					var series;
+					
+					// We need this shared reference
+					var term_type;
+					
+					var seriesName;
+					var seriesColor;
+					if(isMeanSeries) {
+						graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data[seriesIdFacet]];
+						seriesName = graph.bpSideData.meanSeries.name;
+						seriesColor = graph.bpSideData.meanSeries.color;
+					} else {
+						term_type = getTermType(data,seriesNodesHash,view);
+						seriesName = getSeriesName(data,term_type,view);
+						seriesColor = getSeriesColor(data,term_type,view);
+					}
+					switch(graph.type) {
+						case GRAPH_TYPE_STEP_CHARTJS:
+							series = {
+								seriesValues: seriesValues,
+								seriesGenerator: genMeanSeries,
+								seriesDest: 'data',
+								series: {
+									label: seriesName,
+									strokeColor: seriesColor,
+								}
+							};
+							graph.options.data.datasets.push(series.series);
+							break;
+						case GRAPH_TYPE_STEP_CANVASJS:
+							series = {
+								seriesValues: seriesValues,
+								seriesGenerator: genMeanSeries,
+								seriesDest: 'dataPoints',
+								series: {
+									type: "stepLine",
+									name: seriesName,
+									color: seriesColor,
+								}
+							};
+							graph.options.data.push(series.series);
+							break;
+						case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+							series = {
+								seriesValues: seriesValues,
+								seriesGenerator: genBoxPlotSeries,
+								seriesDest: 'data',
+								series: {
+									name: seriesName,
+									color: seriesColor,
+									type: 'boxplot',
+								}
+							};
+							graph.options.series.push(series.series);
+							break;
+						case GRAPH_TYPE_STEP_HIGHCHARTS:
+							series = {
+								seriesValues: seriesValues,
+								seriesGenerator: genMeanSeriesHighcharts,
+								seriesDest: 'data',
+								series: {
+									name: seriesName,
+									color: seriesColor,
+									type: 'line',
+									shadow: false,
+									connectNulls: false,
+									marker: {
+										enabled: false
+									},
+									tooltip: {
+										shared: true,
+										shadow: false,
+									},
+									turboThreshold: 1000,
+									step: 'left',
+								}
+							};
+							graph.options.series.push(series.series);
+							break;
+						case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
+							series = {
+								seriesValues: seriesValues,
+								seriesGenerator: genAreaRangeSeriesHighcharts,
+								seriesDest: 'data',
+								series: {
+									name: seriesName,
+									color: seriesColor,
+									type: 'arearange',
+									fillOpacity: 0.3,
+									lineWidth: 0,
+									shadow: false,
+									connectNulls: false,
+									marker: {
+										enabled: false
+									},
+									tooltip: {
+										shared: true,
+										shadow: false,
+									},
+									turboThreshold: 1000,
+								}
+							};
+							graph.options.series.push(series.series);
+							break;
+						case GRAPH_TYPE_STEP_NVD3:
+							series = {
+								seriesValues: seriesValues,
+								seriesGenerator: genMeanSeries,
+								seriesDest: 'values',
+								term_type: term_type,
+								series: {
+									key: seriesName,
+									color: seriesColor,
+								}
+							};
+							graph.data.push(series.series);
+							break;
+					}
+					if(term_type!==undefined) {
+						series.term_type = term_type;
+					}
+					series.series[series.seriesDest] = [];
+					graph.bpSideData.seriesToIndex[data[seriesIdFacet]] = seriesValues;
+					graph.allData.push(series);
+				}
+				
+				return seriesValues;
+			};
+			
 			for(var i=origin; i<maxI ; i++) {
 				var data = dataArray[i];
 				if(data.meanCellTypeSeriesId in localScope.SeriesToChart) {
@@ -1633,250 +1912,24 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							
 							graphViews.forEach(function(graph) {
 								var meanSeriesValues;
-								if(data.meanCellTypeSeriesId in graph.bpSideData.seriesToIndex) {
-									meanSeriesValues = graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId];
-								} else {
-									meanSeriesValues = [];
-									var meanSeries;
-									
-									graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data.meanCellTypeSeriesId];
-									switch(graph.type) {
-										case GRAPH_TYPE_STEP_CHARTJS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'data',
-												series: {
-													label: graph.bpSideData.meanSeries.name,
-													strokeColor: graph.bpSideData.meanSeries.color
-												}
-											};
-											graph.options.data.datasets.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_STEP_CANVASJS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'dataPoints',
-												series: {
-													type: "stepLine",
-													name: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color
-												}
-											};
-											graph.options.data.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genBoxPlotSeries,
-												seriesDest: 'data',
-												series: {
-													name: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color,
-													type: 'boxplot',
-												}
-											};
-											graph.options.series.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_STEP_HIGHCHARTS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genMeanSeriesHighcharts,
-												seriesDest: 'data',
-												series: {
-													name: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color,
-													type: 'step',
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 0,
-													step: 'left',
-												}
-											};
-											graph.options.series.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genAreaRangeSeriesHighcharts,
-												seriesDest: 'data',
-												series: {
-													name: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color,
-													type: 'arearange',
-													fillOpacity: 0.3,
-													lineWidth: 0,
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 0,
-												}
-											};
-											graph.options.series.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_STEP_NVD3:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'values',
-												series: {
-													type: 'area',
-													key: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color
-												}
-											};
-											graph.data.push(meanSeries.series);
-											break;
-									}
-									meanSeries.series[meanSeries.seriesDest] = [];
-									graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
-									graph.allData.push(meanSeries);
+								if(meanSeriesIdFacet!==undefined) {
+									meanSeriesValues = getSeriesValues(graph,data,meanSeriesIdFacet,true);
 								}
 								
-								var seriesValues;
-								if(data.cellTypeSeriesId in graph.bpSideData.seriesToIndex) {
-									seriesValues = graph.bpSideData.seriesToIndex[data.cellTypeSeriesId];
-								} else {
-									seriesValues = [];
-									var series;
-									
-									// We need this shared reference
-									var term_type = seriesNodesHash[data.analysis.cell_type.o_uri];
-									
-									var seriesName = data.analysis.cell_type.name;
-									var seriesColor = data.analysis.cell_type.color;
-									switch(graph.type) {
-										case GRAPH_TYPE_STEP_CHARTJS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'data',
-												series: {
-													label: seriesName,
-													strokeColor: seriesColor,
-												}
-											};
-											graph.options.data.datasets.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_CANVASJS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'dataPoints',
-												series: {
-													type: "stepLine",
-													name: seriesName,
-													color: seriesColor,
-												}
-											};
-											graph.options.data.push(series.series);
-											break;
-										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genBoxPlotSeries,
-												seriesDest: 'data',
-												term_type: term_type,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'boxplot',
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeriesHighcharts,
-												seriesDest: 'data',
-												term_type: term_type,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'step',
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 1000,
-													step: 'left',
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genAreaRangeSeriesHighcharts,
-												seriesDest: 'data',
-												term_type: term_type,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'arearange',
-													fillOpacity: 0.3,
-													lineWidth: 0,
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 1000,
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_NVD3:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'values',
-												term_type: term_type,
-												series: {
-													key: seriesName,
-													color: seriesColor,
-												}
-											};
-											graph.data.push(series.series);
-											break;
-									}
-									series.series[series.seriesDest] = [];
-									graph.bpSideData.seriesToIndex[data.cellTypeSeriesId] = seriesValues;
-									graph.allData.push(series);
-								}
+								var seriesValues = getSeriesValues(graph,data,seriesIdFacet);
 								
-								meanSeriesValues.push(data.sDataS);
+								if(meanSeriesValues!==undefined) {
+									meanSeriesValues.push(data.sDataS);
+								}
 								seriesValues.push(data.sDataS);
 							});
 						}
 					}
 				}
 			}
-			rangeData.processedData.all = maxI;
+			
+			// Setting the new origin
+			setOrigin(rangeData,view,maxI);
 		}
 		
 		return retval;
@@ -1890,7 +1943,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			
 			// We have to call here this method, to be sure
 			// we have fulfilled all the preconditions
-			var newData = processGeneralChartData(rangeData);
+			var newData = abstractProcessChartData(rangeData,VIEW_GENERAL);
 			if(newData) {
 				doGenerate=true;
 			}
@@ -1949,163 +2002,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		*/
 	}
 	
-	// This is a trimmed version of processGeneralChartData
-	function processCellTypeDiseaseChartData(rangeData) {
-		var origin = rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri];
-		var dataArray = rangeData.fetchedData.byCellType.hash[rangeData.ui.celltypeSelected.o_uri];
-		var maxI = dataArray.length;
-		
-		var retval = origin<maxI;
-		if(origin<maxI) {
-			var localScope = rangeData.localScope;
-			var chartMaps = getChartMaps(rangeData,VIEW_DISEASES);
-			var seriesNodesHash = getSeriesNodesHash(rangeData,VIEW_DISEASES);
-			for(var i=origin; i<maxI ; i++) {
-				var data = dataArray[i];
-				if(data.meanCellTypeSeriesId in localScope.SeriesToChart) {
-					var chartIds = localScope.SeriesToChart[data.meanCellTypeSeriesId];
-					
-					// We do this for every chart where the series appears
-					for(var iChart=0;iChart<chartIds.length;iChart++) {
-						var chartId = chartIds[iChart];
-						if(chartId in chartMaps) {
-							var graphViews = chartMaps[chartId];
-							
-							graphViews.forEach(function(graph) {
-								var seriesValues;
-								if(data.diseaseSeriesId in graph.bpSideData.seriesToIndex) {
-									seriesValues = graph.bpSideData.seriesToIndex[data.diseaseSeriesId];
-								} else {
-									seriesValues = [];
-									var series;
-									
-									// We need this shared reference
-									var disease = seriesNodesHash[data.analysis.lab_experiment.sample.specimen.donor_disease];
-									
-									var seriesName = disease.name;
-									var seriesColor = disease.color;
-									switch(graph.type) {
-										case GRAPH_TYPE_STEP_CHARTJS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'data',
-												series: {
-													label: seriesName,
-													strokeColor: seriesColor,
-												}
-											};
-											graph.options.data.datasets.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_CANVASJS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'dataPoints',
-												series: {
-													type: "stepLine",
-													name: seriesName,
-													color: seriesColor,
-												}
-											};
-											graph.options.data.push(series.series);
-											break;
-										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genBoxPlotSeries,
-												seriesDest: 'data',
-												term_type: disease,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'boxplot',
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeriesHighcharts,
-												seriesDest: 'data',
-												term_type: disease,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'step',
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 1000,
-													step: 'left',
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genAreaRangeSeriesHighcharts,
-												seriesDest: 'data',
-												term_type: disease,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'arearange',
-													fillOpacity: 0.3,
-													lineWidth: 0,
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 1000,
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_NVD3:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'values',
-												term_type: disease,
-												series: {
-													key: seriesName,
-													color: seriesColor,
-												}
-											};
-											graph.data.push(series.series);
-											break;
-									}
-									series.series[series.seriesDest] = [];
-									graph.bpSideData.seriesToIndex[data.diseaseSeriesId] = seriesValues;
-									graph.allData.push(series);
-								}
-								
-								seriesValues.push(data.sDataS);
-							});
-						}
-					}
-				}
-			}
-			rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri] = maxI;
-		}
-		
-		return retval;
-	}
-	
 	// This is almost identical to redrawGeneralCharts
 	function redrawCellTypeDiseaseCharts(charts,doGenerate,stillLoading) {
 		if('ui' in charts) {
@@ -2113,7 +2009,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			
 			// We have to call here this method, to be sure
 			// we have fulfilled all the preconditions
-			var newData = processCellTypeDiseaseChartData(rangeData);
+			var newData = abstractProcessChartData(rangeData,VIEW_DISEASES);
 			if(newData) {
 				doGenerate = true;
 			}
@@ -2148,279 +2044,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		}
 	}
 	
-	// This is almost identical to processGeneralChartData
-	function processTissueChartData(rangeData) {
-		var origin = rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri];
-		var dataArray = rangeData.fetchedData.byTissue.hash[rangeData.ui.tissueSelected.o_uri];
-		var maxI = dataArray.length;
-		
-		var retval = origin<maxI;
-		if(origin<maxI) {
-			var localScope = rangeData.localScope;
-			var chartMaps = getChartMaps(rangeData,VIEW_BY_TISSUE);
-			var seriesNodesHash = getSeriesNodesHash(rangeData,VIEW_BY_TISSUE);
-			for(var i=origin; i<maxI ; i++) {
-				var data = dataArray[i];
-				if(data.meanCellTypeSeriesId in localScope.SeriesToChart) {
-					var chartIds = localScope.SeriesToChart[data.meanCellTypeSeriesId];
-					
-					// We do this for every chart where the series appears
-					for(var iChart=0;iChart<chartIds.length;iChart++) {
-						var chartId = chartIds[iChart];
-						if(chartId in chartMaps) {
-							var graphViews = chartMaps[chartId];
-							
-							graphViews.forEach(function(graph) {
-								var meanSeriesValues;
-								if(data.meanCellTypeSeriesId in graph.bpSideData.seriesToIndex) {
-									meanSeriesValues = graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId];
-								} else {
-									meanSeriesValues = [];
-									var meanSeries;
-									
-									graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data.meanCellTypeSeriesId];
-									switch(graph.type) {
-										case GRAPH_TYPE_STEP_CHARTJS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'data',
-												series: {
-													label: graph.bpSideData.meanSeries.name,
-													strokeColor: graph.bpSideData.meanSeries.color
-												}
-											};
-											graph.options.data.datasets.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_STEP_CANVASJS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'dataPoints',
-												series: {
-													type: "stepLine",
-													name: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color
-												}
-											};
-											graph.options.data.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genBoxPlotSeries,
-												seriesDest: 'data',
-												series: {
-													name: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color,
-													type: 'boxplot',
-												}
-											};
-											graph.options.series.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_STEP_HIGHCHARTS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genMeanSeriesHighcharts,
-												seriesDest: 'data',
-												series: {
-													name: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color,
-													type: 'step',
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 0,
-													step: 'left',
-												}
-											};
-											graph.options.series.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genAreaRangeSeriesHighcharts,
-												seriesDest: 'data',
-												series: {
-													name: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color,
-													type: 'arearange',
-													fillOpacity: 0.3,
-													lineWidth: 0,
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 0,
-												}
-											};
-											graph.options.series.push(meanSeries.series);
-											break;
-										case GRAPH_TYPE_STEP_NVD3:
-											meanSeries = {
-												seriesValues: meanSeriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'values',
-												series: {
-													type: 'area',
-													key: graph.bpSideData.meanSeries.name,
-													color: graph.bpSideData.meanSeries.color
-												}
-											};
-											graph.data.push(meanSeries.series);
-											break;
-									}
-									meanSeries.series[meanSeries.seriesDest] = [];
-									graph.bpSideData.seriesToIndex[data.meanCellTypeSeriesId] = meanSeriesValues;
-									graph.allData.push(meanSeries);
-								}
-								
-								var seriesValues;
-								if(data.cellTypeSeriesId in graph.bpSideData.seriesToIndex) {
-									seriesValues = graph.bpSideData.seriesToIndex[data.cellTypeSeriesId];
-								} else {
-									seriesValues = [];
-									var series;
-									
-									// We need this shared reference
-									var term_type = seriesNodesHash[data.analysis.cell_type.o_uri];
-									
-									var seriesName = data.analysis.cell_type.name;
-									var seriesColor = data.analysis.cell_type.color;
-									switch(graph.type) {
-										case GRAPH_TYPE_STEP_CHARTJS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'data',
-												series: {
-													label: seriesName,
-													strokeColor: seriesColor,
-												}
-											};
-											graph.options.data.datasets.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_CANVASJS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'dataPoints',
-												series: {
-													type: "stepLine",
-													name: seriesName,
-													color: seriesColor,
-												}
-											};
-											graph.options.data.push(series.series);
-											break;
-										case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genBoxPlotSeries,
-												seriesDest: 'data',
-												term_type: term_type,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'boxplot',
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeriesHighcharts,
-												seriesDest: 'data',
-												term_type: term_type,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'step',
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 1000,
-													step: 'left',
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genAreaRangeSeriesHighcharts,
-												seriesDest: 'data',
-												term_type: term_type,
-												series: {
-													name: seriesName,
-													color: seriesColor,
-													type: 'arearange',
-													fillOpacity: 0.3,
-													lineWidth: 0,
-													shadow: false,
-													connectNulls: false,
-													marker: {
-														enabled: false
-													},
-													tooltip: {
-														shared: true,
-														shadow: false,
-													},
-													turboThreshold: 1000,
-												}
-											};
-											graph.options.series.push(series.series);
-											break;
-										case GRAPH_TYPE_STEP_NVD3:
-											series = {
-												seriesValues: seriesValues,
-												seriesGenerator: genMeanSeries,
-												seriesDest: 'values',
-												term_type: term_type,
-												series: {
-													key: seriesName,
-													color: seriesColor,
-												}
-											};
-											graph.data.push(series.series);
-											break;
-									}
-									series.series[series.seriesDest] = [];
-									graph.bpSideData.seriesToIndex[data.cellTypeSeriesId] = seriesValues;
-									graph.allData.push(series);
-								}
-								
-								meanSeriesValues.push(data.sDataS);
-								seriesValues.push(data.sDataS);
-							});
-						}
-					}
-				}
-			}
-			rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri] = maxI;
-		}
-		
-		return retval;
-	}
-	
 	// This is almost identical to redrawGeneralCharts
 	function redrawTissueCharts(charts,doGenerate,stillLoading) {
 		if('ui' in charts) {
@@ -2428,7 +2051,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			
 			// We have to call here this method, to be sure
 			// we have fulfilled all the preconditions
-			var newData = processTissueChartData(rangeData);
+			var newData = abstractProcessChartData(rangeData,VIEW_BY_TISSUE);
 			if(newData) {
 				doGenerate = true;
 			}

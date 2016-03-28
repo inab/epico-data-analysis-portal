@@ -4,7 +4,7 @@
 
 angular.
 module('blueprintApp').
-factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorPalette','d3','$timeout',function($q,$window,portalConfig,ConstantsService,ColorPalette,d3,$timeout) {
+factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorPalette','d3',function($q,$window,portalConfig,ConstantsService,ColorPalette,d3) {
 	
 	var METHYL_GRAPH = 'methyl';
 	var METHYL_HYPER_GRAPH = METHYL_GRAPH+'_hyper';
@@ -25,7 +25,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	var GRAPH_TYPE_STEP_CHARTJS = 'step-'+LIBRARY_CHARTJS;
 	var GRAPH_TYPE_BOXPLOT_HIGHCHARTS = 'boxplot-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_STEP_HIGHCHARTS = 'step-'+LIBRARY_HIGHCHARTS;
+	var GRAPH_TYPE_SPLINE_HIGHCHARTS = 'spline-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_AREARANGE_HIGHCHARTS = 'arearange-'+LIBRARY_HIGHCHARTS;
+	var GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS = 'areasplinerange-'+LIBRARY_HIGHCHARTS;
 	
 	var GRAPHS = [
 		{
@@ -42,13 +44,21 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			yAxisLabel: 'Methylation level',
 			views: [
 				{
-					type: GRAPH_TYPE_STEP_HIGHCHARTS,
-					subtitle: 'mean series'
+					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					//subtitle: 'mean series + min / max'
 				},
-				{
-					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
-					subtitle: 'min / max'
-				}
+				//{
+				//	type: [GRAPH_TYPE_AREARANGE_HIGHCHARTS,GRAPH_TYPE_STEP_HIGHCHARTS],
+				//	subtitle: 'mean series + min / max'
+				//},
+				//{
+				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+				//	subtitle: 'mean series'
+				//},
+				//{
+				//	type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+				//	subtitle: 'min / max'
+				//}
 			],
 		},
 		{
@@ -60,13 +70,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			yAxisLabel: 'Methylation level',
 			views: [
 				{
-					type: GRAPH_TYPE_STEP_HIGHCHARTS,
-					subtitle: 'mean series'
+					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					//subtitle: 'mean series + min / max'
 				},
-				{
-					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
-					subtitle: 'min / max'
-				}
+				//{
+				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+				//	subtitle: 'mean series'
+				//},
+				//{
+				//	type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+				//	subtitle: 'min / max'
+				//}
 			],
 			isInitiallyHidden: true,
 		},
@@ -79,13 +93,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			yAxisLabel: 'Methylation level',
 			views: [
 				{
-					type: GRAPH_TYPE_STEP_HIGHCHARTS,
-					subtitle: 'mean series'
+					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					//subtitle: 'mean series + min / max'
 				},
-				{
-					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
-					subtitle: 'min / max'
-				}
+				//{
+				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+				//	subtitle: 'mean series'
+				//},
+				//{
+				//	type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+				//	subtitle: 'min / max'
+				//}
 			],
 			type: GRAPH_TYPE_STEP_HIGHCHARTS,
 			isInitiallyHidden: true,
@@ -121,13 +139,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			yAxisLabel: 'z-score',
 			views: [
 				{
-					type: GRAPH_TYPE_STEP_HIGHCHARTS,
-					subtitle: 'mean series'
+					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					//subtitle: 'mean series + min / max'
 				},
-				{
-					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
-					subtitle: 'min / max'
-				}
+				//{
+				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+				//	subtitle: 'mean series'
+				//},
+				//{
+				//	type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+				//	subtitle: 'min / max'
+				//}
 			],
 		},
 	];
@@ -141,13 +163,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			yAxisLabel: '-Log10(q-value)',
 			views: [
 				{
-					type: GRAPH_TYPE_STEP_HIGHCHARTS,
-					subtitle: 'mean series'
+					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					//subtitle: 'mean series + min / max'
 				},
-				{
-					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
-					subtitle: 'min / max'
-				}
+				//{
+				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+				//	subtitle: 'mean series'
+				//},
+				//{
+				//	type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+				//	subtitle: 'min / max'
+				//}
 			],
 		},
 		{
@@ -158,13 +184,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			yAxisLabel: '-Log10(q-value)',
 			views: [
 				{
-					type: GRAPH_TYPE_STEP_HIGHCHARTS,
-					subtitle: 'mean series'
+					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					//subtitle: 'mean series + min / max'
 				},
-				{
-					type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
-					subtitle: 'min / max'
-				}
+				//{
+				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
+				//	subtitle: 'mean series'
+				//},
+				//{
+				//	type: GRAPH_TYPE_AREARANGE_HIGHCHARTS,
+				//	subtitle: 'min / max'
+				//}
 			],
 		},
 	];
@@ -556,7 +586,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					preparedValues[chart.boxPlotCategories[boxplot.label].x] = boxplot.data;
 				});
 				series.seriesDigestedValues = preparedValues;
-				chart.options.series[iSeries].data = series.seriesDigestedValues;
+				//chart.options.series[iSeries].data = series.seriesDigestedValues;
+				series.series[series.seriesDest] = series.seriesDigestedValues;
 			}
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
@@ -568,8 +599,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				visibilityState = stillLoading || !chart.meanSeriesHidden;
 			}
 			
-			chart.options.series[iSeries].visible = visibilityState;
-			chart.options.series[iSeries].showInLegend = visibilityState;
+			series.series.visible = visibilityState;
+			series.series.showInLegend =  (series.series.linkedTo === undefined) ? visibilityState : false;
 		});
 		
 		// It is assigned only once
@@ -603,7 +634,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			
 			if(chart.library!==LIBRARY_NVD3) {
 				series.series.visible = visibilityState;
-				series.series.showInLegend = visibilityState;
+				series.series.showInLegend = (series.series.linkedTo === undefined) ? visibilityState : false;
 			} else if(visibilityState) {
 				series.series[series.seriesDest] = [];
 			} else {
@@ -909,7 +940,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			var chartViews = gData.views.map(function(gDataView) {
 				var chart;
 				
-				switch(gDataView.type) {
+				var gDataViewType = Array.isArray(gDataView.type) ? gDataView.type[0] :  gDataView.type;
+				
+				switch(gDataViewType) {
 					case GRAPH_TYPE_STEP_NVD3:
 						chart = {
 							options: {
@@ -1083,6 +1116,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							chart.options.yAxis.lineWidth = 1;
 						}
 						break;
+						
 					case GRAPH_TYPE_STEP_HIGHCHARTS:
 						var plotBands = [];
 						var plotLines = [];
@@ -1316,9 +1350,94 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							}
 						});
 						break;
+						
+					case GRAPH_TYPE_SPLINE_HIGHCHARTS:
+						chart = {
+							options: {
+								options: {
+									chart: {
+										type: 'line',
+										backgroundColor: null,
+										events: {
+											// reflowing after load and redraw events led to blank drawings
+											addSeries: function() {
+												var chart = this;
+												//this.reflow();
+												setTimeout(function() {
+													chart.reflow();
+												},0);
+											}
+										},
+										animation: false,
+										zoomType: 'x',
+										panning: true,
+										panKey: 'shift'
+									},
+									legend: {
+										enabled: false,
+										title: {
+											text: legendTitle
+										}
+									},
+									tooltip: {
+										animation: false,
+										shared: true,
+										backgroundColor: '#FFFFFF'
+									},
+									plotOptions: {
+										series: {
+											animation: false
+										}
+									},
+									exporting: HighchartsCommonExportingOptions,
+								},
+								title: {
+									text: title
+								},
+								xAxis: {
+									title: {
+										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
+									},
+									min: range_start,
+									max: range_end,
+									allowDecimals: false,
+								},
+								yAxis: {
+									title: {
+										text: gData.yAxisLabel
+									}
+								},
+								series: [],
+								loading: true,
+								//func: function(chart) {
+								//	// This is needed to reflow the chart
+								//	// to its final width
+								//	$timeout(function() {
+								//		chart.reflow();
+								//	},0);
+								//},
+							},
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_HIGHCHARTS,
+						};
+						
+						// Setting the floor and ceiling when available
+						if(gData.floor!==undefined) {
+							chart.options.yAxis.floor = gData.floor;
+						}
+						
+						if(gData.ceiling!==undefined) {
+							chart.options.yAxis.ceiling = gData.ceiling;
+						}
+						
+						if(gData.breaks!==undefined) {
+							chart.options.yAxis.breaks = gData.breaks;
+							//chart.options.yAxis.lineColor = 'black';
+							chart.options.yAxis.lineWidth = 1;
+						}
+						break;
+						
 					case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-						var plotBands = [];
-						var plotLines = [];
 						chart = {
 							options: {
 								options: {
@@ -1404,157 +1523,100 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							//chart.options.yAxis.lineColor = 'black';
 							chart.options.yAxis.lineWidth = 1;
 						}
+						break;
 						
-						// Adding the gene and transcript regions
-						ConstantsService.REGION_FEATURES.forEach(function(featureType) {
-							if(featureType in DRAWABLE_REGION_FEATURES) {
-								var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
-								
-								// Consolidating the declared feature regions
-								var consolidatedFeatureRegions = [];
-								var consolidatedHash = {};
-								if(featureType in rangeData.regionLayout) {
-									rangeData.regionLayout[featureType].forEach(function(featureRegion) {
-										var uKey = '';
-										featureRegion.coordinates.forEach(function(coords) {
-											uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
-										});
-										var feaRegion;
-										if(uKey in consolidatedHash) {
-											feaRegion = consolidatedHash[uKey];
-											feaRegion.label += ', ' + featureRegion.label;
-										} else {
-											feaRegion = {
-												label: featureRegion.label,
-												coordinates: featureRegion.coordinates,
-											};
-											consolidatedFeatureRegions.push(feaRegion);
-											consolidatedHash[uKey] = feaRegion;
-										}
-									});
-									
-									consolidatedFeatureRegions.forEach(function(featureRegion) {
-										featureRegion.coordinates.forEach(function(coords) {
-											switch(drawableFeature.type) {
-												case PLOTBAND_FEATURE:
-													var plotBand = {
-														//borderColor: drawableFeature.color,
-														//borderColor: {
-														//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-														//	stops: [
-														//		[0, drawableFeature.color],
-														//		[1, '#000000']
-														//	]
-														//},
-														//borderWidth: 1,
-														color: drawableFeature.color,
-														from: coords.chromosome_start,
-														to: coords.chromosome_end,
-														//zIndex: zIndex+5
-													};
-													plotBands.push(plotBand);
-													
-													if(drawableFeature.showLabel) {
-														var plotBandLabel = {
-															text: featureRegion.label,
-															style: {
-																fontSize: '8px',
-															},
-															rotation: 330
-														};
-														plotBand.label = plotBandLabel;
-													}
-													break;
-												case BORDERED_PLOTBAND_FEATURE:
-													var borderedPlotBand = {
-														//borderColor: drawableFeature.color,
-														//borderColor: {
-														//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-														//	stops: [
-														//		[0, drawableFeature.color],
-														//		[1, '#000000']
-														//	]
-														//},
-														//borderWidth: 0,
-														color: drawableFeature.color,
-														from: coords.chromosome_start,
-														to: coords.chromosome_end,
-														//zIndex: 5
-													};
-													plotBands.push(borderedPlotBand);
-													
-													var borderedStart = {
-														color: 'gray',
-														dashStyle: 'DashDot',
-														width: 2,
-														value: coords.chromosome_start,
-														zIndex: 6
-													};
-													var borderedStop = {
-														color: 'gray',
-														dashStyle: 'Dash',
-														width: 2,
-														value: coords.chromosome_end,
-														zIndex: 6
-													};
-													plotLines.push(borderedStart,borderedStop);
-													
-													if(drawableFeature.showLabel) {
-														var borderedPlotBandLabel = {
-															text: featureRegion.label,
-															verticalAlign: 'middle',
-															textAlign: 'center',
-															align: 'center',
-															style: {
-																fontSize: '2mm',
-															},
-															rotation: 90
-														};
-														if(drawableFeature.showAtBorders) {
-															borderedStart.label = borderedPlotBandLabel;
-															borderedStop.label = borderedPlotBandLabel;
-														} else {
-															borderedPlotBand.label = borderedPlotBandLabel;
-														}
-													}
-													break;
-												case PLOTLINE_FEATURE:
-													var plotLine = {
-														color: drawableFeature.color,
-														width: 2,
-														value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
-														zIndex: 5
-													};
-													plotLines.push(plotLine);
-													
-													if(drawableFeature.showLabel) {
-														var plotLineLabel = {
-															text: featureRegion.label,
-															style: {
-																fontSize: '2mm',
-															}
-														};
-														if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
-															plotLineLabel.rotation = 270;
-															plotLineLabel.textAlign = 'right';
-															plotLineLabel.x = 10;
-														}
-														plotLine.label = plotLineLabel;
-													}
-													break;
+					case GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS:
+						chart = {
+							options: {
+								options: {
+									chart: {
+										type: 'areasplinerange',
+										backgroundColor: null,
+										events: {
+											// reflowing after load and redraw events led to blank drawings
+											addSeries: function() {
+												var chart = this;
+												//this.reflow();
+												setTimeout(function() {
+													chart.reflow();
+												},0);
 											}
-										});
-									});
-								}
-							}
-						});
+										},
+										animation: false,
+										zoomType: 'x',
+										panning: true,
+										panKey: 'shift'
+									},
+									legend: {
+										enabled: false,
+										title: {
+											text: legendTitle
+										}
+									},
+									tooltip: {
+										animation: false,
+										shared: true,
+										backgroundColor: '#FFFFFF'
+									},
+									plotOptions: {
+										series: {
+											animation: false
+										}
+									},
+									exporting: HighchartsCommonExportingOptions,
+								},
+								title: {
+									text: title
+								},
+								xAxis: {
+									title: {
+										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
+									},
+									min: range_start,
+									max: range_end,
+									allowDecimals: false,
+								},
+								yAxis: {
+									title: {
+										text: gData.yAxisLabel
+									}
+								},
+								series: [],
+								loading: true,
+								//func: function(chart) {
+								//	// This is needed to reflow the chart
+								//	// to its final width
+								//	$timeout(function() {
+								//		chart.reflow();
+								//	},0);
+								//},
+							},
+							seriesAggregator: defaultSeriesAggregator,
+							library: LIBRARY_HIGHCHARTS,
+						};
+						
+						// Setting the floor and ceiling when available
+						if(gData.floor!==undefined) {
+							chart.options.yAxis.floor = gData.floor;
+						}
+						
+						if(gData.ceiling!==undefined) {
+							chart.options.yAxis.ceiling = gData.ceiling;
+						}
+						
+						if(gData.breaks!==undefined) {
+							chart.options.yAxis.breaks = gData.breaks;
+							//chart.options.yAxis.lineColor = 'black';
+							chart.options.yAxis.lineWidth = 1;
+						}
 						break;
 				}
 				
 				
 				// Common attributes
 				chart.chartId = gName;
-				chart.type = gDataView.type;
+				chart.type = gDataViewType;
+				chart.graphTypes = Array.isArray(gDataView.type) ? gDataView.type : [ gDataView.type ];
 				chart.regionFeature = rangeData.regionFeature;
 				chart.allData = [];
 				chart.bpSideData = {
@@ -1763,14 +1825,13 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			var meanSeriesIdFacet = getMeanSeriesIdFacet(view);
 			var seriesIdFacet = getSeriesIdFacet(view);
 			
-			var getSeriesValues = function(graph,data,seriesIdFacet,isMeanSeries) {
-				var seriesValues;
+			var addToSeriesValuesArray = function(seriesValuesArray,chart,data,seriesIdFacet,isMeanSeries) {
+				var seriesValuesList;
 				
-				if(data[seriesIdFacet] in graph.bpSideData.seriesToIndex) {
-					seriesValues = graph.bpSideData.seriesToIndex[data[seriesIdFacet]];
+				if(data[seriesIdFacet] in chart.bpSideData.seriesToIndex) {
+					seriesValuesList = chart.bpSideData.seriesToIndex[data[seriesIdFacet]];
 				} else {
-					seriesValues = [];
-					var series;
+					seriesValuesList = [];
 					
 					// We need this shared reference
 					var term_type;
@@ -1778,125 +1839,201 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					var seriesName;
 					var seriesColor;
 					if(isMeanSeries) {
-						graph.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data[seriesIdFacet]];
-						seriesName = graph.bpSideData.meanSeries.name;
-						seriesColor = graph.bpSideData.meanSeries.color;
+						chart.bpSideData.meanSeries = localScope.AVG_SERIES_COLORS[data[seriesIdFacet]];
+						seriesName = chart.bpSideData.meanSeries.name;
+						seriesColor = chart.bpSideData.meanSeries.color;
 					} else {
 						term_type = getTermType(data,seriesNodesHash,view);
 						seriesName = getSeriesName(data,term_type,view);
 						seriesColor = getSeriesColor(data,term_type,view);
 					}
-					switch(graph.type) {
-						case GRAPH_TYPE_STEP_CHARTJS:
-							series = {
-								seriesValues: seriesValues,
-								seriesGenerator: genMeanSeries,
-								seriesDest: 'data',
-								series: {
-									label: seriesName,
-									strokeColor: seriesColor,
+					
+					chart.graphTypes.forEach(function(graphType,iGraphType) {
+						var seriesValues = [];
+						var series;
+						
+						switch(graphType) {
+							case GRAPH_TYPE_STEP_CHARTJS:
+								series = {
+									seriesValues: seriesValues,
+									seriesGenerator: genMeanSeries,
+									seriesDest: 'data',
+									series: {
+										label: seriesName,
+										strokeColor: seriesColor,
+									}
+								};
+								chart.options.data.datasets.push(series.series);
+								break;
+							case GRAPH_TYPE_STEP_CANVASJS:
+								series = {
+									seriesValues: seriesValues,
+									seriesGenerator: genMeanSeries,
+									seriesDest: 'dataPoints',
+									series: {
+										type: "stepLine",
+										name: seriesName,
+										color: seriesColor,
+									}
+								};
+								chart.options.data.push(series.series);
+								break;
+							case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
+								series = {
+									seriesValues: seriesValues,
+									seriesGenerator: genBoxPlotSeries,
+									seriesDest: 'data',
+									series: {
+										name: seriesName,
+										color: seriesColor,
+										type: 'boxplot',
+									}
+								};
+								// Multiple charts facility
+								if(iGraphType>0) {
+									series.series.linkedTo = ':previous';
 								}
-							};
-							graph.options.data.datasets.push(series.series);
-							break;
-						case GRAPH_TYPE_STEP_CANVASJS:
-							series = {
-								seriesValues: seriesValues,
-								seriesGenerator: genMeanSeries,
-								seriesDest: 'dataPoints',
-								series: {
-									type: "stepLine",
-									name: seriesName,
-									color: seriesColor,
-								}
-							};
-							graph.options.data.push(series.series);
-							break;
-						case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-							series = {
-								seriesValues: seriesValues,
-								seriesGenerator: genBoxPlotSeries,
-								seriesDest: 'data',
-								series: {
-									name: seriesName,
-									color: seriesColor,
-									type: 'boxplot',
-								}
-							};
-							graph.options.series.push(series.series);
-							break;
-						case GRAPH_TYPE_STEP_HIGHCHARTS:
-							series = {
-								seriesValues: seriesValues,
-								seriesGenerator: genMeanSeriesHighcharts,
-								seriesDest: 'data',
-								series: {
-									name: seriesName,
-									color: seriesColor,
-									type: 'line',
-									shadow: false,
-									connectNulls: false,
-									marker: {
-										enabled: false
-									},
-									tooltip: {
-										shared: true,
+								chart.options.series.push(series.series);
+								break;
+							case GRAPH_TYPE_STEP_HIGHCHARTS:
+								series = {
+									seriesValues: seriesValues,
+									seriesGenerator: genMeanSeriesHighcharts,
+									seriesDest: 'data',
+									series: {
+										name: seriesName,
+										color: seriesColor,
+										type: 'line',
 										shadow: false,
-									},
-									turboThreshold: 1000,
-									step: 'left',
+										connectNulls: false,
+										marker: {
+											enabled: false
+										},
+										tooltip: {
+											shared: true,
+											shadow: false,
+										},
+										turboThreshold: 1000,
+										step: 'left',
+									}
+								};
+								// Multiple charts facility
+								if(iGraphType>0) {
+									series.series.linkedTo = ':previous';
 								}
-							};
-							graph.options.series.push(series.series);
-							break;
-						case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
-							series = {
-								seriesValues: seriesValues,
-								seriesGenerator: genAreaRangeSeriesHighcharts,
-								seriesDest: 'data',
-								series: {
-									name: seriesName,
-									color: seriesColor,
-									type: 'arearange',
-									fillOpacity: 0.3,
-									lineWidth: 0,
-									shadow: false,
-									connectNulls: false,
-									marker: {
-										enabled: false
-									},
-									tooltip: {
-										shared: true,
+								chart.options.series.push(series.series);
+								break;
+							case GRAPH_TYPE_SPLINE_HIGHCHARTS:
+								series = {
+									seriesValues: seriesValues,
+									seriesGenerator: genMeanSeriesHighcharts,
+									seriesDest: 'data',
+									series: {
+										name: seriesName,
+										color: seriesColor,
+										type: 'spline',
 										shadow: false,
-									},
-									turboThreshold: 1000,
+										connectNulls: false,
+										marker: {
+											enabled: false
+										},
+										tooltip: {
+											shared: true,
+											shadow: false,
+										},
+										turboThreshold: 1000,
+									}
+								};
+								// Multiple charts facility
+								if(iGraphType>0) {
+									series.series.linkedTo = ':previous';
 								}
-							};
-							graph.options.series.push(series.series);
-							break;
-						case GRAPH_TYPE_STEP_NVD3:
-							series = {
-								seriesValues: seriesValues,
-								seriesGenerator: genMeanSeries,
-								seriesDest: 'values',
-								term_type: term_type,
-								series: {
-									key: seriesName,
-									color: seriesColor,
+								chart.options.series.push(series.series);
+								break;
+							case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
+								series = {
+									seriesValues: seriesValues,
+									seriesGenerator: genAreaRangeSeriesHighcharts,
+									seriesDest: 'data',
+									series: {
+										name: seriesName,
+										color: seriesColor,
+										type: 'arearange',
+										fillOpacity: 0.3,
+										lineWidth: 0,
+										shadow: false,
+										connectNulls: false,
+										marker: {
+											enabled: false
+										},
+										tooltip: {
+											shared: true,
+											shadow: false,
+										},
+										turboThreshold: 1000,
+									}
+								};
+								// Multiple charts facility
+								if(iGraphType>0) {
+									series.series.linkedTo = ':previous';
 								}
-							};
-							graph.data.push(series.series);
-							break;
-					}
-					if(term_type!==undefined) {
-						series.term_type = term_type;
-					}
-					series.series[series.seriesDest] = [];
-					graph.bpSideData.seriesToIndex[data[seriesIdFacet]] = seriesValues;
-					graph.allData.push(series);
+								chart.options.series.push(series.series);
+								break;
+							case GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS:
+								series = {
+									seriesValues: seriesValues,
+									seriesGenerator: genAreaRangeSeriesHighcharts,
+									seriesDest: 'data',
+									series: {
+										name: seriesName,
+										color: seriesColor,
+										type: 'areasplinerange',
+										fillOpacity: 0.3,
+										lineWidth: 0,
+										shadow: false,
+										connectNulls: false,
+										marker: {
+											enabled: false
+										},
+										tooltip: {
+											shared: true,
+											shadow: false,
+										},
+										turboThreshold: 1000,
+									}
+								};
+								// Multiple charts facility
+								if(iGraphType>0) {
+									series.series.linkedTo = ':previous';
+								}
+								chart.options.series.push(series.series);
+								break;
+							case GRAPH_TYPE_STEP_NVD3:
+								series = {
+									seriesValues: seriesValues,
+									seriesGenerator: genMeanSeries,
+									seriesDest: 'values',
+									term_type: term_type,
+									series: {
+										key: seriesName,
+										color: seriesColor,
+									}
+								};
+								chart.data.push(series.series);
+								break;
+						}
+						if(term_type!==undefined) {
+							series.term_type = term_type;
+						}
+						series.series[series.seriesDest] = [];
+						chart.allData.push(series);
+						seriesValuesList.push(seriesValues);
+					});
+					
+					chart.bpSideData.seriesToIndex[data[seriesIdFacet]] = seriesValuesList;
 				}
-				
-				return seriesValues;
+				// merging the array
+				Array.prototype.push.apply(seriesValuesArray,seriesValuesList);
 			};
 			
 			for(var i=origin; i<maxI ; i++) {
@@ -1910,18 +2047,20 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						if(chartId in chartMaps) {
 							var graphViews = chartMaps[chartId];
 							
-							graphViews.forEach(function(graph) {
-								var meanSeriesValues;
+							graphViews.forEach(function(chart) {
+								var seriesValuesArray = [];
+								// Mean series
 								if(meanSeriesIdFacet!==undefined) {
-									meanSeriesValues = getSeriesValues(graph,data,meanSeriesIdFacet,true);
+									addToSeriesValuesArray(seriesValuesArray,chart,data,meanSeriesIdFacet,true);
 								}
 								
-								var seriesValues = getSeriesValues(graph,data,seriesIdFacet);
+								// Series
+								addToSeriesValuesArray(seriesValuesArray,chart,data,seriesIdFacet);
 								
-								if(meanSeriesValues!==undefined) {
-									meanSeriesValues.push(data.sDataS);
-								}
-								seriesValues.push(data.sDataS);
+								// Add to all of them
+								seriesValuesArray.forEach(function(seriesValues) {
+									seriesValues.push(data.sDataS);
+								});
 							});
 						}
 					}
@@ -1936,27 +2075,29 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	
-	function redrawGeneralCharts(charts,doGenerate,stillLoading) {
-		var rangeData;
+	// This is almost identical to redrawGeneralCharts, but generalized
+	function abstractRedrawCharts(charts /* optional */,doGenerate,stillLoading,viewClass,localScope) {
 		if('ui' in charts) {
-			rangeData = charts;
+			var rangeData = charts;
 			
 			// We have to call here this method, to be sure
 			// we have fulfilled all the preconditions
-			var newData = abstractProcessChartData(rangeData,VIEW_GENERAL);
+			var newData = abstractProcessChartData(rangeData,viewClass);
 			if(newData) {
-				doGenerate=true;
+				doGenerate = true;
 			}
 			
-			charts = getCharts(rangeData,VIEW_GENERAL);
+			charts = getCharts(rangeData,viewClass);
 		} else if(!Array.isArray(charts)) {
 			charts = [ charts ];
 		}
 		
-		//if(doGenerate || stillLoading) {
-			var timeoutFunc = function(charts,iChart) {
-				if(iChart<charts.length) {
-					var chart = charts[iChart];
+		var timeoutFunc = function(charts,iChart) {
+			if(iChart<charts.length) {
+				var chart = charts[iChart];
+				if(chart.isHidden) {
+					timeoutFunc(charts,iChart+1);
+				} else {
 					chart.options.loading = true;
 					setTimeout(function() {
 						try {
@@ -1965,130 +2106,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						} catch(e) {
 							console.log(e);
 						}
-						chart.pendingRedraws = false;
+						//chart.pendingRedraws = false;
 						timeoutFunc(charts,iChart+1);
 					},10);
-				} else if(rangeData!==undefined) {
-					rangeData.localScope.$applyAsync();
 				}
-			};
-			timeoutFunc(charts,0);
-			//charts.forEach(function(chart) {
-			//	$timeout(function() {
-			//		try {
-			//			chart.seriesAggregator(chart,doGenerate,stillLoading);
-			//			chart.options.loading = stillLoading;
-			//			//if(rangeData!==undefined) {
-			//			//	rangeData.localScope.$broadcast('highchartsng.reflow');
-			//			//}
-			//		} catch(e) {
-			//			console.log(e);
-			//		}
-			//	});
-			//});
-		/*
-		} else {
-			charts.forEach(function(chart) {
-				try {
-					chart.seriesAggregator(chart,doGenerate,stillLoading);
-					chart.options.loading = stillLoading;
-				} catch(e) {
-					console.log(e);
-				}
-			});
-			// To force a reflow / redraw
-			//$scope.$broadcast('highchartsng.reflow');
-		}
-		*/
+			} else if(localScope!==undefined) {
+				// Revalidating the scope
+				localScope.$applyAsync();
+			}
+		};
+		timeoutFunc(charts,0);
 	}
 	
-	// This is almost identical to redrawGeneralCharts
-	function redrawCellTypeDiseaseCharts(charts,doGenerate,stillLoading) {
-		if('ui' in charts) {
-			var rangeData = charts;
-			
-			// We have to call here this method, to be sure
-			// we have fulfilled all the preconditions
-			var newData = abstractProcessChartData(rangeData,VIEW_DISEASES);
-			if(newData) {
-				doGenerate = true;
-			}
-			
-			charts = getCharts(rangeData,VIEW_DISEASES);
-		} else if(!Array.isArray(charts)) {
-			charts = [ charts ];
-		}
-		
-		if(doGenerate || stillLoading) {
-			charts.forEach(function(chart) {
-				$timeout(function() {
-					try {
-						chart.seriesAggregator(chart,doGenerate,stillLoading);
-						chart.options.loading = stillLoading;
-					} catch(e) {
-						console.log(e);
-					}
-				},0);
-			});
-		} else {
-			charts.forEach(function(chart) {
-				try {
-					chart.seriesAggregator(chart,doGenerate,stillLoading);
-					chart.options.loading = stillLoading;
-				} catch(e) {
-					console.log(e);
-				}
-			});
-			// To force a reflow / redraw
-			//$scope.$broadcast('highchartsng.reflow');
-		}
-	}
-	
-	// This is almost identical to redrawGeneralCharts
-	function redrawTissueCharts(charts,doGenerate,stillLoading) {
-		if('ui' in charts) {
-			var rangeData = charts;
-			
-			// We have to call here this method, to be sure
-			// we have fulfilled all the preconditions
-			var newData = abstractProcessChartData(rangeData,VIEW_BY_TISSUE);
-			if(newData) {
-				doGenerate = true;
-			}
-			
-			charts = getCharts(rangeData,VIEW_BY_TISSUE);
-		} else if(!Array.isArray(charts)) {
-			charts = [ charts ];
-		}
-		
-		if(doGenerate || stillLoading) {
-			charts.forEach(function(chart) {
-				$timeout(function() {
-					try {
-						chart.seriesAggregator(chart,doGenerate,stillLoading);
-						chart.options.loading = stillLoading;
-					} catch(e) {
-						console.log(e);
-					}
-				},0);
-			});
-		} else {
-			charts.forEach(function(chart) {
-				try {
-					chart.seriesAggregator(chart,doGenerate,stillLoading);
-					chart.options.loading = stillLoading;
-				} catch(e) {
-					console.log(e);
-				}
-			});
-			// To force a reflow / redraw
-			//$scope.$broadcast('highchartsng.reflow');
-		}
-	}
 	
 	function selectGeneral(rangeData,viewClass/*,dumbIndex*/) {
 		rangeData.ui.chartViews[viewClass].termNodes = rangeData.termNodes;
-		rangeData.ui.chartViews[viewClass].termNodesHash =rangeData.termNodesHash;
+		rangeData.ui.chartViews[viewClass].termNodesHash = rangeData.termNodesHash;
 		
 		doChartLayout(rangeData,viewClass);
 	}
@@ -2124,7 +2157,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			seriesNodesHashFacet: 'termNodesHash',
 			selectGroupMethod: selectGeneral,
 			legendTitle: 'Cell Types',
-			redrawMethod: redrawGeneralCharts,
 			chartMapsFacet: 'general',
 		},
 		{
@@ -2135,7 +2167,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			groupBySeriesNodesFacet: 'tissueNodes',
 			selectGroupMethod: selectTissueForCellTypes,
 			legendTitle: 'Cell Types',
-			redrawMethod: redrawTissueCharts,
 			chartMapsFacet: 'byTissue',
 		},
 		{
@@ -2146,7 +2177,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			groupBySeriesNodesFacet: 'termNodes',
 			selectGroupMethod: selectCellTypeForDiseases,
 			legendTitle: 'Diseases',
-			redrawMethod: redrawCellTypeDiseaseCharts,
 			chartMapsFacet: 'celltypeDisease',
 		},
 	];
@@ -2238,11 +2268,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		}
 	}
 	
-	function switchMeanSeries(chart,doRedraw) {
+	function switchMeanSeries(chart,doRedraw,localScope) {
 		chart.meanSeriesHidden = !chart.meanSeriesHidden;
 		
 		if(doRedraw) {
-			redrawCharts(chart);
+			redrawCharts(chart,undefined,undefined,undefined,localScope);
 		}
 	}
 	
@@ -2255,7 +2285,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			chart.isHidden = false;
 		} else if(event.shiftKey) {
 			// We are not going to redraw in background (this should not happen)
-			switchMeanSeries(chart,viewClass===undefined || viewClass === rangeData.viewClass);
+			switchMeanSeries(chart,viewClass===undefined || viewClass === rangeData.viewClass,rangeData.localScope);
 		} else {
 			chart.isHidden = !chart.isHidden;
 		}
@@ -2374,18 +2404,19 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	
-	function redrawCharts(charts,doGenerate,stillLoading,viewClass) {
+	function redrawCharts(charts,doGenerate,stillLoading,viewClass,localScope) {
 		if('ui' in charts) {
 			var rangeData = charts;
 			
 			viewClass = rangeData.viewClass;
+			localScope = rangeData.localScope;
 		}
 		if(viewClass===undefined) {
 			viewClass = VIEW_GENERAL;
 		}
 		if(viewClass in RedrawSelector) {
 			// Normalizing doGenerate and stillLoading
-			RedrawSelector[viewClass].redrawMethod(charts,!!doGenerate,!!stillLoading);
+			abstractRedrawCharts(charts,!!doGenerate,!!stillLoading,viewClass,localScope);
 		}
 	}
 	

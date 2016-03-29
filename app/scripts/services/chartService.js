@@ -584,6 +584,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				
 				series.seriesPreDigestedValues.forEach(function(boxplot) {
 					preparedValues[chart.boxPlotCategories[boxplot.label].x] = boxplot.data;
+					boxplot.data.x = chart.boxPlotCategories[boxplot.label].x;
 				});
 				series.seriesDigestedValues = preparedValues;
 				//chart.options.series[iSeries].data = series.seriesDigestedValues;
@@ -1105,6 +1106,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
+								drilldown: [],
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1179,6 +1181,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
+								drilldown: [],
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1253,6 +1256,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
+								drilldown: [],
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1329,6 +1333,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
+								drilldown: [],
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1403,6 +1408,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
+								drilldown: [],
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1829,50 +1835,35 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						switch(graphType) {
 							case GRAPH_TYPE_STEP_CHARTJS:
 								series = {
-									seriesValues: seriesValues,
 									seriesGenerator: genMeanSeries,
-									seriesDest: 'data',
 									series: {
 										label: seriesName,
 										strokeColor: seriesColor,
 									}
 								};
-								chart.options.data.datasets.push(series.series);
 								break;
 							case GRAPH_TYPE_STEP_CANVASJS:
 								series = {
-									seriesValues: seriesValues,
 									seriesGenerator: genMeanSeries,
-									seriesDest: 'dataPoints',
 									series: {
 										type: "stepLine",
 										name: seriesName,
 										color: seriesColor,
 									}
 								};
-								chart.options.data.push(series.series);
 								break;
 							case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
 								series = {
-									seriesValues: seriesValues,
 									seriesGenerator: genBoxPlotSeries,
-									seriesDest: 'data',
 									series: {
-										name: seriesName,
-										color: seriesColor,
 										type: 'boxplot',
 									}
 								};
-								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_STEP_HIGHCHARTS:
 								series = {
-									seriesValues: seriesValues,
 									seriesGenerator: genMeanSeriesHighcharts,
-									seriesDest: 'data',
 									series: {
-										name: seriesName,
-										color: seriesColor,
 										type: 'line',
 										shadow: false,
 										connectNulls: false,
@@ -1887,16 +1878,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										step: 'left',
 									}
 								};
-								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_SPLINE_HIGHCHARTS:
 								series = {
-									seriesValues: seriesValues,
 									seriesGenerator: genMeanSeriesHighcharts,
-									seriesDest: 'data',
 									series: {
-										name: seriesName,
-										color: seriesColor,
 										type: 'spline',
 										shadow: false,
 										connectNulls: false,
@@ -1910,16 +1896,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										turboThreshold: 1000,
 									}
 								};
-								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
 								series = {
-									seriesValues: seriesValues,
 									seriesGenerator: genAreaRangeSeriesHighcharts,
-									seriesDest: 'data',
 									series: {
-										name: seriesName,
-										color: seriesColor,
 										type: 'arearange',
 										fillOpacity: 0.3,
 										lineWidth: 0,
@@ -1935,16 +1916,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										turboThreshold: 1000,
 									}
 								};
-								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS:
 								series = {
-									seriesValues: seriesValues,
 									seriesGenerator: genAreaRangeSeriesHighcharts,
-									seriesDest: 'data',
 									series: {
-										name: seriesName,
-										color: seriesColor,
 										type: 'areasplinerange',
 										fillOpacity: 0.3,
 										lineWidth: 0,
@@ -1960,22 +1936,45 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										turboThreshold: 1000,
 									}
 								};
-								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_STEP_NVD3:
 								series = {
-									seriesValues: seriesValues,
 									seriesGenerator: genMeanSeries,
-									seriesDest: 'values',
-									term_type: term_type,
 									series: {
 										key: seriesName,
 										color: seriesColor,
 									}
 								};
-								chart.data.push(series.series);
 								break;
 						}
+						
+						// Saving the real series location
+						series.seriesValues = seriesValues;
+						switch(chart.library) {
+							case LIBRARY_HIGHCHARTS:
+								series.seriesDest = 'data';
+								series.series.name = seriesName;
+								series.series.color = seriesColor;
+								
+								chart.options.series.push(series.series);
+								break;
+							case LIBRARY_NVD3:
+								series.seriesDest = 'values';
+								
+								chart.data.push(series.series);
+								break;
+							case LIBRARY_CHARTJS:
+								series.seriesDest = 'data';
+								
+								chart.options.data.datasets.push(series.series);
+								break;
+							case LIBRARY_CANVASJS:
+								series.seriesDest = 'dataPoints';
+								
+								chart.options.data.push(series.series);
+								break;
+						}
+						
 						if(iGraphType === 0) {
 							// Saving for later linkage
 							firstSeries = series;

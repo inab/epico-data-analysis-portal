@@ -65,6 +65,7 @@ angular.module('blueprintApp')
     $scope.currentQueryStr = null;
     
 	$scope.graphData = [];
+	$scope.currentTab = null;
 	// The default flanking window size
 	$scope.flankingWindowSize = ConstantsService.DEFAULT_FLANKING_WINDOW_SIZE;
 	
@@ -222,6 +223,7 @@ angular.module('blueprintApp')
 			var regions = '';
 			// Now, let's prepare the backbones!
 			localScope.graphData = [];
+			localScope.currentTab = null;
 			
 			localScope.rangeQuery.forEach(function(range,i) {
 				if(!range.isDisabled) {
@@ -235,6 +237,9 @@ angular.module('blueprintApp')
 					regions += "<a href='"+localScope.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
 					
 					ChartService.storeRange(localScope,range);
+					if(localScope.currentTab === null && localScope.graphData.length > 0) {
+						localScope.currentTab = localScope.graphData[0].id;
+					}
 				}
 			});
 			localScope.found = "Query '"+qString+"' displaying information from ";
@@ -309,7 +314,7 @@ angular.module('blueprintApp')
 				var featureLabel = currentQuery.featureLabel = ChartService.chooseLabelFromSymbols(suggestedQuery.symbols);
 				var isReactome = ConstantsService.isReactome(currentQuery.queryType);
 				suggestedQuery.coordinates.forEach(function(range) {
-					var theRange = { chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end, currentQuery: currentQuery };
+					var theRange = { feature_id: range.feature_id, chr: range.chromosome , start: range.chromosome_start, end: range.chromosome_end, currentQuery: currentQuery };
 					
 					theRange.label = isReactome ? range.feature_id : featureLabel;
 					localScope.rangeQuery.push(theRange);
@@ -527,7 +532,7 @@ angular.module('blueprintApp')
 		return '';
 	}
 	
-	$scope.doState = function(rangeData) {
+	function doState(rangeData) {
 		switch(rangeData.state) {
 			case ConstantsService.STATE_INITIAL:
 				doInitial(rangeData);
@@ -576,6 +581,12 @@ angular.module('blueprintApp')
 		}
 		
 		return '';
+	}
+	
+	$scope.doSelectTab = function(rangeData) {
+		$scope.currentTab = rangeData.id;
+		
+		return doState(rangeData);
 	};
 	
 	$scope.suggestSearch = QueryService.suggestSearch;
@@ -674,7 +685,7 @@ angular.module('blueprintApp')
 		// Changing to this state
 		//rangeData.state = ConstantsService.STATE_SHOW_DATA;
 		rangeData.state = ConstantsService.STATE_SELECT_CHARTS;
-		$scope.doState(rangeData);
+		doState(rangeData);
 	};
 	
 	$scope.selectVisibleCharts = function(rangeData) {
@@ -682,7 +693,7 @@ angular.module('blueprintApp')
 		
 		// Changing to this state
 		rangeData.state = ConstantsService.STATE_SHOW_DATA;
-		$scope.doState(rangeData);
+		doState(rangeData);
 	};
 	
 	$scope.deselectAllVisibleCellTypes = function(rangeData) {

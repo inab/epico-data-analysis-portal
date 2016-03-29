@@ -824,6 +824,35 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 	}
 	
+	function origSeriesComparator(a,b) {
+		var retval = a[0] - b[0];
+		
+		if(retval===0) {
+			retval = a[1] - b[1];
+		}
+		
+		return retval;
+	}
+	
+	function genSegmentSeries(origValues) {
+		var retValues = [];
+		
+		// Pre-processing the original values
+		if(origValues.length > 0) {
+			var sortedOrigValues = origValues.clone(0);
+			sortedOrigValues.sort(origSeriesComparator);
+			
+			sortedOrigValues.forEach(function(data,dataI) {
+				retValues.push({x:data[0], y:data[2]},{x:data[1], y:data[2]},{x:data[1], y:null});
+			});
+			
+			// Removing last, spureous null
+			retValues.pop();
+		}
+		
+		return retValues;
+	}
+	
 	function doRegionFeatureLayout(rangeData,results,localScope) {
 		rangeData.regionLayout = {};
 		var range = rangeData.range;
@@ -1106,7 +1135,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
-								drilldown: [],
+								drilldown: {
+									drillUpButton: {
+									},
+									series: []
+								},
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1181,7 +1214,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
-								drilldown: [],
+								drilldown: {
+									drillUpButton: {
+									},
+									series: []
+								},
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1256,7 +1293,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
-								drilldown: [],
+								drilldown: {
+									drillUpButton: {
+									},
+									series: []
+								},
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1333,7 +1374,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
-								drilldown: [],
+								drilldown: {
+									drillUpButton: {
+									},
+									series: []
+								},
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -1408,7 +1453,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								}],
 								series: [],
-								drilldown: [],
+								drilldown: {
+									drillUpButton: {
+									},
+									series: []
+								},
 								loading: true,
 								//func: function(chart) {
 								//	// This is needed to reflow the chart
@@ -2662,6 +2711,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			numFetchTotal: 100,
 			fetching: false,
 			heading: (range.label !== undefined) ? range.label : ('Region ' + range.chr + ':' + range.start + '-' + range.end),
+			id: (range.feature_id !== undefined) ? range.feature_id : (range.chr + ':' + range.start + '-' + range.end),
 			range: range,
 			treedata: null,
 			termNodes: termNodes,

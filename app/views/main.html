@@ -146,7 +146,7 @@
 <p class="text-center" style="margin-bottom:40px;" ng-bind-html="found"></p>
 -->
 <uib-tabset id="resultTabs" ng-if="graphData.length &gt; 0">
-	<uib-tab ng-repeat="rangeData in graphData" select="doState(rangeData)">
+	<uib-tab ng-repeat="rangeData in graphData" select="doSelectTab(rangeData)">
 		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.fetchState === 'fetch_initial' || rangeData.state==='selectCellTypes','glyphicon-filter': rangeData.state==='selectCellTypes','glyphicon-download': rangeData.state!=='selectCellTypes' && rangeData.fetchState === 'fetch_initial', 'glyphicon-hourglass': rangeData.fetchState === 'fetching', 'blink': rangeData.fetchState === 'fetching'}"></i><i class="hover_red" ng-class="{'glyphicon': rangeData.fetchState === 'fetch_end','glyphicon-remove-sign': rangeData.fetchState === 'fetch_end' && graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
 		
 		<!-- Types of analysis -->

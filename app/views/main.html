@@ -131,7 +131,7 @@
 		<input id="search" type="text" ng-model="query" ng-keypress="enterSearch($event)" ng-disabled="queryInProgress" placeholder="Step 1: Search by gene name, Ensembl gene Id, chromosome region or Reactome pathway id" uib-typeahead="suggest for suggest in suggestSearch($viewValue)" typeadhead-loading="loadingSuggestions" typeahead-no-results="noSuggestion" typeahead-popup-template-url="suggestionPopupTemplate.html" typeahead-min-length="3" typeahead-on-select="query=label.term;search($label)" typeahead-template-url="suggestionTemplate.html" class="form-control" style="background:#f5f5f5">
 		<i ng-show="loadingSuggestions" class="glyphicon glyphicon-refresh"></i>
 		<div ng-show="noSuggestion">
-			<i class="glyphicon glyphicon-remove"></i> No Results Found
+			<i class="glyphicon glyphicon-remove"></i> No Suggestions Found
 		</div>
             <!-- <p class="small">Chromosome regions should be shorter than 10Kb</p> -->
 	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:208856422-208956421'; search()" style="cursor: pointer;">chr1:208856422-208956421</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a>, <a ng-click="query='pathway:Cell Cycle, Mitotic'; search()" style="cursor: pointer;">Pathway <i>Cell Cycle, Mitotic</i></a></p>

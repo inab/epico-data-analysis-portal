@@ -1099,11 +1099,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									},
 									categories: []
 								},
-								yAxis: {
+								yAxis: [{
 									title: {
 										text: gData.yAxisLabel
 									}
-								},
+								}],
 								series: [],
 								loading: true,
 								//func: function(chart) {
@@ -1117,26 +1117,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							seriesAggregator: highchartsBoxPlotAggregator,
 							library: LIBRARY_HIGHCHARTS,
 						};
-						
-						// Setting the floor and ceiling when available
-						if(gData.floor!==undefined) {
-							chart.options.yAxis.floor = gData.floor;
-						}
-						
-						if(gData.ceiling!==undefined) {
-							chart.options.yAxis.ceiling = gData.ceiling;
-						}
-						
-						if(gData.breaks!==undefined) {
-							chart.options.yAxis.breaks = gData.breaks;
-							//chart.options.yAxis.lineColor = 'black';
-							chart.options.yAxis.lineWidth = 1;
-						}
 						break;
 						
 					case GRAPH_TYPE_STEP_HIGHCHARTS:
-						var plotBands = [];
-						var plotLines = [];
 						chart = {
 							options: {
 								options: {
@@ -1189,14 +1172,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									min: range_start,
 									max: range_end,
 									allowDecimals: false,
-									plotBands: plotBands,
-									plotLines: plotLines,
 								},
-								yAxis: {
+								yAxis: [{
 									title: {
 										text: gData.yAxisLabel
 									}
-								},
+								}],
 								series: [],
 								loading: true,
 								//func: function(chart) {
@@ -1210,165 +1191,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
 						};
-						
-						// Setting the floor and ceiling when available
-						if(gData.floor!==undefined) {
-							chart.options.yAxis.floor = gData.floor;
-						}
-						
-						if(gData.ceiling!==undefined) {
-							chart.options.yAxis.ceiling = gData.ceiling;
-						}
-						
-						if(gData.breaks!==undefined) {
-							chart.options.yAxis.breaks = gData.breaks;
-							//chart.options.yAxis.lineColor = 'black';
-							chart.options.yAxis.lineWidth = 1;
-						}
-						
-						// Adding the gene and transcript regions
-						ConstantsService.REGION_FEATURES.forEach(function(featureType) {
-							if(featureType in DRAWABLE_REGION_FEATURES) {
-								var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
-								
-								// Consolidating the declared feature regions
-								var consolidatedFeatureRegions = [];
-								var consolidatedHash = {};
-								if(featureType in rangeData.regionLayout) {
-									rangeData.regionLayout[featureType].forEach(function(featureRegion) {
-										var uKey = '';
-										featureRegion.coordinates.forEach(function(coords) {
-											uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
-										});
-										var feaRegion;
-										if(uKey in consolidatedHash) {
-											feaRegion = consolidatedHash[uKey];
-											feaRegion.label += ', ' + featureRegion.label;
-										} else {
-											feaRegion = {
-												label: featureRegion.label,
-												coordinates: featureRegion.coordinates,
-											};
-											consolidatedFeatureRegions.push(feaRegion);
-											consolidatedHash[uKey] = feaRegion;
-										}
-									});
-									
-									consolidatedFeatureRegions.forEach(function(featureRegion) {
-										featureRegion.coordinates.forEach(function(coords) {
-											switch(drawableFeature.type) {
-												case PLOTBAND_FEATURE:
-													var plotBand = {
-														//borderColor: drawableFeature.color,
-														//borderColor: {
-														//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-														//	stops: [
-														//		[0, drawableFeature.color],
-														//		[1, '#000000']
-														//	]
-														//},
-														//borderWidth: 1,
-														color: drawableFeature.color,
-														from: coords.chromosome_start,
-														to: coords.chromosome_end,
-														//zIndex: zIndex+5
-													};
-													plotBands.push(plotBand);
-													
-													if(drawableFeature.showLabel) {
-														var plotBandLabel = {
-															text: featureRegion.label,
-															style: {
-																fontSize: '8px',
-															},
-															rotation: 330
-														};
-														plotBand.label = plotBandLabel;
-													}
-													break;
-												case BORDERED_PLOTBAND_FEATURE:
-													var borderedPlotBand = {
-														//borderColor: drawableFeature.color,
-														//borderColor: {
-														//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-														//	stops: [
-														//		[0, drawableFeature.color],
-														//		[1, '#000000']
-														//	]
-														//},
-														//borderWidth: 0,
-														color: drawableFeature.color,
-														from: coords.chromosome_start,
-														to: coords.chromosome_end,
-														//zIndex: 5
-													};
-													plotBands.push(borderedPlotBand);
-													
-													var borderedStart = {
-														color: 'gray',
-														dashStyle: 'DashDot',
-														width: 2,
-														value: coords.chromosome_start,
-														zIndex: 6
-													};
-													var borderedStop = {
-														color: 'gray',
-														dashStyle: 'Dash',
-														width: 2,
-														value: coords.chromosome_end,
-														zIndex: 6
-													};
-													plotLines.push(borderedStart,borderedStop);
-													
-													if(drawableFeature.showLabel) {
-														var borderedPlotBandLabel = {
-															text: featureRegion.label,
-															verticalAlign: 'middle',
-															textAlign: 'center',
-															align: 'center',
-															style: {
-																fontSize: '2mm',
-															},
-															rotation: 90
-														};
-														if(drawableFeature.showAtBorders) {
-															borderedStart.label = borderedPlotBandLabel;
-															borderedStop.label = borderedPlotBandLabel;
-														} else {
-															borderedPlotBand.label = borderedPlotBandLabel;
-														}
-													}
-													break;
-												case PLOTLINE_FEATURE:
-													var plotLine = {
-														color: drawableFeature.color,
-														width: 2,
-														value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
-														zIndex: 5
-													};
-													plotLines.push(plotLine);
-													
-													if(drawableFeature.showLabel) {
-														var plotLineLabel = {
-															text: featureRegion.label,
-															style: {
-																fontSize: '2mm',
-															}
-														};
-														if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
-															plotLineLabel.rotation = 270;
-															plotLineLabel.textAlign = 'right';
-															plotLineLabel.x = 10;
-														}
-														plotLine.label = plotLineLabel;
-													}
-													break;
-											}
-										});
-									});
-								}
-							}
-						});
 						break;
 						
 					case GRAPH_TYPE_SPLINE_HIGHCHARTS:
@@ -1425,11 +1247,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									max: range_end,
 									allowDecimals: false,
 								},
-								yAxis: {
+								yAxis: [{
 									title: {
 										text: gData.yAxisLabel
 									}
-								},
+								}],
 								series: [],
 								loading: true,
 								//func: function(chart) {
@@ -1443,21 +1265,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
 						};
-						
-						// Setting the floor and ceiling when available
-						if(gData.floor!==undefined) {
-							chart.options.yAxis.floor = gData.floor;
-						}
-						
-						if(gData.ceiling!==undefined) {
-							chart.options.yAxis.ceiling = gData.ceiling;
-						}
-						
-						if(gData.breaks!==undefined) {
-							chart.options.yAxis.breaks = gData.breaks;
-							//chart.options.yAxis.lineColor = 'black';
-							chart.options.yAxis.lineWidth = 1;
-						}
 						break;
 						
 					case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
@@ -1516,11 +1323,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									plotBands: plotBands,
 									plotLines: plotLines,
 								},
-								yAxis: {
+								yAxis: [{
 									title: {
 										text: gData.yAxisLabel
 									}
-								},
+								}],
 								series: [],
 								loading: true,
 								//func: function(chart) {
@@ -1534,21 +1341,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
 						};
-						
-						// Setting the floor and ceiling when available
-						if(gData.floor!==undefined) {
-							chart.options.yAxis.floor = gData.floor;
-						}
-						
-						if(gData.ceiling!==undefined) {
-							chart.options.yAxis.ceiling = gData.ceiling;
-						}
-						
-						if(gData.breaks!==undefined) {
-							chart.options.yAxis.breaks = gData.breaks;
-							//chart.options.yAxis.lineColor = 'black';
-							chart.options.yAxis.lineWidth = 1;
-						}
 						break;
 						
 					case GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS:
@@ -1605,11 +1397,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									max: range_end,
 									allowDecimals: false,
 								},
-								yAxis: {
+								yAxis: [{
 									title: {
 										text: gData.yAxisLabel
 									}
-								},
+								}],
 								series: [],
 								loading: true,
 								//func: function(chart) {
@@ -1623,24 +1415,177 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
 						};
-						
-						// Setting the floor and ceiling when available
-						if(gData.floor!==undefined) {
-							chart.options.yAxis.floor = gData.floor;
-						}
-						
-						if(gData.ceiling!==undefined) {
-							chart.options.yAxis.ceiling = gData.ceiling;
-						}
-						
-						if(gData.breaks!==undefined) {
-							chart.options.yAxis.breaks = gData.breaks;
-							//chart.options.yAxis.lineColor = 'black';
-							chart.options.yAxis.lineWidth = 1;
-						}
 						break;
 				}
 				
+				switch(chart.library) {
+					case LIBRARY_HIGHCHARTS:
+						// Setting the floor and ceiling when available
+						if(gData.floor!==undefined) {
+							chart.options.yAxis[0].floor = gData.floor;
+						}
+						
+						if(gData.ceiling!==undefined) {
+							chart.options.yAxis[0].ceiling = gData.ceiling;
+						}
+						
+						if(gData.breaks!==undefined) {
+							chart.options.yAxis[0].breaks = gData.breaks;
+							//chart.options.yAxis[0].lineColor = 'black';
+							chart.options.yAxis[0].lineWidth = 1;
+						}
+						
+						if(gDataViewType !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
+							// Adding the gene and transcript regions
+							var plotBands = [];
+							var plotLines = [];
+							chart.options.xAxis.plotBands = plotBands;
+							chart.options.xAxis.plotLines = plotLines;
+							ConstantsService.REGION_FEATURES.forEach(function(featureType) {
+								if(featureType in DRAWABLE_REGION_FEATURES) {
+									var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
+									
+									// Consolidating the declared feature regions
+									var consolidatedFeatureRegions = [];
+									var consolidatedHash = {};
+									if(featureType in rangeData.regionLayout) {
+										rangeData.regionLayout[featureType].forEach(function(featureRegion) {
+											var uKey = '';
+											featureRegion.coordinates.forEach(function(coords) {
+												uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
+											});
+											var feaRegion;
+											if(uKey in consolidatedHash) {
+												feaRegion = consolidatedHash[uKey];
+												feaRegion.label += ', ' + featureRegion.label;
+											} else {
+												feaRegion = {
+													label: featureRegion.label,
+													coordinates: featureRegion.coordinates,
+												};
+												consolidatedFeatureRegions.push(feaRegion);
+												consolidatedHash[uKey] = feaRegion;
+											}
+										});
+										
+										consolidatedFeatureRegions.forEach(function(featureRegion) {
+											featureRegion.coordinates.forEach(function(coords) {
+												switch(drawableFeature.type) {
+													case PLOTBAND_FEATURE:
+														var plotBand = {
+															//borderColor: drawableFeature.color,
+															//borderColor: {
+															//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+															//	stops: [
+															//		[0, drawableFeature.color],
+															//		[1, '#000000']
+															//	]
+															//},
+															//borderWidth: 1,
+															color: drawableFeature.color,
+															from: coords.chromosome_start,
+															to: coords.chromosome_end,
+															//zIndex: zIndex+5
+														};
+														plotBands.push(plotBand);
+														
+														if(drawableFeature.showLabel) {
+															var plotBandLabel = {
+																text: featureRegion.label,
+																style: {
+																	fontSize: '8px',
+																},
+																rotation: 330
+															};
+															plotBand.label = plotBandLabel;
+														}
+														break;
+													case BORDERED_PLOTBAND_FEATURE:
+														var borderedPlotBand = {
+															//borderColor: drawableFeature.color,
+															//borderColor: {
+															//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
+															//	stops: [
+															//		[0, drawableFeature.color],
+															//		[1, '#000000']
+															//	]
+															//},
+															//borderWidth: 0,
+															color: drawableFeature.color,
+															from: coords.chromosome_start,
+															to: coords.chromosome_end,
+															//zIndex: 5
+														};
+														plotBands.push(borderedPlotBand);
+														
+														var borderedStart = {
+															color: 'gray',
+															dashStyle: 'DashDot',
+															width: 2,
+															value: coords.chromosome_start,
+															zIndex: 6
+														};
+														var borderedStop = {
+															color: 'gray',
+															dashStyle: 'Dash',
+															width: 2,
+															value: coords.chromosome_end,
+															zIndex: 6
+														};
+														plotLines.push(borderedStart,borderedStop);
+														
+														if(drawableFeature.showLabel) {
+															var borderedPlotBandLabel = {
+																text: featureRegion.label,
+																verticalAlign: 'middle',
+																textAlign: 'center',
+																align: 'center',
+																style: {
+																	fontSize: '2mm',
+																},
+																rotation: 90
+															};
+															if(drawableFeature.showAtBorders) {
+																borderedStart.label = borderedPlotBandLabel;
+																borderedStop.label = borderedPlotBandLabel;
+															} else {
+																borderedPlotBand.label = borderedPlotBandLabel;
+															}
+														}
+														break;
+													case PLOTLINE_FEATURE:
+														var plotLine = {
+															color: drawableFeature.color,
+															width: 2,
+															value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
+															zIndex: 5
+														};
+														plotLines.push(plotLine);
+														
+														if(drawableFeature.showLabel) {
+															var plotLineLabel = {
+																text: featureRegion.label,
+																style: {
+																	fontSize: '2mm',
+																}
+															};
+															if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
+																plotLineLabel.rotation = 270;
+																plotLineLabel.textAlign = 'right';
+																plotLineLabel.x = 10;
+															}
+															plotLine.label = plotLineLabel;
+														}
+														break;
+												}
+											});
+										});
+									}
+								}
+							});
+						}
+						break;
+				}
 				
 				// Common attributes
 				chart.chartId = gName;

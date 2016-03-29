@@ -33,7 +33,8 @@
         "highcharts.src.js",
         "highcharts-more.src.js",
         "modules/broken-axis.src.js",
-        "modules/exporting.src.js"
+        "modules/exporting.src.js",
+        "modules/no-data-to-display.src.js"
       ]
     }
   },

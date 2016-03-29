@@ -617,6 +617,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	
 	function defaultSeriesAggregator(chart,doGenerate,stillLoading) {
 		var isEmpty = true;
+		stillLoading = !!stillLoading;
 		chart.allData.forEach(function(series) {
 			// isEmpty detector
 			if(series.seriesValues.length > 0) {
@@ -647,7 +648,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			
 			if(chart.library!==LIBRARY_NVD3) {
 				series.series.visible = visibilityState;
-				series.series.showInLegend = visibilityState;
+				series.series.showInLegend = showInLegend;
 			} else if(visibilityState) {
 				series.series[series.seriesDest] = [];
 			} else {
@@ -1089,6 +1090,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								title: {
 									text: title
 								},
+								lang: {
+									noData: noData,
+								},
 								xAxis: {
 									title: {
 										text: 'Ensembl Ids (at '+rangeData.rangeStrEx+')'
@@ -1174,6 +1178,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								},
 								title: {
 									text: title
+								},
+								lang: {
+									noData: noData,
 								},
 								xAxis: {
 									title: {
@@ -1407,6 +1414,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								title: {
 									text: title
 								},
+								lang: {
+									noData: noData,
+								},
 								xAxis: {
 									title: {
 										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
@@ -1492,6 +1502,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								},
 								title: {
 									text: title
+								},
+								lang: {
+									noData: noData,
 								},
 								xAxis: {
 									title: {
@@ -1581,6 +1594,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								title: {
 									text: title
 								},
+								lang: {
+									noData: noData,
+								},
 								xAxis: {
 									title: {
 										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
@@ -1663,9 +1679,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	function switchLegend(chart) {
-		switch(chart.type) {
-			case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
-			case GRAPH_TYPE_STEP_HIGHCHARTS:
+		switch(chart.library) {
+			case LIBRARY_HIGHCHARTS:
 				chart.options.options.legend.enabled = ! chart.options.options.legend.enabled;
 				break;
 		}
@@ -1903,10 +1918,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										type: 'boxplot',
 									}
 								};
-								// Multiple charts facility
-								if(iGraphType>0) {
-									series.series.linkedTo = ':previous';
-								}
 								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_STEP_HIGHCHARTS:
@@ -1931,10 +1942,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										step: 'left',
 									}
 								};
-								// Multiple charts facility
-								if(iGraphType>0) {
-									series.series.linkedTo = ':previous';
-								}
 								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_SPLINE_HIGHCHARTS:
@@ -1958,10 +1965,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										turboThreshold: 1000,
 									}
 								};
-								// Multiple charts facility
-								if(iGraphType>0) {
-									series.series.linkedTo = ':previous';
-								}
 								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_AREARANGE_HIGHCHARTS:
@@ -1987,10 +1990,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										turboThreshold: 1000,
 									}
 								};
-								// Multiple charts facility
-								if(iGraphType>0) {
-									series.series.linkedTo = ':previous';
-								}
 								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS:
@@ -2016,10 +2015,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										turboThreshold: 1000,
 									}
 								};
-								// Multiple charts facility
-								if(iGraphType>0) {
-									series.series.linkedTo = ':previous';
-								}
 								chart.options.series.push(series.series);
 								break;
 							case GRAPH_TYPE_STEP_NVD3:

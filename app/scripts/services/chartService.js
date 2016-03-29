@@ -572,7 +572,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 		// Now, second pass!!
 		var isEmpty = true;
-		chart.allData.forEach(function(series,iSeries) {
+		chart.allData.forEach(function(series) {
 			// isEmpty detector
 			if(series.seriesValues.length > 0) {
 				isEmpty = false;
@@ -592,15 +592,21 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
-			var visibilityState;
-			if('term_type' in series) {
-				visibilityState = !stillLoading && !series.term_type.termHidden;
+			if(series.linkedTo === undefined) {
+				var visibilityState;
+				if('term_type' in series) {
+					visibilityState = !stillLoading && !series.term_type.termHidden;
+				} else {
+					visibilityState = stillLoading || !chart.meanSeriesHidden;
+				}
+				
+				series.series.visible = visibilityState;
+				series.series.showInLegend =  visibilityState;
 			} else {
-				visibilityState = stillLoading || !chart.meanSeriesHidden;
+				// Linked series
+				series.series.visible = series.linkedTo.series.visible;
+				series.series.showInLegend =  false;
 			}
-			
-			series.series.visible = visibilityState;
-			series.series.showInLegend =  (series.series.linkedTo === undefined) ? visibilityState : false;
 		});
 		
 		// It is assigned only once
@@ -626,15 +632,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
 			var visibilityState;
-			if('term_type' in series) {
-				visibilityState = !stillLoading && !series.term_type.termHidden;
+			var showInLegend;
+			if(series.linkedTo !== undefined) {
+				visibilityState = series.linkedTo.series.visible;
+				showInLegend = false;
 			} else {
-				visibilityState = stillLoading || !chart.meanSeriesHidden;
+				if('term_type' in series) {
+					visibilityState = !stillLoading && !series.term_type.termHidden;
+				} else {
+					visibilityState = stillLoading || !chart.meanSeriesHidden;
+				}
+				showInLegend = visibilityState;
 			}
 			
 			if(chart.library!==LIBRARY_NVD3) {
 				series.series.visible = visibilityState;
-				series.series.showInLegend = (series.series.linkedTo === undefined) ? visibilityState : false;
+				series.series.showInLegend = visibilityState;
 			} else if(visibilityState) {
 				series.series[series.seriesDest] = [];
 			} else {
@@ -1848,6 +1861,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						seriesColor = getSeriesColor(data,term_type,view);
 					}
 					
+					var firstSeries;
 					chart.graphTypes.forEach(function(graphType,iGraphType) {
 						var seriesValues = [];
 						var series;
@@ -2021,6 +2035,13 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								};
 								chart.data.push(series.series);
 								break;
+						}
+						if(iGraphType === 0) {
+							// Saving for later linkage
+							firstSeries = series;
+						} else {
+							// Main series linkage
+							series.linkedTo = firstSeries;
 						}
 						if(term_type!==undefined) {
 							series.term_type = term_type;

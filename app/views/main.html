@@ -311,13 +311,15 @@
 				<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
 					<div class="row" style="width:100%">
 						<div class="panel-info" ng-class="{'zoomed': chart.isZoomed,'unzoomed': !chart.isZoomed, 'col-md-12':!chart.isZoomed, 'col-lg-6': !chart.isZoomed}" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-hide="chart.isEmpty || chart.isHidden">
+							<!--
 							<div style="float:left;clear:left;">
 								Chart features: 
-								<span ng-class="{'square': feature.type !== 'plotline', 'thick-line': feature.type === 'plotline'}" ng-style="{'background-color': feature.color}" ng-repeat-start="(featureName,feature) in uiFuncs.DRAWABLE_REGION_FEATURES"></span>
+								<span ng-class="{'square': feature.type !== 'plotline', 'thick-line': feature.type === 'plotline'}" ng-style="{'background-color': feature.color}" ng-repeat-start="(featureName,feature) in uiFuncs.DRAWABLE_REGION_FEATURES_V0"></span>
 								<span style="margin-right: 1em;" ng-repeat-end>{{featureName}}</span>
 								<span style="margin-right: 1em;"><b>&#x2013; &#x2013;</b> gene start</span>
 								<span style="margin-right: 1em;"><b>· &#x2013; ·</b> gene end</span>
 							</div>
+							-->
 							<div style="float:right;clear:right;">
 								<!-- Hide chart button -->
 								<i class="glyphicon glyphicon-eye-close space-glyphicon" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>

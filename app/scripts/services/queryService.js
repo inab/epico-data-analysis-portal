@@ -2028,21 +2028,20 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		return parentPromise;
 	}
 	
-	var my_feature_ranking = {
-		gene: 1,
-		pathway: 2,
-		"direct_complex": 3,
-		"indirect_complex": 4,
-		transcript: 5,
-		exon: 6,
-		reaction: 7,
-		"neighbouring_reaction": 8,
-		start_codon: 9,
-		stop_codon: 10,
-		Selenocysteine: 11,
-		UTR: 12,
-		CDS: 13,
-	};
+	var my_feature_ranking = {};
+	my_feature_ranking[ConstantsService.REGION_FEATURE_GENE] = 1;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_PATHWAY] = 2;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_DIRECT_COMPLEX] = 3;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_INDIRECT_COMPLEX] = 4;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_TRANSCRIPT] = 5;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_EXON] = 6;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_REACTION] = 7;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_NEIGHBOURING_REACTION] = 8;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_START_CODON] = 9;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_STOP_CODON] = 10;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_SELENOCYSTEINE] = 11;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_UTR] = 12;
+	my_feature_ranking[ConstantsService.REGION_FEATURE_CDS] = 13;
 	
 	function suggestSearch(typedQuery) {
 		var query = typedQuery.trim().toLowerCase();

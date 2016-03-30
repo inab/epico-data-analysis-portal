@@ -291,23 +291,47 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	var BORDERED_PLOTBAND_FEATURE = 'bordered-plotband';
 	var PLOTLINE_FEATURE = 'plotline';
 	
-	var DRAWABLE_REGION_FEATURES = {};
-	DRAWABLE_REGION_FEATURES[ConstantsService.REGION_FEATURE_GENE] = {
+	var DRAWABLE_REGION_FEATURES_V0 = {};
+	DRAWABLE_REGION_FEATURES_V0[ConstantsService.REGION_FEATURE_GENE] = {
 		color: '#ffffcc',
 		type: BORDERED_PLOTBAND_FEATURE,
 		showLabel: true,
 		showAtBorders: true,
 	};
-	DRAWABLE_REGION_FEATURES[ConstantsService.REGION_FEATURE_START_CODON] = {
+	DRAWABLE_REGION_FEATURES_V0[ConstantsService.REGION_FEATURE_START_CODON] = {
 		color: '#008000',
 		type: PLOTLINE_FEATURE,
 		showLabel: true,
 	};
-	DRAWABLE_REGION_FEATURES[ConstantsService.REGION_FEATURE_STOP_CODON] = {
+	DRAWABLE_REGION_FEATURES_V0[ConstantsService.REGION_FEATURE_STOP_CODON] = {
 		color: '#800000',
 		type: PLOTLINE_FEATURE,
 		showLabel: true,
 	};
+	
+	var DRAWABLE_REGION_FEATURES_V1 = {};
+	DRAWABLE_REGION_FEATURES_V1[ConstantsService.REGION_FEATURE_GENE] = {
+		color: 'rgba(255,0,204,0.5)',
+	};
+	DRAWABLE_REGION_FEATURES_V1[ConstantsService.REGION_FEATURE_TRANSCRIPT] = {
+		color: 'rgba(204,204,0,0.25)',
+	};
+	DRAWABLE_REGION_FEATURES_V1[ConstantsService.REGION_FEATURE_START_CODON] = {
+		color: 'rgba(0,128,0,1)',
+	};
+	DRAWABLE_REGION_FEATURES_V1[ConstantsService.REGION_FEATURE_STOP_CODON] = {
+		color: 'rgba(128,0,0,1)',
+	};
+	DRAWABLE_REGION_FEATURES_V1[ConstantsService.REGION_FEATURE_EXON] = {
+		color: 'rgba(255,153,0,0.5)',
+	};
+	DRAWABLE_REGION_FEATURES_V1[ConstantsService.REGION_FEATURE_CDS] = {
+		color: 'rgba(0,255,255,0.5)',
+	};
+	DRAWABLE_REGION_FEATURES_V1[ConstantsService.REGION_FEATURE_UTR] = {
+		color: 'rgba(0,0,255,0.5)',
+	};
+	
 	
 	var LABELLED_REGION_FEATURES = [ConstantsService.REGION_FEATURE_GENE , ConstantsService.REGION_FEATURE_TRANSCRIPT];
 	
@@ -861,6 +885,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return retValues;
 	}
 	
+	var APPRIS_FACET_ID = 'APPRIS_PRINCIPAL';
+	var TRANSCRIPT_TYPE_FACET_ID = 'transcript_type';
+	var TRANSCRIPT_PROTEIN_CODING = 'protein_coding';
+	var TRANSCRIPT_STATUS_FACET_ID = 'transcript_status';
+	var TRANSCRIPT_STATUS_KNOWN = 'KNOWN';
+	
 	function doRegionFeatureLayout(rangeData,results,localScope) {
 		rangeData.regionLayout = {};
 		var range = rangeData.range;
@@ -889,8 +919,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				return a._source.coordinates[0].chromosome_end - b._source.coordinates[0].chromosome_end;
 			}
 		});
+		
+		// First pass, gather all features
+		var features = [];
 		results.forEach(function(feature) {
 			var featureRegion = feature._source;
+			features.push(featureRegion);
 			var dest = featureRegion.feature;
 			if(!(dest in rangeData.regionLayout)) {
 				rangeData.regionLayout[dest] = [];
@@ -942,6 +976,82 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		} else {
 			found = 'No gene or transcript in this region';
 		}
+		
+		// Second pass, build features hierarchy based on feature_cluster_id
+		features.forEach(function(feature) {
+			feature.feature_cluster_id.forEach(function(feature_cluster_id) {
+				if(feature_cluster_id !== feature.feature_id && (feature_cluster_id in regionFeature)) {
+					var parentFeature = regionFeature[feature_cluster_id];
+					var feaArray;
+					if(feature.feature in parentFeature) {
+						feaArray = parentFeature[feature.feature];
+					} else {
+						feaArray = [];
+						parentFeature[feature.feature] = feaArray;
+					}
+					
+					feaArray.push(feature);
+				}
+			});
+		});
+		
+		// Third pass, choose main transcript for each gene
+		var genes = rangeData.regionLayout[ConstantsService.REGION_FEATURE_GENE];
+		genes.forEach(function(gene) {
+			if(ConstantsService.REGION_FEATURE_TRANSCRIPT in gene) {
+				var transcripts = gene[ConstantsService.REGION_FEATURE_TRANSCRIPT];
+				var mainTranscript;
+				var proteinCodingTranscript;
+				var knownTranscript;
+				if(transcripts.length === 1) {
+					mainTranscript = transcripts[0];
+				} else {
+					var found = transcripts.some(function(transcript) {
+						// Finding the APPRIS attribute
+						return transcript.attribute.some(function(attribute) {
+							var retval = false;
+							
+							switch(attribute.domain) {
+								case APPRIS_FACET_ID:
+									mainTranscript = transcript;
+									retval = true;
+									break;
+								case TRANSCRIPT_TYPE_FACET_ID:
+									if(proteinCodingTranscript === undefined && attribute.value[0] === TRANSCRIPT_PROTEIN_CODING) {
+										proteinCodingTranscript = transcript;
+									}
+									break;
+								case TRANSCRIPT_STATUS_FACET_ID:
+									if(knownTranscript === undefined && attribute.value[0] === TRANSCRIPT_STATUS_KNOWN) {
+										knownTranscript = transcript;
+									}
+									break;
+							}
+							
+							return retval;
+						});
+					});
+					
+					// If principal transcript / isoform is not found, use alternate ones
+					if(!found) {
+						if(proteinCodingTranscript!==undefined) {
+							// Choose first found protein coding transcript
+							mainTranscript = proteinCodingTranscript;
+						} else if(knownTranscript!==undefined) {
+							// Choose first known transcript
+							mainTranscript = knownTranscript;
+						} else {
+							// In the worst case, choose first transcript
+							mainTranscript = transcripts[0];
+						}
+					}
+					
+				}
+				gene.mainTranscript = mainTranscript;
+			}
+		});
+
+		
 		rangeData.regionFeature = regionFeature;
 		rangeData.rangeStr = rangeStr;
 		rangeData.rangeStrEx = rangeStrEx;
@@ -950,6 +1060,156 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		// Initializing the layouts, now the common data is available
 		doInitialChartsLayout(rangeData);
 	}
+	
+	// FeatureDrawer class
+	function FeatureDrawer(minVal,maxVal) {
+		// These are needed for scaled shapes
+		this.minVal = minVal;
+		this.maxVal = maxVal;
+		
+		this.featureSeriesHash = {};
+		this.featureSeries = [];
+		this.category = [];
+		this.yAxis = {
+			title: {
+				text: null
+			},
+			type: 'category',
+			categories: this.category,
+			gridLineWidth: 0,
+			labels: {
+				step: 1,
+			//	style: {
+			//		fontWeight: 'normal'
+			//	}
+			},
+			min: 0,
+			max: -1,
+			//showLastLabel: false,
+			//tickInterval: 1,
+			opposite: true,
+		};
+	}
+	
+	FeatureDrawer.prototype.addFeatureType = function(featureType) {
+		var series = {
+			name: featureType,
+			type: 'polygon',
+			animation: false,
+			enableMouseTracking: false,
+			showInLegend: true,
+			yAxis: 1,
+			data: []
+		};
+		if(featureType in DRAWABLE_REGION_FEATURES_V1) {
+			series.color = DRAWABLE_REGION_FEATURES_V1[featureType].color;
+		}
+		this.featureSeries.push(series);
+		this.featureSeriesHash[featureType] = series;
+	};
+	
+	FeatureDrawer.prototype.addCategory = function(category) {
+		this.category.push(category);
+		
+		this.yAxis.max++;
+	};
+	
+	FeatureDrawer.prototype.draw = function(feature) {
+		var yBase = this.yAxis.max;
+		
+		var featureSeries = this.featureSeriesHash[feature.feature].data;
+		var coord = feature.coordinates[0];
+		// Needed to separate one polygon from another
+		if(featureSeries.length > 0) {
+			featureSeries.push(null);
+		}
+		switch(feature.feature) {
+			case ConstantsService.REGION_FEATURE_GENE:
+				// Easiest shape: a thin rectangle
+				featureSeries.push(
+					[coord.chromosome_start,-1/36+yBase],
+					[coord.chromosome_start,1/36+yBase],
+					[coord.chromosome_end,1/36+yBase],
+					[coord.chromosome_end,-1/36+yBase]
+				);
+				break;
+			case ConstantsService.REGION_FEATURE_TRANSCRIPT:
+				// Easiest shape: a thin rectangle
+				featureSeries.push(
+					[coord.chromosome_start,-1/12+yBase],
+					[coord.chromosome_start,1/12+yBase],
+					[coord.chromosome_end,1/12+yBase],
+					[coord.chromosome_end,-1/12+yBase]
+				);
+				break;
+			case ConstantsService.REGION_FEATURE_EXON:
+				// Easiest shape: a thin rectangle
+				var meanPos = Math.round((coord.chromosome_end + coord.chromosome_start)/2);
+				if(coord.chromosome_strand===1 || coord.chromosome_strand===null) {
+					featureSeries.push(
+						[coord.chromosome_start,-1/4+yBase],
+						[coord.chromosome_start,1/4+yBase]
+					);
+					if(coord.chromosome_strand===1) {
+						featureSeries.push(
+							[meanPos,1/4+yBase],
+							[coord.chromosome_end,yBase],
+							[meanPos,-1/4+yBase]
+						);
+					}
+				}
+				if(coord.chromosome_strand===-1 || coord.chromosome_strand===null) {
+					if(coord.chromosome_strand===-1) {
+						featureSeries.push(
+							[meanPos,-1/4+yBase],
+							[coord.chromosome_start,yBase],
+							[meanPos,1/4+yBase]
+						);
+					}
+					featureSeries.push(
+						[coord.chromosome_end,1/4+yBase],
+						[coord.chromosome_end,-1/4+yBase]
+					);
+				}
+				break;
+			default:
+				// Easiest shape: a thin rectangle
+				featureSeries.push(
+					[coord.chromosome_start,-1/4+yBase],
+					[coord.chromosome_start,1/4+yBase],
+					[coord.chromosome_end,1/4+yBase],
+					[coord.chromosome_end,-1/4+yBase]
+				);
+				break;
+		}
+	};
+	
+	var FeatureSeriesFraction = 6;
+	
+	FeatureDrawer.prototype.close = function() {
+		// Hiding empty features series in legend (easier than removing them)
+		this.featureSeries.forEach(function(series) {
+			if(series.data.length === 0) {
+				series.showInLegend = false;
+			}
+		});
+		
+		// Adjusting the space for the categories
+		var origCatLength = this.category.length;
+		for(var i=0; i<(FeatureSeriesFraction-1)*origCatLength; i++) {
+			this.category.push('');
+		}
+		this.yAxis.max = this.category.length - 1;
+		this.yAxis.tickAmount = this.category.length;
+	};
+	
+	FeatureDrawer.prototype.getYAxis = function() {
+		return this.yAxis;
+	};
+	
+	FeatureDrawer.prototype.getSeries = function() {
+		return this.featureSeries;
+	};
 	
 	function doChartLayout(rangeData,viewClass,postTitle) {
 		var view;
@@ -973,6 +1233,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 		// So, we can prepare the charts
 		var histoneInstance;
+		
+		var fDraw;
 		
 		var GraphPrepare = function(gData) {
 			var title = gData.title;
@@ -1085,6 +1347,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								options: {
 									chart: {
 										type: 'boxplot',
+										alignTicks: false,
 										backgroundColor: null,
 										events: {
 											// reflowing after load and redraw events led to blank drawings
@@ -1131,11 +1394,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									},
 									categories: []
 								},
-								yAxis: [{
-									title: {
-										text: gData.yAxisLabel
-									}
-								}],
 								drilldown: {
 									drillUpButton: {
 									},
@@ -1153,6 +1411,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								options: {
 									chart: {
 										type: 'line',
+										alignTicks: false,
 										backgroundColor: null,
 										events: {
 											// reflowing after load and redraw events led to blank drawings
@@ -1195,11 +1454,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									max: range_end,
 									allowDecimals: false,
 								},
-								yAxis: [{
-									title: {
-										text: gData.yAxisLabel
-									}
-								}],
 								drilldown: {
 									drillUpButton: {
 									},
@@ -1217,6 +1471,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								options: {
 									chart: {
 										type: 'line',
+										alignTicks: false,
 										backgroundColor: null,
 										events: {
 											// reflowing after load and redraw events led to blank drawings
@@ -1259,11 +1514,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									max: range_end,
 									allowDecimals: false,
 								},
-								yAxis: [{
-									title: {
-										text: gData.yAxisLabel
-									}
-								}],
 								drilldown: {
 									drillUpButton: {
 									},
@@ -1281,6 +1531,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								options: {
 									chart: {
 										type: 'arearange',
+										alignTicks: false,
 										backgroundColor: null,
 										events: {
 											// reflowing after load and redraw events led to blank drawings
@@ -1323,11 +1574,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									max: range_end,
 									allowDecimals: false,
 								},
-								yAxis: [{
-									title: {
-										text: gData.yAxisLabel
-									}
-								}],
 								drilldown: {
 									drillUpButton: {
 									},
@@ -1345,6 +1591,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								options: {
 									chart: {
 										type: 'areasplinerange',
+										alignTicks: false,
 										backgroundColor: null,
 										events: {
 											// reflowing after load and redraw events led to blank drawings
@@ -1387,11 +1634,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									max: range_end,
 									allowDecimals: false,
 								},
-								yAxis: [{
-									title: {
-										text: gData.yAxisLabel
-									}
-								}],
 								drilldown: {
 									drillUpButton: {
 									},
@@ -1452,7 +1694,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						var yAxis = {
 							title: {
 								text: chart.yAxisLabel
-							}
+							},
+							startOnTick: false,
+							endOnTick: false,
 						};
 						
 						// Setting the floor and ceiling when available
@@ -1472,15 +1716,103 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						
 						chart.options.yAxis = [ yAxis ];
 						
+						// New style markup
 						if(gDataViewType !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
+							// Do axis generation only once!
+							if(fDraw===undefined) {
+								// First, gene processing
+								if(Array.isArray(rangeData.regionLayout[ConstantsService.REGION_FEATURE_GENE])) {
+									// Scaffolding the genomic features series
+									fDraw = new FeatureDrawer();
+									ConstantsService.REGION_FEATURES.forEach(function(feature) {
+										fDraw.addFeatureType(feature);
+									});
+									var genes = rangeData.regionLayout[ConstantsService.REGION_FEATURE_GENE];
+									
+									// Do it in reverse order, so first genes are the last categories
+									genes.reverse();
+									genes.forEach(function(gene) {
+										// Now, select best transcript
+										if(ConstantsService.REGION_FEATURE_TRANSCRIPT in gene) {
+											if(gene.mainTranscript!==undefined) {
+												// The main transcript is a better category than the gene
+												fDraw.addCategory(gene.mainTranscript.label);
+												
+												fDraw.draw(gene.mainTranscript);
+												
+												// And now process all the associated UTRs and exons / CDS
+												if(ConstantsService.REGION_FEATURE_UTR in gene.mainTranscript) {
+													gene.mainTranscript[ConstantsService.REGION_FEATURE_UTR].forEach(function(UTR) {
+														fDraw.draw(UTR);
+													});
+												}
+												
+												if(ConstantsService.REGION_FEATURE_EXON in gene.mainTranscript) {
+													gene.mainTranscript[ConstantsService.REGION_FEATURE_EXON].forEach(function(exon) {
+														fDraw.draw(exon);
+														// Draw CDS (when available)
+														if(ConstantsService.REGION_FEATURE_CDS in exon) {
+															exon[ConstantsService.REGION_FEATURE_CDS].forEach(function(CDS) {
+																fDraw.draw(CDS);
+															});
+														}
+														
+														// At last, process start and stop codons
+														if(ConstantsService.REGION_FEATURE_START_CODON in exon) {
+															exon[ConstantsService.REGION_FEATURE_START_CODON].forEach(function(start_codon) {
+																fDraw.draw(start_codon);
+															});
+														}
+														if(ConstantsService.REGION_FEATURE_STOP_CODON in exon) {
+															exon[ConstantsService.REGION_FEATURE_STOP_CODON].forEach(function(stop_codon) {
+																fDraw.draw(stop_codon);
+															});
+														}
+													});
+												}
+											} else {
+												// Each gene is a category
+												fDraw.addCategory(gene.label);
+											}
+											// Last, push the shape of the gene
+											fDraw.draw(gene);
+										}
+											
+									});
+									// Leave it as it was
+									genes.reverse();
+									
+									fDraw.close();
+								}
+							}
+							
+							// Add axis whenever it is defined
+							if(fDraw!==undefined) {
+								// Without this, it is not possible to make room for the
+								// polygon series
+								delete yAxis.floor;
+								
+								// Rounding to the first decimal
+								yAxis.minPadding = Math.round(10/FeatureSeriesFraction)/10;
+								// For breaks we need less padding
+								if(yAxis.breaks !== undefined) {
+									yAxis.minPadding /= 2;
+								}
+								chart.options.yAxis.push(fDraw.getYAxis());
+								Array.prototype.push.apply(chart.options.series,fDraw.getSeries());
+							}
+						}
+						
+						// Old style markup
+						if(false && gDataViewType !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
 							// Adding the gene and transcript regions
 							var plotBands = [];
 							var plotLines = [];
 							chart.options.xAxis.plotBands = plotBands;
 							chart.options.xAxis.plotLines = plotLines;
 							ConstantsService.REGION_FEATURES.forEach(function(featureType) {
-								if(featureType in DRAWABLE_REGION_FEATURES) {
-									var drawableFeature = DRAWABLE_REGION_FEATURES[featureType];
+								if(featureType in DRAWABLE_REGION_FEATURES_V0) {
+									var drawableFeature = DRAWABLE_REGION_FEATURES_V0[featureType];
 									
 									// Consolidating the declared feature regions
 									var consolidatedFeatureRegions = [];
@@ -2722,7 +3054,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		}
 		
 		// Now, rescueing hints
-		if(localScope.currentQueryHints !== null && Array.isArray(localScope.currentQueryHints.tabs)) {
+		if(localScope.currentQueryHints !== null && localScope.currentQueryHints !== undefined && localScope.currentQueryHints.tabs!==undefined && Array.isArray(localScope.currentQueryHints.tabs)) {
 			localScope.currentQueryHints.tabs.some(function(tab) {
 				var retval = tab.id === rangeData.id;
 				if(retval) {
@@ -3135,7 +3467,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			
 			selectVisibleCellTypes: selectVisibleCellTypes,
 			selectVisibleCharts: selectVisibleCharts,
-			DRAWABLE_REGION_FEATURES: DRAWABLE_REGION_FEATURES,
+			DRAWABLE_REGION_FEATURES_V0: DRAWABLE_REGION_FEATURES_V0,
 			
 			buildCurrentState: buildCurrentState,
 			selectableCellTypesFromHints: selectableCellTypesFromHints,

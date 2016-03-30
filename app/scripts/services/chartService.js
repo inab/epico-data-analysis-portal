@@ -2737,6 +2737,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						tab.visibleTerms = [tab.visibleTerms];
 					}
 					
+					if(tab.visibleMeanSeries !== undefined && !Array.isArray(tab.visibleMeanSeries)) {
+						tab.visibleMeanSeries = [tab.visibleMeanSeries];
+					}
+					
 					// Setting default viewClass
 					if(tab.selectedView!==undefined && (tab.selectedView in RedrawSelector)) {
 						rangeData.viewClass = tab.selectedView;
@@ -2997,7 +3001,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	function selectVisibleCharts(rangeData) {
 		// Normalizing
 		var hasChartHints = selectableChartsFromHints(rangeData);
-		var initiallyHideMeanSeries = !( (hasChartHints) ? rangeData.viewHints.initiallyShowMeanSeries : rangeData.ui.initiallyShowMeanSeries );
+		var initiallyHideMeanSeries = !( hasChartHints ? rangeData.viewHints.initiallyShowMeanSeries : rangeData.ui.initiallyShowMeanSeries );
 		
 		var charts = getCharts(rangeData,VIEW_GENERAL);
 		

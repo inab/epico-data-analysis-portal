@@ -94,6 +94,11 @@ factory('ConstantsService',function() {
 		FETCH_STATE_ERROR: 'fetch_error',
 		FETCH_STATE_END: 'fetch_end',
 		
+		TREE_STATE_INITIAL: 'tree_initial',
+		TREE_STATE_FETCHING: 'tree_fetching',
+		TREE_STATE_ERROR: 'tree_error',
+		TREE_STATE_END: 'tree_end',
+		
 		DEFAULT_SEARCH_URI: DEFAULT_SEARCH_URI,
 		REGION_SEARCH_URI: REGION_SEARCH_URI,
 		SEARCH_URIS: SEARCH_URIS,

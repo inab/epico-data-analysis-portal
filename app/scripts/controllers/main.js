@@ -66,6 +66,7 @@ angular.module('blueprintApp')
     
 	$scope.graphData = [];
 	$scope.currentTab = null;
+	$scope.qString = null;
 	// The default flanking window size
 	$scope.flankingWindowSize = ConstantsService.DEFAULT_FLANKING_WINDOW_SIZE;
 	
@@ -119,12 +120,70 @@ angular.module('blueprintApp')
 	}
 	
 	ChartService.initializeSubtotalsCharts($scope);
-
+	
 	var preventLocationChange;
 	
-	function updateLocation(qString/*,w*/) {
+	function updateLocation(localScope/*,w*/) {
 		preventLocationChange = true;
-		$location.search({q: qString});
+		
+		var searchObj = ChartService.uiFuncs.buildCurrentState(localScope);
+		if(localScope.qString !== null) {
+			searchObj.q = localScope.qString;
+		}
+		$location.search(angular.element.param(searchObj));
+	}
+	
+	var TABSTART = 'tabs[';
+	var ValidIndexRE = /^0|[1-9][0-9]*$/;
+	
+	function decodeLocationSearch() {
+		var lObj = $location.search();
+		
+		var decLObj = {};
+		
+		var tabs = [];
+		for(var facet in lObj) {
+			if(facet.substring(0,TABSTART.length) === TABSTART) {
+				var decoded = false;
+				
+				var endBracket = facet.indexOf(']');
+				if(endBracket!==-1) {
+					var index = facet.substring(TABSTART.length,endBracket);
+					if(ValidIndexRE.test(index)) {
+						index = parseInt(index);
+						
+						var tab;
+						if(typeof tabs[index] === 'undefined') {
+							tab = {};
+							tabs[index] = tab;
+						} else {
+							tab = tabs[index];
+						}
+						
+						var subFacet = facet.substring(endBracket+1);
+						if(subFacet.charAt(0) === '[') {
+							var endSubBracket = subFacet.indexOf(']');
+							if(endSubBracket!==-1) {
+								var subFacetName = subFacet.substring(1,endSubBracket);
+								tab[subFacetName] = lObj[facet];
+								decoded = true;
+							}
+						}
+					}
+				}
+				
+				if(!decoded) {
+					console.log('Ill built parameter: '+facet);
+				}
+			} else {
+				decLObj[facet] = lObj[facet];
+			}
+		}
+		if(tabs.length > 0) {
+			decLObj.tabs = tabs;
+		}
+		
+		return decLObj;
 	}
 	
 	function updateChromosomes(localScope) {
@@ -170,7 +229,8 @@ angular.module('blueprintApp')
 					qString += ':'+flankingWindowSize;
 				}
 			});
-			updateLocation(qString);
+			localScope.qString = qString;
+			updateLocation(localScope);
 			
 			// Now, let's remove the ranges which overlap
 			var overlappers = {};
@@ -323,6 +383,13 @@ angular.module('blueprintApp')
 		} else {
 			var q = localScope.query.trim();
 			localScope.currentQueryStr = q;
+			
+			if(localScope.queryHints !== null && localScope.queryHints !== undefined) {
+				localScope.currentQueryHints = localScope.queryHints;
+			} else {
+				localScope.currentQueryHints = null;
+			}
+			localScope.queryHints = null;
 			
 			var addi_splitted = q.split(UNION_ADDITIVITY_PATTERN);
 			
@@ -507,6 +574,10 @@ angular.module('blueprintApp')
 				// Also, fetch data in an asynchronous way
 				doRefresh(rangeData);
 				
+				if(ChartService.uiFuncs.selectableCellTypesFromHints(rangeData)) {
+					localScope.selectVisibleCellTypes(rangeData);
+				}
+				
 				return localScope;
 			}, function(err) {
 				if(rangeData.state === ConstantsService.STATE_INITIAL) {
@@ -538,36 +609,49 @@ angular.module('blueprintApp')
 				doInitial(rangeData);
 				break;
 			case ConstantsService.STATE_SELECT_CHARTS:
+				if(ChartService.uiFuncs.selectableChartsFromHints(rangeData)) {
+					rangeData.localScope.selectVisibleCharts(rangeData);
+				}
 				$anchorScroll('resultTabs');
 				break;
 			case ConstantsService.STATE_SHOW_DATA:
 				$anchorScroll('resultTabs');
 			//	doRefresh(rangeData);
-				if(rangeData.ui.treeDisplay!=='none') {
-					var deferred = $q.defer();
-					var promise = deferred.promise;
-					promise = promise
-						.then(QueryService.rangeLaunch(QueryService.getStatsData,rangeData))
-						// Either the browser or the server gets too stressed with this concurrent query
-						//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
-						.then(QueryService.rangeLaunch(QueryService.initTree,rangeData), function(err) {
-							if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
-								rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
-								openModal('Data error','Error while computing stats');
-								console.error('Stats data');
-								console.error(err);
-							}
-						})
-						.catch(function(err) {
-							if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
-								rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
-								openModal('Data error','Error while initializing stats tree');
-								console.error('Stats tree');
-								console.error(err);
-							}
-						});
-					 
-					deferred.resolve(rangeData.localScope);
+				if(rangeData.ui.treeDisplayState === ConstantsService.TREE_STATE_INITIAL) {
+					if(rangeData.ui.treeDisplay!=='none') {
+						rangeData.ui.treeDisplayState = ConstantsService.TREE_STATE_FETCHING;
+						var deferred = $q.defer();
+						var promise = deferred.promise;
+						promise = promise
+							.then(QueryService.rangeLaunch(QueryService.getStatsData,rangeData))
+							// Either the browser or the server gets too stressed with this concurrent query
+							//.then($q.all([QueryService.launch(getWgbsData),QueryService.launch(getRnaSeqGData),QueryService.launch(getRnaSeqTData),QueryService.launch(getChipSeqData),QueryService.launch(getDnaseData)]))
+							.then(QueryService.rangeLaunch(QueryService.initTree,rangeData), function(err) {
+								rangeData.ui.treeDisplayState = ConstantsService.TREE_STATE_ERROR;
+								if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
+									rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
+									openModal('Data error','Error while computing stats');
+									console.error('Stats data');
+									console.error(err);
+								}
+							})
+							.then(function(localScope) {
+								rangeData.treeState = ConstantsService.TREE_STATE_END;
+								return localScope;
+							} , function(err) {
+								rangeData.ui.treeDisplayState = ConstantsService.TREE_STATE_ERROR;
+								if(rangeData.fetchState === ConstantsService.FETCH_STATE_FETCHING) {
+									rangeData.fetchState = ConstantsService.FETCH_STATE_ERROR;
+									openModal('Data error','Error while initializing stats tree');
+									console.error('Stats tree');
+									console.error(err);
+								}
+							});
+						 
+						deferred.resolve(rangeData.localScope);
+					} else {
+						rangeData.ui.treeDisplayState = ConstantsService.TREE_STATE_END;
+					}
 				}
 				switch(rangeData.fetchState) {
 					case ConstantsService.FETCH_STATE_END:
@@ -583,10 +667,56 @@ angular.module('blueprintApp')
 		return '';
 	}
 	
+	// All these methods are needed in order to update the query string properly
 	$scope.doSelectTab = function(rangeData) {
-		$scope.currentTab = rangeData.id;
+		rangeData.localScope.currentTab = rangeData.id;
 		
-		return doState(rangeData);
+		var retval = doState(rangeData);
+		updateLocation(rangeData.localScope);
+		
+		return retval;
+	};
+	
+	$scope.hideAllCharts = function($event,rangeData) {
+		var retval = ChartService.uiFuncs.hideAllCharts($event,rangeData);
+		updateLocation(rangeData.localScope);
+		
+		return retval;
+	};
+	
+	$scope.showAllCharts = function($event,rangeData) {
+		var retval = ChartService.uiFuncs.showAllCharts($event,rangeData);
+		updateLocation(rangeData.localScope);
+		
+		return retval;
+	};
+	
+	$scope.switchChart = function($event,chart,rangeData) {
+		var retval = ChartService.uiFuncs.switchChart($event,chart,rangeData);
+		updateLocation(rangeData.localScope);
+		
+		return retval;
+	};
+	
+	$scope.hideAllSeries = function(rangeData,viewClass) {
+		var retval = ChartService.uiFuncs.hideAllSeries(rangeData,viewClass);
+		updateLocation(rangeData.localScope);
+		
+		return retval;
+	};
+	
+	$scope.showAllSeries = function(rangeData,viewClass) {
+		var retval = ChartService.uiFuncs.showAllSeries(rangeData,viewClass);
+		updateLocation(rangeData.localScope);
+		
+		return retval;
+	};
+	
+	$scope.switchSeriesNode = function($event,termNode,rangeData,viewClass) {
+		var retval = ChartService.uiFuncs.switchSeriesNode($event,termNode,rangeData,viewClass);
+		updateLocation(rangeData.localScope);
+		
+		return retval;
 	};
 	
 	$scope.suggestSearch = QueryService.suggestSearch;
@@ -633,9 +763,10 @@ angular.module('blueprintApp')
 			} else {
 				qString += rangeData.range.chr+':'+rangeData.range.start+'-'+rangeData.range.end;
 			}
-			updateLocation(qString);
+			$scope.qString = qString;
 		}
 		$scope.graphData.splice(index, 1);
+		updateLocation($scope);
 	};
 	
 	$scope.onTreeSelection = function(ontology,node,selected,$event) {
@@ -686,6 +817,8 @@ angular.module('blueprintApp')
 		//rangeData.state = ConstantsService.STATE_SHOW_DATA;
 		rangeData.state = ConstantsService.STATE_SELECT_CHARTS;
 		doState(rangeData);
+		
+		updateLocation(rangeData.localScope);
 	};
 	
 	$scope.selectVisibleCharts = function(rangeData) {
@@ -694,6 +827,8 @@ angular.module('blueprintApp')
 		// Changing to this state
 		rangeData.state = ConstantsService.STATE_SHOW_DATA;
 		doState(rangeData);
+		
+		updateLocation(rangeData.localScope);
 	};
 	
 	$scope.deselectAllVisibleCellTypes = function(rangeData) {
@@ -736,20 +871,22 @@ angular.module('blueprintApp')
 		});
 		$scope.$on('$locationChangeSuccess', function(/*event*/) {
 			//console.log("Lo vi!!!!!");
+			var lObj = decodeLocationSearch();
 			var query;
 			var w;
-			if('w' in $location.search()) {
-				w = parseInt($location.search().w);
+			if('w' in lObj) {
+				w = parseInt(lObj.w);
 				if(isNaN(w) || w < 0) {
 					w = 0;
 				}
 			}
-			if('q' in $location.search()) {
-				query = $location.search().q;
+			if('q' in lObj) {
+				query = lObj.q;
 				if(w!==undefined) {
 					$scope.flankingWindowSize = w;
 				}
 				$scope.query = query;
+				$scope.queryHints = lObj;
 				
 				$rootScope.title = 'Search '+query + ' - ' + titlePrefix;
 			} else {
@@ -826,21 +963,24 @@ angular.module('blueprintApp')
 					console.error(err);
 				});
 		
+		var lObj = decodeLocationSearch();
+		
 		var w;
-		if('w' in $location.search()) {
-			w = parseInt($location.search().w);
+		if('w' in lObj) {
+			w = parseInt(lObj.w);
 			if(isNaN(w) || w < 0) {
 				w = 0;
 			}
 		}
 		
-		if('q' in $location.search()) {
-			var query = $location.search().q;
+		if('q' in lObj) {
+			var query = lObj.q;
 			promise = promise.then(function(localScope) {
 				if(w!==undefined) {
 					localScope.flankingWindowSize = w;
 				}
 				localScope.query = query;
+				localScope.queryHints = lObj;
 				
 				$rootScope.title = 'Search '+query + ' - ' + titlePrefix;
 				localScope.search();

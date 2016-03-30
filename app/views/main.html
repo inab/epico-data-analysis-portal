@@ -214,7 +214,7 @@
 
 		<div class="no-margin-padding text-center" ng-show="rangeData.state==='showData' || rangeData.state==='end'">
 			<div class="btn-group">
-				<label class="btn btn-default" ng-repeat="view in uiFuncs.EXPORTED_VIEWS" ng-model="rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'" ng-click="uiFuncs.redrawCharts(rangeData)">{{view.viewDesc}}</label>
+				<label class="btn btn-default" ng-repeat="view in uiFuncs.EXPORTED_VIEWS" ng-model="rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'" ng-click="doChangeView(rangeData)">{{view.viewDesc}}</label>
 			</div>
 		</div>
 		
@@ -257,31 +257,31 @@
 				{{doReflow()}}
 				<uib-accordion class="col-xs-12 col-sm-2 col-lg-1" close-others="false">
 					<uib-accordion-group heading="&#x25BC; Showing {{uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} of {{uiFuncs.getChartsWithDataCount(rangeData,view.viewClass)}} charts" panel-class="panel-info" class="row terms-selector">
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="uiFuncs.hideAllCharts($event,rangeData)">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData)">
 							<span class="square" style="border-color: #202020 ; background-color: white;"></span>
 							<span class="term">Hide all charts / mean series</span>
 						</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="uiFuncs.showAllCharts($event,rangeData)">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllCharts($event,rangeData)">
 							<span class="square" style="border-color: #202020 ; background-color: #202020;"></span>
 							<span class="term">Show all charts / mean series</span>
 						</div>
 						<div class="col-xs-1 col-sm-12">&nbsp;</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="uiFuncs.switchChart($event,chart,rangeData)" ng-hide="chart.isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-hide="chart.isEmpty" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 							<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
 							<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
 						</div>
 					</uib-accordion-group>
 					<uib-accordion-group is-open="true" heading="&#x25BC; {{uiFuncs.getLegendTitle(view.viewClass)}}: {{uiFuncs.getVisibleSeriesCount(rangeData,view.viewClass)}} of {{uiFuncs.getSeenSeriesCount(rangeData,view.viewClass)}} for this range and view" panel-class="panel-info" class="row terms-selector">
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="uiFuncs.hideAllSeries(rangeData,view.viewClass)">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllSeries(rangeData,view.viewClass)">
 							<span class="circle" style="border-color: #202020 ; background-color: white;"></span>
 							<span class="term">Hide all {{uiFuncs.getLegendTitle(view.viewClass)}}</span>
 						</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="uiFuncs.showAllSeries(rangeData,view.viewClass)">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="showAllSeries(rangeData,view.viewClass)">
 							<span class="circle" style="border-color: #202020 ; background-color: #202020;"></span>
 							<span class="term">Show all {{uiFuncs.getLegendTitle(view.viewClass)}}</span>
 						</div>
 						<div class="col-xs-1 col-sm-12">&nbsp;</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="uiFuncs.switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
 							<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
 							<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
 							<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>
@@ -301,7 +301,7 @@
 							</div>
 							<div style="float:right;clear:right;">
 								<!-- Hide chart button -->
-								<i class="glyphicon glyphicon-eye-close space-glyphicon" ng-click="uiFuncs.switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon glyphicon-eye-close space-glyphicon" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Switch mean series -->
 								<!-- Functional, but unfancy
 								<i class="glyphicon glyphicon-indent-right" ng-style="{'color': chart.meanSeriesHidden ? 'gray' : 'initial'}"ng-click="uiFuncs.switchMeanSeries(chart,true,rangeData.localScope)" uib-tooltip="Hide/show mean series" tooltip-popup-delay="500" tooltip-popup-close-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>

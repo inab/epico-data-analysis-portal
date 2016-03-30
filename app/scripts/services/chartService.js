@@ -842,7 +842,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			var sortedOrigValues = origValues.clone(0);
 			sortedOrigValues.sort(origSeriesComparator);
 			
-			sortedOrigValues.forEach(function(data,dataI) {
+			sortedOrigValues.forEach(function(data) {
 				retValues.push({x:data[0], y:data[2]},{x:data[1], y:data[2]},{x:data[1], y:null});
 			});
 			
@@ -1365,8 +1365,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									min: range_start,
 									max: range_end,
 									allowDecimals: false,
-									plotBands: plotBands,
-									plotLines: plotLines,
 								},
 								yAxis: [{
 									title: {
@@ -2292,11 +2290,15 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				chart.isHidden = true;
 			});
 			chart.isHidden = false;
+			redrawCharts(chart,undefined,undefined,undefined,rangeData.localScope);
 		} else if(event.shiftKey) {
 			// We are not going to redraw in background (this should not happen)
 			switchMeanSeries(chart,viewClass===undefined || viewClass === rangeData.viewClass,rangeData.localScope);
+		} else if(chart.isHidden) {
+			chart.isHidden = false;
+			redrawCharts(chart,undefined,undefined,undefined,rangeData.localScope);
 		} else {
-			chart.isHidden = !chart.isHidden;
+			chart.isHidden = true;
 		}
 	}
 	
@@ -2315,6 +2317,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			charts.forEach(function(chart) {
 				chart.isHidden = false;
 			});
+			redrawCharts(rangeData);
 		}
 	}
 
@@ -2741,6 +2744,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			ui: {
 				gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
 				treeDisplay: 'compact',
+				treeDisplayState: ConstantsService.TREE_STATE_INITIAL,
 				chartViews: chartViews
 			},
 			// Initially, the default view
@@ -2750,6 +2754,31 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		// Only not taking into account flanking window size for explicit ranges
 		if(range.currentQuery.flankingWindowSize !== undefined) {
 			rangeData.flankingWindowSize = range.currentQuery.flankingWindowSize;
+		}
+		
+		// Now, rescueing hints
+		if(localScope.currentQueryHints !== null && Array.isArray(localScope.currentQueryHints.tabs)) {
+			localScope.currentQueryHints.tabs.some(function(tab) {
+				var retval = tab.id === rangeData.id;
+				if(retval) {
+					rangeData.viewHints = tab;
+					
+					// Curating some parameters
+					if(tab.visibleCharts !== undefined && !Array.isArray(tab.visibleCharts)) {
+						tab.visibleCharts = [tab.visibleCharts];
+					}
+					
+					if(tab.visibleTerms !== undefined && !Array.isArray(tab.visibleTerms)) {
+						tab.visibleTerms = [tab.visibleTerms];
+					}
+					
+					// Setting default viewClass
+					if(tab.selectedView!==undefined && (tab.selectedView in RedrawSelector)) {
+						rangeData.viewClass = tab.selectedView;
+					}
+				}
+				return retval;
+			});
 		}
 		
 		localScope.graphData.push(rangeData);
@@ -2927,6 +2956,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 	}
 		
+	function selectableCellTypesFromHints(rangeData) {
+		return (rangeData.viewHints !==  undefined && (rangeData.viewHints.initiallyShowMeanSeries !== undefined || rangeData.viewHints.visibleTerms !== undefined));
+	}
+	
 	function selectVisibleCellTypes(rangeData) {
 		var numSelected = 0;
 		
@@ -2948,9 +2981,26 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			}
 		};
 		
-		rangeData.treedata.forEach(function(ontology) {
-			ontology.selectedNodes.forEach(enableTermNodeFunc);
-		});
+		if(selectableCellTypesFromHints(rangeData)) {
+			if(rangeData.viewHints.visibleTerms !== undefined) {
+				// Preparing the selection, so terms can be found
+				var visibleHash = {};
+				
+				rangeData.viewHints.visibleTerms.forEach(function(o) {
+					visibleHash[o] = null;
+				});
+				
+				rangeData.termNodes.forEach(function(termNode) {
+					if(termNode.o in visibleHash) {
+						enableTermNodeFunc(termNode);
+					}
+				});
+			}
+		} else {
+			rangeData.treedata.forEach(function(ontology) {
+				ontology.selectedNodes.forEach(enableTermNodeFunc);
+			});
+		}
 		
 		// Select all when no one was selected
 		if(numSelected===0) {
@@ -2975,15 +3025,100 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 	}
 	
+	function selectableChartsFromHints(rangeData) {
+		return (rangeData.viewHints !==  undefined && rangeData.viewHints.initiallyShowMeanSeries !== undefined);
+	}
+	
 	function selectVisibleCharts(rangeData) {
 		// Normalizing
-		var initiallyHideMeanSeries = !rangeData.ui.initiallyShowMeanSeries;
+		var hasChartHints = selectableChartsFromHints(rangeData);
+		var initiallyHideMeanSeries = !( (hasChartHints) ? rangeData.viewHints.initiallyShowMeanSeries : rangeData.ui.initiallyShowMeanSeries );
 		
 		var charts = getCharts(rangeData,VIEW_GENERAL);
 		
+		var visibleChartsHash;
+		var visibleMeanSeriesHash;
+		if(hasChartHints) {
+			visibleChartsHash = {};
+			
+			if(Array.isArray(rangeData.viewHints.visibleCharts)) {
+				rangeData.viewHints.visibleCharts.forEach(function(visibleChartId) {
+					visibleChartsHash[visibleChartId] = null;
+				});
+			}
+			
+			visibleMeanSeriesHash = {};
+			
+			if(Array.isArray(rangeData.viewHints.visibleMeanSeries)) {
+				rangeData.viewHints.visibleMeanSeries.forEach(function(visibleChartId) {
+					visibleMeanSeriesHash[visibleChartId] = null;
+				});
+			}
+			
+			if(rangeData.viewHints.treeDisplay!==undefined) {
+				rangeData.ui.treeDisplay = rangeData.viewHints.treeDisplay;
+			}
+		}
+		
 		charts.forEach(function(chart) {
 			chart.meanSeriesHidden = initiallyHideMeanSeries;
+			if(hasChartHints) {
+				chart.isHidden = !(chart.chartId in visibleChartsHash);
+				
+				chart.meanSeriesHidden = !(chart.chartId in visibleMeanSeriesHash);
+			}
 		});
+	}
+	
+	function buildCurrentState(localScope) {
+		var state = {
+			selectedTab: localScope.currentTab,
+			tabs: localScope.graphData.map(function(rangeData) {
+				var tabState = {
+					id: rangeData.id,
+				};
+				
+				// Visible terms
+				if(rangeData.state === ConstantsService.STATE_SELECT_CHARTS || rangeData.state === ConstantsService.STATE_SHOW_DATA) {
+					var visibleTerms = [];
+					rangeData.termNodes.forEach(function(termNode) {
+						if(termNode.wasSeen && !termNode.termHidden) {
+							visibleTerms.push(termNode.o);
+						}
+					});
+					
+					tabState.visibleTerms = visibleTerms;
+					
+					// Visible charts
+					if(rangeData.state === ConstantsService.STATE_SHOW_DATA) {
+						tabState.selectedView = rangeData.viewClass;
+						
+						var visibleCharts = [];
+						var visibleMeanSeries = [];
+						
+						getCharts(rangeData,VIEW_GENERAL).forEach(function(chart) {
+							if(!chart.isEmpty) {
+								if(!chart.meanSeriesHidden) {
+									visibleMeanSeries.push(chart.chartId);
+								}
+								if(!chart.isHidden) {
+									visibleCharts.push(chart.chartId);
+								}
+							}
+						});
+						
+						tabState.initiallyShowMeanSeries = !!rangeData.ui.initiallyShowMeanSeries;
+						tabState.visibleCharts = visibleCharts;
+						tabState.visibleMeanSeries = visibleMeanSeries;
+						tabState.treeDisplay = rangeData.ui.treeDisplay;
+					}
+				}
+				
+				return tabState;
+			})
+		};
+		
+		return state;
 	}
 	
 	return {
@@ -3032,6 +3167,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			selectVisibleCellTypes: selectVisibleCellTypes,
 			selectVisibleCharts: selectVisibleCharts,
 			DRAWABLE_REGION_FEATURES: DRAWABLE_REGION_FEATURES,
+			
+			buildCurrentState: buildCurrentState,
+			selectableCellTypesFromHints: selectableCellTypesFromHints,
+			selectableChartsFromHints: selectableChartsFromHints,
 		},
 	};
 }]);

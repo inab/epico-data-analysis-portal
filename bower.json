@@ -18,8 +18,8 @@
     "angular-tree-control": "jmfernandez/angular-tree-control#dad854a431f1c17a7a79d3771e71dbaffd97c59a",
     "elasticsearch": "~10.1.3",
     "highcharts-release": "v4.2.3",
-    "highcharts-ng": "inab/highcharts-ng#7d0e93f1287841aba70cd1ff42dfec7519025cb0",
-    "highcharts-export-csv": "highcharts/export-csv#fda57662e1e5141b45d9abd917d1aca81b3a42ac",
+    "highcharts-ng": "inab/highcharts-ng#f26ff5d584e08279ae3cc029def3317bdca8175d",
+    "highcharts-export-csv": "highcharts/export-csv#257af53a0c5bc7fe438e0306ef514d87e2299af2",
     "jalette": "jalette#b9b4108c652baef9d77ef4f32d8f09000c7dc2d8",
     "roboto-fontface": "~0.4.5",
     "ng-csv": "~0.3.6"
@@ -34,7 +34,8 @@
         "highcharts-more.src.js",
         "modules/broken-axis.src.js",
         "modules/exporting.src.js",
-        "modules/no-data-to-display.src.js"
+        "modules/no-data-to-display.src.js",
+        "modules/drilldown.src.js"
       ]
     }
   },

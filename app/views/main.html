@@ -266,16 +266,16 @@
 							<span class="term">Show all charts / mean series</span>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-hide="chart.isEmpty || chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
-							<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
-							<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-hide="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
+							<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.bpSideData.meanSeries.color }" ng-class="{'dash': !chart.meanSeriesHidden}"></span>
+							<span class="term">{{chart.title}}</span>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
 						<uib-accordion class="col-sm-12" close-others="false">
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getChartsWithDataCount(rangeData,view.viewClass) - uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} charts disabled" panel-class="panel-info" class="row terms-selector">
-								<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-show="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
-									<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.isHidden ? 'white' : (chart.meanSeriesHidden ? '#E0E0E0': chart.bpSideData.meanSeries.color) }"></span>
-									<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.title}}</span>
+								<div class="col-xs-1 col-sm-12 termItem pointer chartHidden" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-show="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
+									<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color}"></span>
+									<span class="term">{{chart.title}}</span>
 								</div>
 							</uib-accordion-group>
 						</uib-accordion>
@@ -291,16 +291,16 @@
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
 						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-hide="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
-							<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
-							<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
+							<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>
+							<span class="term">{{termNode.name}}</span>
 							<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
 						<uib-accordion class="col-sm-12" close-others="false">
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getLegendTitle(view.viewClass)}}: {{uiFuncs.getSeenSeriesCount(rangeData,view.viewClass) - uiFuncs.getVisibleSeriesCount(rangeData,view.viewClass)}} hidden" panel-class="panel-info" class="row terms-selector">
-								<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-show="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
-									<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.termHidden ? 'white' : termNode.color }"></span>
-									<span class="term" ng-style="{color: termNode.termHidden ? 'gray' : 'initial'}">{{termNode.name}}</span>
+								<div class="col-xs-1 col-sm-12 termItem pointer termHidden" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-show="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
+									<span class="circle" ng-style="{'border-color': termNode.color }"></span>
+									<span class="term">{{termNode.name}}</span>
 									<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>
 								</div>
 							</uib-accordion-group>

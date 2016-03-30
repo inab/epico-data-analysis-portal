@@ -284,6 +284,30 @@ span.thick-line {
 	padding-bottom: 0.4em;
 }
 
+$dash-color: rgba(255,255,255,0);
+$dash-transparent-color: rgba(255,255,255,1);
+.circle.dash , .square.dash , .rounded-square.dash {
+	background: -webkit-linear-gradient(45deg, $dash-color 0, $dash-color 49%, $dash-transparent-color 49%, $dash-transparent-color 51%, $dash-transparent-color 51%, $dash-color 51%, $dash-color 100%), -webkit-linear-gradient(-45deg, $dash-color 0, $dash-color 49%, $dash-transparent-color 49%, $dash-transparent-color 51%, $dash-transparent-color 51%, $dash-color 51%, $dash-color 100%);
+	background: -moz-linear-gradient(45deg, $dash-color 0, $dash-color 49%, $dash-transparent-color 49%, $dash-transparent-color 51%, $dash-transparent-color 51%, $dash-color 51%, $dash-color 100%), -moz-linear-gradient(135deg, $dash-color 0, $dash-color 49%, $dash-transparent-color 49%, $dash-transparent-color 51%, $dash-transparent-color 51%, $dash-color 51%, $dash-color 100%);
+	background: linear-gradient(45deg, $dash-color 0, $dash-color 49%, $dash-transparent-color 49%, $dash-transparent-color 51%, $dash-transparent-color 51%, $dash-color 51%, $dash-color 100%), linear-gradient(135deg, $dash-color 0, $dash-color 49%, $dash-transparent-color 49%, $dash-transparent-color 51%, $dash-transparent-color 51%, $dash-color 51%, $dash-color 100%);
+	background-position: -5px 0, 5px 0;
+	-webkit-background-origin: padding-box;
+	background-origin: padding-box;
+	-webkit-background-clip: border-box;
+	background-clip: border-box;
+	-webkit-background-size: 20px 10px;
+	background-size: 20px 10px;
+}
+
+.chartHidden , .termHidden {
+	.circle , .square {
+		background-color: white;
+	}
+	.term {
+		color: gray;
+	}
+}
+
 .term {
 	line-height: 1em;
 	padding-bottom: 0.5em;

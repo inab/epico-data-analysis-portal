@@ -45,6 +45,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					subtitle: 'mean series',
 					//subtitle: 'mean series + min / max'
 				},
 				//{
@@ -71,6 +72,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					subtitle: 'mean series',
 					//subtitle: 'mean series + min / max'
 				},
 				//{
@@ -94,6 +96,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					subtitle: 'mean series',
 					//subtitle: 'mean series + min / max'
 				},
 				//{
@@ -117,6 +120,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+					subtitle: 'mean series',
 				},
 			],
 		},
@@ -129,17 +133,19 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+					subtitle: 'mean series',
 				},
 			],
 		},
 		{
 			name: DNASE_GRAPH,
 			noData: 'regulatory regions',
-			title: 'Regulatory regions (DNaseI) (mean series)',
+			title: 'Regulatory regions (DNaseI)',
 			yAxisLabel: 'z-score',
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					subtitle: 'mean series',
 					//subtitle: 'mean series + min / max'
 				},
 				//{
@@ -164,6 +170,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					subtitle: 'mean series',
 					//subtitle: 'mean series + min / max'
 				},
 				//{
@@ -185,6 +192,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
+					subtitle: 'mean series',
 					//subtitle: 'mean series + min / max'
 				},
 				//{
@@ -1117,12 +1125,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									},
 									exporting: HighchartsCommonExportingOptions,
 								},
-								title: {
-									text: title
-								},
-								lang: {
-									noData: noData,
-								},
 								xAxis: {
 									title: {
 										text: 'Ensembl Ids (at '+rangeData.rangeStrEx+')'
@@ -1134,20 +1136,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										text: gData.yAxisLabel
 									}
 								}],
-								series: [],
 								drilldown: {
 									drillUpButton: {
 									},
 									series: []
 								},
-								loading: true,
-								//func: function(chart) {
-								//	// This is needed to reflow the chart
-								//	// to its final width
-								//	$timeout(function() {
-								//		chart.reflow();
-								//	},0);
-								//},
 							},
 							seriesAggregator: highchartsBoxPlotAggregator,
 							library: LIBRARY_HIGHCHARTS,
@@ -1194,12 +1187,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									},
 									exporting: HighchartsCommonExportingOptions,
 								},
-								title: {
-									text: title
-								},
-								lang: {
-									noData: noData,
-								},
 								xAxis: {
 									title: {
 										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
@@ -1213,20 +1200,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										text: gData.yAxisLabel
 									}
 								}],
-								series: [],
 								drilldown: {
 									drillUpButton: {
 									},
 									series: []
 								},
-								loading: true,
-								//func: function(chart) {
-								//	// This is needed to reflow the chart
-								//	// to its final width
-								//	$timeout(function() {
-								//		chart.reflow();
-								//	},0);
-								//},
 							},
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
@@ -1273,12 +1251,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									},
 									exporting: HighchartsCommonExportingOptions,
 								},
-								title: {
-									text: title
-								},
-								lang: {
-									noData: noData,
-								},
 								xAxis: {
 									title: {
 										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
@@ -1292,20 +1264,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										text: gData.yAxisLabel
 									}
 								}],
-								series: [],
 								drilldown: {
 									drillUpButton: {
 									},
 									series: []
 								},
-								loading: true,
-								//func: function(chart) {
-								//	// This is needed to reflow the chart
-								//	// to its final width
-								//	$timeout(function() {
-								//		chart.reflow();
-								//	},0);
-								//},
 							},
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
@@ -1352,12 +1315,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									},
 									exporting: HighchartsCommonExportingOptions,
 								},
-								title: {
-									text: title
-								},
-								lang: {
-									noData: noData,
-								},
 								xAxis: {
 									title: {
 										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
@@ -1371,20 +1328,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										text: gData.yAxisLabel
 									}
 								}],
-								series: [],
 								drilldown: {
 									drillUpButton: {
 									},
 									series: []
 								},
-								loading: true,
-								//func: function(chart) {
-								//	// This is needed to reflow the chart
-								//	// to its final width
-								//	$timeout(function() {
-								//		chart.reflow();
-								//	},0);
-								//},
 							},
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
@@ -1431,12 +1379,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									},
 									exporting: HighchartsCommonExportingOptions,
 								},
-								title: {
-									text: title
-								},
-								lang: {
-									noData: noData,
-								},
 								xAxis: {
 									title: {
 										text: 'Coordinates (at '+rangeData.rangeStrEx+')'
@@ -1450,20 +1392,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										text: gData.yAxisLabel
 									}
 								}],
-								series: [],
 								drilldown: {
 									drillUpButton: {
 									},
 									series: []
 								},
-								loading: true,
-								//func: function(chart) {
-								//	// This is needed to reflow the chart
-								//	// to its final width
-								//	$timeout(function() {
-								//		chart.reflow();
-								//	},0);
-								//},
 							},
 							seriesAggregator: defaultSeriesAggregator,
 							library: LIBRARY_HIGHCHARTS,
@@ -1471,22 +1404,73 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						break;
 				}
 				
+				// Common attributes
+				chart.chartId = gName;
+				chart.type = gDataViewType;
+				chart.graphTypes = Array.isArray(gDataView.type) ? gDataView.type : [ gDataView.type ];
+				
+				chart.title = title;
+				chart.subtitle = (gDataView.subtitle!==undefined) ? gDataView.subtitle : null;
+				chart.yAxisLabel = gData.yAxisLabel;
+				
+				chart.allData = [];
+				chart.regionFeature = rangeData.regionFeature;
+				chart.bpSideData = {
+					seriesToIndex: {},
+					meanSeries: null
+				};
+				// Is this graph initially hidden?
+				if(gData.isInitiallyHidden !== undefined) {
+					chart.isHidden = gData.isInitiallyHidden;
+				}
+				chart.meanSeriesHidden = !rangeData.ui.initiallyShowMeanSeries;
+				
+				// And now, specific customizations for this library
 				switch(chart.library) {
 					case LIBRARY_HIGHCHARTS:
+						// Common options
+						chart.options.loading = true;
+						chart.options.series = [];
+						//chart.options.func = function(chart) {
+						//	// This is needed to reflow the chart
+						//	// to its final width
+						//	$timeout(function() {
+						//		chart.reflow();
+						//	},0);
+						//};
+						chart.options.lang = {
+							noData: noData
+						};
+						chart.options.title = {
+							text: chart.title
+						};
+						if(chart.subtitle!==null) {
+							chart.options.subtitle = {
+								text: chart.subtitle
+							};
+						}
+						var yAxis = {
+							title: {
+								text: chart.yAxisLabel
+							}
+						};
+						
 						// Setting the floor and ceiling when available
 						if(gData.floor!==undefined) {
-							chart.options.yAxis[0].floor = gData.floor;
+							yAxis.floor = gData.floor;
 						}
 						
 						if(gData.ceiling!==undefined) {
-							chart.options.yAxis[0].ceiling = gData.ceiling;
+							yAxis.ceiling = gData.ceiling;
 						}
 						
 						if(gData.breaks!==undefined) {
-							chart.options.yAxis[0].breaks = gData.breaks;
-							//chart.options.yAxis[0].lineColor = 'black';
-							chart.options.yAxis[0].lineWidth = 1;
+							yAxis.breaks = gData.breaks;
+							//yAxis.lineColor = 'black';
+							yAxis.lineWidth = 1;
 						}
+						
+						chart.options.yAxis = [ yAxis ];
 						
 						if(gDataViewType !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
 							// Adding the gene and transcript regions
@@ -1639,25 +1623,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						}
 						break;
 				}
-				
-				// Common attributes
-				chart.chartId = gName;
-				chart.type = gDataViewType;
-				chart.graphTypes = Array.isArray(gDataView.type) ? gDataView.type : [ gDataView.type ];
-				chart.regionFeature = rangeData.regionFeature;
-				chart.allData = [];
-				chart.bpSideData = {
-					seriesToIndex: {},
-					meanSeries: null
-				};
-				chart.title = title;
-				chart.subtitle = (gDataView.subtitle!==undefined) ? gDataView.subtitle : null;
-				chart.yAxisLabel = gData.yAxisLabel;
-				// Is this graph initially hidden?
-				if(gData.isInitiallyHidden !== undefined) {
-					chart.isHidden = gData.isInitiallyHidden;
-				}
-				chart.meanSeriesHidden = !rangeData.ui.initiallyShowMeanSeries;
 				
 				charts.push(chart);
 				

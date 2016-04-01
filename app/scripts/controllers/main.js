@@ -874,33 +874,35 @@ angular.module('blueprintApp')
 			}
 		});
 		$scope.$on('$locationChangeSuccess', function(/*event*/) {
-			//console.log("Lo vi!!!!!");
-			var lObj = decodeLocationSearch();
-			var query;
-			var w;
-			if('w' in lObj) {
-				w = parseInt(lObj.w);
-				if(isNaN(w) || w < 0) {
-					w = 0;
-				}
-			}
-			if('q' in lObj) {
-				query = lObj.q;
-				if(w!==undefined) {
-					$scope.flankingWindowSize = w;
-				}
-				$scope.query = query;
-				$scope.queryHints = lObj;
-				
-				$rootScope.title = 'Search '+query + ' - ' + titlePrefix;
-			} else {
-				$rootScope.title = titlePrefix;
-			}
-			
 			if(preventLocationChange) {
 				preventLocationChange = false;
-			} else if(query!==undefined) {
-				$scope.search();
+			} else {
+				//console.log("Lo vi!!!!!");
+				var lObj = decodeLocationSearch();
+				var query;
+				var w;
+				if('w' in lObj) {
+					w = parseInt(lObj.w);
+					if(isNaN(w) || w < 0) {
+						w = 0;
+					}
+				}
+				if('q' in lObj) {
+					query = lObj.q;
+					if(w!==undefined) {
+						$scope.flankingWindowSize = w;
+					}
+					$scope.query = query;
+					$scope.queryHints = lObj;
+					
+					$rootScope.title = 'Search '+query + ' - ' + titlePrefix;
+				} else {
+					$rootScope.title = titlePrefix;
+				}
+				
+				if(query!==undefined) {
+					$scope.search();
+				}
 			}
 		});
 		

@@ -146,7 +146,7 @@
 <p class="text-center" style="margin-bottom:40px;" ng-bind-html="found"></p>
 -->
 <uib-tabset id="resultTabs" ng-if="graphData.length &gt; 0">
-	<uib-tab ng-repeat="rangeData in graphData" select="doSelectTab(rangeData)">
+	<uib-tab ng-repeat="rangeData in graphData track by rangeData.id" select="doSelectTab(rangeData)">
 		<uib-tab-heading>{{rangeData.heading}}&nbsp;<i ng-class="{'glyphicon': rangeData.fetchState === 'fetch_initial' || rangeData.state==='selectCellTypes','glyphicon-filter': rangeData.state==='selectCellTypes','glyphicon-download': rangeData.state!=='selectCellTypes' && rangeData.fetchState === 'fetch_initial', 'glyphicon-hourglass': rangeData.fetchState === 'fetching', 'blink': rangeData.fetchState === 'fetching'}"></i><i class="hover_red" ng-class="{'glyphicon': rangeData.fetchState === 'fetch_end','glyphicon-remove-sign': rangeData.fetchState === 'fetch_end' && graphData.length > 1}" ng-click="removeTabResult($event,$index);" uib-tooltip-template="'tooltip/closeTab.html'" tooltip-placement="bottom" tooltip-append-to-body></i></uib-tab-heading>
 		
 		<!-- Types of analysis -->
@@ -164,7 +164,7 @@
 
 			
 			<!-- Selection tree -->
-			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCellTypes'" ng-unless="uiFuncs.selectableCellTypesFromHints(rangeData)">
+			<div class="row" style="clear:both;" ng-if="rangeData.state==='selectCellTypes'" ng-unless="::uiFuncs.selectableCellTypesFromHints(rangeData)">
 				<h3 class="text-center">Step 2: Found {{rangeData.ui.numCellTypesInRange}} cellular types which are involved on {{rangeData.ui.numAnalysesInRange}} analysis products in this range</h3>
 				<h4 class="text-center">Please, select below the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 				<div class="col-sm-1 text-center">
@@ -182,10 +182,10 @@
 			</div>
 			
 			<!-- Chart selection tree -->
-			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCharts'" ng-unless="uiFuncs.selectableChartsFromHints(rangeData)">
+			<div class="row" style="clear:both;" ng-if="rangeData.state==='selectCharts'" ng-unless="::uiFuncs.selectableChartsFromHints(rangeData)">
 				<h3 class="text-center">Step 3: There are {{rangeData.ui.numChartsForSelectedCellTypes}} general charts available for the {{rangeData.ui.numSelectedCellTypes}} cellular types in this range</h3>
 				<div class="initial-charts">
-					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
+					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes track by chart.chartId" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
 						<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
 						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{:: chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
 					</div>
@@ -208,21 +208,21 @@
 			</div>
 		</div>
 
-		<div class="no-margin-padding" style="margin-bottom:1em" ng-show="rangeData.fetchState === 'fetching' || rangeData.fetchState === 'fetch_error'">
+		<div class="no-margin-padding" style="margin-bottom:1em" ng-if="rangeData.fetchState === 'fetching' || rangeData.fetchState === 'fetch_error'">
 			<uib-progressbar class="initial-progressbar" value="rangeData.numFetchEntries" max="rangeData.numFetchTotal" type="{{rangeData.fetchState === 'fetching' ? 'info':'error'}}"><span>Fetching &amp; Plotting data</span></uib-progressbar>
 		</div>
 
-		<div class="no-margin-padding text-center" ng-show="rangeData.state==='showData' || rangeData.state==='end'">
+		<div class="no-margin-padding text-center" ng-if="rangeData.state==='showData' || rangeData.state==='end'">
 			<div class="btn-group">
-				<label class="btn btn-default" ng-repeat="view in uiFuncs.EXPORTED_VIEWS" ng-model="rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'" ng-click="doChangeView(rangeData)">{{view.viewDesc}}</label>
+				<label class="btn btn-default" ng-repeat="view in uiFuncs.EXPORTED_VIEWS track by view.viewClass" ng-model="rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'" ng-click="doChangeView(rangeData)">{{view.viewDesc}}</label>
 			</div>
 		</div>
 		
-		<div class="no-margin-padding" style="margin-top: 1em;" ng-show="rangeData.state==='showData' || rangeData.state==='end'">
+		<div class="no-margin-padding" style="margin-top: 1em;" ng-if="rangeData.state==='showData' || rangeData.state==='end'">
 			<!--
 				Generic
 			-->
-			<div class="no-margin-padding" ng-repeat="view in uiFuncs.EXPORTED_VIEWS" ng-show="view.viewClass===rangeData.viewClass">
+			<div class="no-margin-padding" ng-repeat="view in uiFuncs.EXPORTED_VIEWS track by view.viewClass" ng-init="chartView = rangeData.ui.chartViews[view.viewClass];" ng-show="view.viewClass===rangeData.viewClass">
 				<!-- Single button for Tissues -->
 				<div class="no-margin-padding text-center" style="margin-bottom: 0.5em;" ng-if="view.viewClass==='Tissues'">
 					<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.tissueButtonIsOpen">
@@ -230,7 +230,7 @@
 							Tissue: <span class="circle" ng-style="{'border-color': rangeData.ui.tissueSelected.color, 'background-color': rangeData.ui.tissueSelected.color }"></span>{{rangeData.ui.tissueSelected.name}} <span class="caret"></span>
 						</button>
 						<ul uib-dropdown-menu class="celltype-menu" aria-labelledby="tissue-button">
-							<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': rangeData.ui.tissueButtonSelected === $index}" ng-repeat="tissueNode in uiFuncs.getGroupBySeriesNodes(rangeData,view.viewClass)"><a ng-click="uiFuncs.selectGroup(rangeData,$index);"><span class="circle" ng-style="{'border-color': tissueNode.color, 'background-color': tissueNode.color }"></span>{{tissueNode.name}}</a></li>
+							<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': rangeData.ui.tissueButtonSelected === $index}" ng-repeat="tissueNode in uiFuncs.getGroupBySeriesNodes(rangeData,view.viewClass) track by tissueNode.o"><a ng-click="uiFuncs.selectGroup(rangeData,$index);"><span class="circle" ng-style="{'border-color': tissueNode.color, 'background-color': tissueNode.color }"></span>{{tissueNode.name}}</a></li>
 							<!--
 							<li class="divider"></li>
 							<li role="menuitem"><a href="#">Separated link</a></li>
@@ -245,7 +245,7 @@
 							Cellular type: <span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
 						</button>
 						<ul uib-dropdown-menu class="celltype-menu" aria-labelledby="celltype-button">
-							<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in uiFuncs.getGroupBySeriesNodes(rangeData,view.viewClass)" ng-if="termNode.wasSeen"><a ng-click="uiFuncs.selectGroup(rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
+							<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in uiFuncs.getGroupBySeriesNodes(rangeData,view.viewClass) track by termNode.o" ng-if="termNode.wasSeen"><a ng-click="uiFuncs.selectGroup(rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
 							<!--
 							<li class="divider"></li>
 							<li role="menuitem"><a href="#">Separated link</a></li>
@@ -266,14 +266,14 @@
 							<span class="term">Show all charts / mean series</span>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-hide="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in ::chartView.charts track by chart.chartId" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-hide="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 							<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.bpSideData.meanSeries.color }" ng-class="{'dash': !chart.meanSeriesHidden}"></span>
 							<span class="term">{{::chart.title}}</span>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
 						<uib-accordion class="col-sm-12" close-others="false">
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getChartsWithDataCount(rangeData,view.viewClass) - uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} charts disabled" panel-class="panel-info" class="row terms-selector">
-								<div class="col-xs-1 col-sm-12 termItem pointer chartHidden" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-show="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
+								<div class="col-xs-1 col-sm-12 termItem pointer chartHidden" ng-repeat="chart in ::chartView.charts track by chart.chartId" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-show="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 									<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color}"></span>
 									<span class="term">{{::chart.title}}</span>
 								</div>
@@ -290,7 +290,7 @@
 							<span class="term">Show all {{uiFuncs.getLegendTitle(view.viewClass)}}</span>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
-						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-hide="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
+						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in chartView.termNodes track by termNode.o" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-hide="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
 							<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>
 							<span class="term">{{::termNode.name}}</span>
 							<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>
@@ -298,7 +298,7 @@
 						<div class="col-sm-12">&nbsp;</div>
 						<uib-accordion class="col-sm-12" close-others="false">
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getLegendTitle(view.viewClass)}}: {{uiFuncs.getSeenSeriesCount(rangeData,view.viewClass) - uiFuncs.getVisibleSeriesCount(rangeData,view.viewClass)}} hidden" panel-class="panel-info" class="row terms-selector">
-								<div class="col-xs-1 col-sm-12 termItem pointer termHidden" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-show="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
+								<div class="col-xs-1 col-sm-12 termItem pointer termHidden" ng-repeat="termNode in chartView.termNodes track by termNode.o" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-show="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
 									<span class="circle" ng-style="{'border-color': termNode.color }"></span>
 									<span class="term">{{::termNode.name}}</span>
 									<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>
@@ -310,7 +310,7 @@
 				
 				<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
 					<div class="row" style="width:100%">
-						<div class="panel-info" ng-class="{'zoomed': chart.isZoomed,'unzoomed': !chart.isZoomed, 'col-md-12':!chart.isZoomed, 'col-lg-6': !chart.isZoomed}" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-hide="chart.isEmpty || chart.isHidden">
+						<div class="panel-info" ng-class="{'zoomed': chart.isZoomed,'unzoomed': !chart.isZoomed, 'col-md-12':!chart.isZoomed, 'col-lg-6': !chart.isZoomed}" ng-repeat="chart in chartView.charts track by chart.chartId" ng-hide="chart.isEmpty || chart.isHidden">
 							<!--
 							<div style="float:left;clear:left;">
 								Chart features: 
@@ -375,7 +375,7 @@
 				</div>
 				
 				<!-- Single tree for General -->
-				<div class="row" style="clear:both;" ng-show="view.viewClass==='General' && rangeData.ui.treeDisplay!=='none'">
+				<div class="row" style="clear:both;" ng-if="view.viewClass==='General'" ng-show="rangeData.ui.treeDisplay!=='none'">
 					<div class="col-sm-1 text-center" style="margin-top:1em;">
 						<img ng-src="{{rangeData.ui.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.ui.gChro.n}}">
 					</div>

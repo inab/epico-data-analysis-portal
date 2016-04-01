@@ -891,187 +891,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return retValues;
 	}
 	
-	var APPRIS_FACET_ID = 'APPRIS_PRINCIPAL';
-	var TRANSCRIPT_TYPE_FACET_ID = 'transcript_type';
-	var TRANSCRIPT_PROTEIN_CODING = 'protein_coding';
-	var TRANSCRIPT_STATUS_FACET_ID = 'transcript_status';
-	var TRANSCRIPT_STATUS_KNOWN = 'KNOWN';
-	
-	function doRegionFeatureLayout(rangeData,results,localScope) {
-		rangeData.regionLayout = {};
-		var range = rangeData.range;
-		var rangeStr = range.chr+":"+range.start+"-"+range.end;
-		var rangeStrEx = rangeStr + '';
-		var range_start = range.start;
-		var range_end = range.end;
-		if(rangeData.flankingWindowSize!==undefined) {
-			rangeStrEx += " \u00B1 "+rangeData.flankingWindowSize+"bp";
-			range_start -= rangeData.flankingWindowSize;
-			range_end += rangeData.flankingWindowSize;
-		}
-		
-		// Now, we have the region layout and features
-		var regionFeature = {};
-		var found = '';
-		var isReactome = ConstantsService.isReactome(range.currentQuery.queryType);
-		var curRegionType = '';
-		var curRegionTypeNum;
-		results.sort(function(a,b) {
-			if(a._source.feature!==b._source.feature) {
-				return a._source.feature.localeCompare(b._source.feature);
-			} else if(a._source.coordinates[0].chromosome_start !== b._source.coordinates[0].chromosome_start) {
-				return a._source.coordinates[0].chromosome_start - b._source.coordinates[0].chromosome_start;
-			} else {
-				return a._source.coordinates[0].chromosome_end - b._source.coordinates[0].chromosome_end;
-			}
-		});
-		
-		// First pass, gather all features
-		var features = [];
-		var featuresHash = {};
-		results.forEach(function(feature) {
-			var featureRegion = feature._source;
-			features.push(featureRegion);
-			var dest = featureRegion.feature;
-			if(!(dest in rangeData.regionLayout)) {
-				rangeData.regionLayout[dest] = [];
-			}
-			
-			// Saving for later processing
-			rangeData.regionLayout[dest].push(featureRegion);
-			featureRegion.coordinates.forEach(function(coordinates) {
-				featuresHash[coordinates.feature_id] = featureRegion;
-			});
-			
-			// Getting a understandable label
-			featureRegion.label = chooseLabelFromSymbols(featureRegion.symbol);
-			
-			if(LABELLED_REGION_FEATURES.some(function(feat) { return dest === feat; })) {
-				if(curRegionType !== dest) {
-					if(found.length > 0) {
-						found += '; ';
-					}
-					curRegionType = dest;
-					curRegionTypeNum = 0;
-					found += curRegionType+'s: ';
-				}
-				var uri = (dest in localScope.SEARCH_URIS) ? localScope.SEARCH_URIS[dest] : localScope.DEFAULT_SEARCH_URI;
-				
-				// Matching the feature_id to its region
-				featureRegion.coordinates.forEach(function(coordinates) {
-					regionFeature[coordinates.feature_id] = featureRegion;
-					
-					if(isReactome && coordinates.feature_id.indexOf(rangeData.range.label)===0) {
-						// Setting it only once
-						rangeData.heading = rangeData.range.label = featureRegion.label;
-						isReactome = false;
-					}
-					
-					// Preparing the label
-					if(curRegionTypeNum > 0) {
-						found += ', ';
-					}
-					curRegionTypeNum++;
-					found += " <a href='"+uri+coordinates.feature_id+"' title='"+coordinates.feature_id+"' target='_blank'>"+featureRegion.label+"</a>";
-				});
-			}
-		});
-		if(found.length>0) {
-			var newFound = "Region <a href='"+localScope.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
-			if(rangeData.flankingWindowSize!==undefined) {
-				newFound += " (&plusmn; "+rangeData.flankingWindowSize+"bp)";
-			}
-			found = newFound + " overlaps " + found;
-			
-		} else {
-			found = 'No gene or transcript in this region';
-		}
-		
-		// Second pass, build features hierarchy based on feature_cluster_id
-		features.forEach(function(feature) {
-			feature.feature_cluster_id.forEach(function(feature_cluster_id) {
-				if(feature_cluster_id !== feature.feature_id && (feature_cluster_id in featuresHash)) {
-					var parentFeature = featuresHash[feature_cluster_id];
-					var feaArray;
-					if(feature.feature in parentFeature) {
-						feaArray = parentFeature[feature.feature];
-					} else {
-						feaArray = [];
-						parentFeature[feature.feature] = feaArray;
-					}
-					
-					feaArray.push(feature);
-				}
-			});
-		});
-		// Third pass, choose main transcript for each gene
-		if(ConstantsService.REGION_FEATURE_GENE in rangeData.regionLayout) {
-			var genes = rangeData.regionLayout[ConstantsService.REGION_FEATURE_GENE];
-			genes.forEach(function(gene) {
-				if(ConstantsService.REGION_FEATURE_TRANSCRIPT in gene) {
-					var transcripts = gene[ConstantsService.REGION_FEATURE_TRANSCRIPT];
-					var mainTranscript;
-					var proteinCodingTranscript;
-					var knownTranscript;
-					if(transcripts.length === 1) {
-						mainTranscript = transcripts[0];
-					} else {
-						var found = transcripts.some(function(transcript) {
-							// Finding the APPRIS attribute
-							return transcript.attribute.some(function(attribute) {
-								var retval = false;
-								
-								switch(attribute.domain) {
-									case APPRIS_FACET_ID:
-										mainTranscript = transcript;
-										retval = true;
-										break;
-									case TRANSCRIPT_TYPE_FACET_ID:
-										if(proteinCodingTranscript === undefined && attribute.value[0] === TRANSCRIPT_PROTEIN_CODING) {
-											proteinCodingTranscript = transcript;
-										}
-										break;
-									case TRANSCRIPT_STATUS_FACET_ID:
-										if(knownTranscript === undefined && attribute.value[0] === TRANSCRIPT_STATUS_KNOWN) {
-											knownTranscript = transcript;
-										}
-										break;
-								}
-								
-								return retval;
-							});
-						});
-						
-						// If principal transcript / isoform is not found, use alternate ones
-						if(!found) {
-							if(proteinCodingTranscript!==undefined) {
-								// Choose first found protein coding transcript
-								mainTranscript = proteinCodingTranscript;
-							} else if(knownTranscript!==undefined) {
-								// Choose first known transcript
-								mainTranscript = knownTranscript;
-							} else {
-								// In the worst case, choose first transcript
-								mainTranscript = transcripts[0];
-							}
-						}
-						
-					}
-					gene.mainTranscript = mainTranscript;
-				}
-			});
-		}
-
-		
-		rangeData.regionFeature = regionFeature;
-		rangeData.rangeStr = rangeStr;
-		rangeData.rangeStrEx = rangeStrEx;
-		rangeData.found = found;
-		
-		// Initializing the layouts, now the common data is available
-		doInitialChartsLayout(rangeData);
-	}
-	
 	// This parameter changes the reserved space for the feature series
 	var FeatureSeriesFraction = 6;
 	
@@ -1356,6 +1175,49 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 		return fDraw;
 	};
+	
+	function getCharts(rangeData,viewClass) {
+		if(rangeData === undefined) {
+			return [];
+		}
+		if(viewClass===undefined) {
+			if(rangeData.viewClass === undefined) {
+				return [];
+			}
+			viewClass = rangeData.viewClass;
+		}
+		
+		return rangeData.ui.chartViews[viewClass].charts;
+	}
+	
+	function synchronizedZoomHandler(event,originChart,rangeData) {
+		var charts = getCharts(rangeData);
+		if(event.xAxis) {
+			charts.forEach(function(oChart) {
+				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
+					var chart = oChart.options.getHighcharts();
+					chart.xAxis[0].setExtremes(event.xAxis[0].min,event.xAxis[0].max);
+					if(!chart.resetZoomButton) {
+						chart.showResetZoom();
+					}
+				}
+			});
+		} else {
+			charts.forEach(function(oChart) {
+				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
+					var chart = oChart.options.getHighcharts();
+					chart.xAxis[0].setExtremes(null,null);
+					if(chart.resetZoomButton) {
+						chart.resetZoomButton = chart.resetZoomButton.destroy();
+					}
+				}
+			});
+		}
+	}
+	
+	// Filling the exported view array later
+	var EXPORTED_VIEWS;
+	var RedrawSelector;
 	
 	function doChartLayout(rangeData,viewClass,postTitle) {
 		var view;
@@ -1659,6 +1521,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									max: range_end,
 									allowDecimals: false,
 								};
+								chart.options.options.chart.events.selection = function(event) {
+									synchronizedZoomHandler(event,chart,rangeData);
+								};
 								break;
 						}
 						
@@ -1888,6 +1753,197 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 	}
 	
+	function doInitialChartsLayout(rangeData) {
+		EXPORTED_VIEWS.forEach(function(view) {
+			if('selectGroupMethod' in view) {
+				view.selectGroupMethod(rangeData,view.viewClass,0);
+			} else {
+				doChartLayout(rangeData,view.viewClass);
+			}
+		});
+	}
+	
+	var APPRIS_FACET_ID = 'APPRIS_PRINCIPAL';
+	var TRANSCRIPT_TYPE_FACET_ID = 'transcript_type';
+	var TRANSCRIPT_PROTEIN_CODING = 'protein_coding';
+	var TRANSCRIPT_STATUS_FACET_ID = 'transcript_status';
+	var TRANSCRIPT_STATUS_KNOWN = 'KNOWN';
+	
+	function doRegionFeatureLayout(rangeData,results,localScope) {
+		rangeData.regionLayout = {};
+		var range = rangeData.range;
+		var rangeStr = range.chr+":"+range.start+"-"+range.end;
+		var rangeStrEx = rangeStr + '';
+		var range_start = range.start;
+		var range_end = range.end;
+		if(rangeData.flankingWindowSize!==undefined) {
+			rangeStrEx += " \u00B1 "+rangeData.flankingWindowSize+"bp";
+			range_start -= rangeData.flankingWindowSize;
+			range_end += rangeData.flankingWindowSize;
+		}
+		
+		// Now, we have the region layout and features
+		var regionFeature = {};
+		var found = '';
+		var isReactome = ConstantsService.isReactome(range.currentQuery.queryType);
+		var curRegionType = '';
+		var curRegionTypeNum;
+		results.sort(function(a,b) {
+			if(a._source.feature!==b._source.feature) {
+				return a._source.feature.localeCompare(b._source.feature);
+			} else if(a._source.coordinates[0].chromosome_start !== b._source.coordinates[0].chromosome_start) {
+				return a._source.coordinates[0].chromosome_start - b._source.coordinates[0].chromosome_start;
+			} else {
+				return a._source.coordinates[0].chromosome_end - b._source.coordinates[0].chromosome_end;
+			}
+		});
+		
+		// First pass, gather all features
+		var features = [];
+		var featuresHash = {};
+		results.forEach(function(feature) {
+			var featureRegion = feature._source;
+			features.push(featureRegion);
+			var dest = featureRegion.feature;
+			if(!(dest in rangeData.regionLayout)) {
+				rangeData.regionLayout[dest] = [];
+			}
+			
+			// Saving for later processing
+			rangeData.regionLayout[dest].push(featureRegion);
+			featureRegion.coordinates.forEach(function(coordinates) {
+				featuresHash[coordinates.feature_id] = featureRegion;
+			});
+			
+			// Getting a understandable label
+			featureRegion.label = chooseLabelFromSymbols(featureRegion.symbol);
+			
+			if(LABELLED_REGION_FEATURES.some(function(feat) { return dest === feat; })) {
+				if(curRegionType !== dest) {
+					if(found.length > 0) {
+						found += '; ';
+					}
+					curRegionType = dest;
+					curRegionTypeNum = 0;
+					found += curRegionType+'s: ';
+				}
+				var uri = (dest in localScope.SEARCH_URIS) ? localScope.SEARCH_URIS[dest] : localScope.DEFAULT_SEARCH_URI;
+				
+				// Matching the feature_id to its region
+				featureRegion.coordinates.forEach(function(coordinates) {
+					regionFeature[coordinates.feature_id] = featureRegion;
+					
+					if(isReactome && coordinates.feature_id.indexOf(rangeData.range.label)===0) {
+						// Setting it only once
+						rangeData.heading = rangeData.range.label = featureRegion.label;
+						isReactome = false;
+					}
+					
+					// Preparing the label
+					if(curRegionTypeNum > 0) {
+						found += ', ';
+					}
+					curRegionTypeNum++;
+					found += " <a href='"+uri+coordinates.feature_id+"' title='"+coordinates.feature_id+"' target='_blank'>"+featureRegion.label+"</a>";
+				});
+			}
+		});
+		if(found.length>0) {
+			var newFound = "Region <a href='"+localScope.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
+			if(rangeData.flankingWindowSize!==undefined) {
+				newFound += " (&plusmn; "+rangeData.flankingWindowSize+"bp)";
+			}
+			found = newFound + " overlaps " + found;
+			
+		} else {
+			found = 'No gene or transcript in this region';
+		}
+		
+		// Second pass, build features hierarchy based on feature_cluster_id
+		features.forEach(function(feature) {
+			feature.feature_cluster_id.forEach(function(feature_cluster_id) {
+				if(feature_cluster_id !== feature.feature_id && (feature_cluster_id in featuresHash)) {
+					var parentFeature = featuresHash[feature_cluster_id];
+					var feaArray;
+					if(feature.feature in parentFeature) {
+						feaArray = parentFeature[feature.feature];
+					} else {
+						feaArray = [];
+						parentFeature[feature.feature] = feaArray;
+					}
+					
+					feaArray.push(feature);
+				}
+			});
+		});
+		// Third pass, choose main transcript for each gene
+		if(ConstantsService.REGION_FEATURE_GENE in rangeData.regionLayout) {
+			var genes = rangeData.regionLayout[ConstantsService.REGION_FEATURE_GENE];
+			genes.forEach(function(gene) {
+				if(ConstantsService.REGION_FEATURE_TRANSCRIPT in gene) {
+					var transcripts = gene[ConstantsService.REGION_FEATURE_TRANSCRIPT];
+					var mainTranscript;
+					var proteinCodingTranscript;
+					var knownTranscript;
+					if(transcripts.length === 1) {
+						mainTranscript = transcripts[0];
+					} else {
+						var found = transcripts.some(function(transcript) {
+							// Finding the APPRIS attribute
+							return transcript.attribute.some(function(attribute) {
+								var retval = false;
+								
+								switch(attribute.domain) {
+									case APPRIS_FACET_ID:
+										mainTranscript = transcript;
+										retval = true;
+										break;
+									case TRANSCRIPT_TYPE_FACET_ID:
+										if(proteinCodingTranscript === undefined && attribute.value[0] === TRANSCRIPT_PROTEIN_CODING) {
+											proteinCodingTranscript = transcript;
+										}
+										break;
+									case TRANSCRIPT_STATUS_FACET_ID:
+										if(knownTranscript === undefined && attribute.value[0] === TRANSCRIPT_STATUS_KNOWN) {
+											knownTranscript = transcript;
+										}
+										break;
+								}
+								
+								return retval;
+							});
+						});
+						
+						// If principal transcript / isoform is not found, use alternate ones
+						if(!found) {
+							if(proteinCodingTranscript!==undefined) {
+								// Choose first found protein coding transcript
+								mainTranscript = proteinCodingTranscript;
+							} else if(knownTranscript!==undefined) {
+								// Choose first known transcript
+								mainTranscript = knownTranscript;
+							} else {
+								// In the worst case, choose first transcript
+								mainTranscript = transcripts[0];
+							}
+						}
+						
+					}
+					gene.mainTranscript = mainTranscript;
+				}
+			});
+		}
+
+		
+		rangeData.regionFeature = regionFeature;
+		rangeData.rangeStr = rangeStr;
+		rangeData.rangeStrEx = rangeStrEx;
+		rangeData.found = found;
+		
+		// Initializing the layouts, now the common data is available
+		doInitialChartsLayout(rangeData);
+	}
+	
 	function switchLegend(chart) {
 		switch(chart.library) {
 			case LIBRARY_HIGHCHARTS:
@@ -1898,16 +1954,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	
 	function isLegendEnabled(chart) {
 		return !!chart.options.options.legend.enabled;
-	}
-	
-	function doInitialChartsLayout(rangeData) {
-		EXPORTED_VIEWS.forEach(function(view) {
-			if('selectGroupMethod' in view) {
-				view.selectGroupMethod(rangeData,view.viewClass,0);
-			} else {
-				doChartLayout(rangeData,view.viewClass);
-			}
-		});
 	}
 	
 	
@@ -2047,6 +2093,55 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		}
 		
 		return seriesColor;
+	}
+	
+	function getChartMaps(rangeData,viewClass) {
+		if(viewClass===undefined) {
+			viewClass = rangeData.viewClass;
+		}
+		
+		return rangeData.chartMaps[RedrawSelector[viewClass].chartMapsFacet];
+	}
+	
+	function getSeriesNodesHash(rangeData,viewClass) {
+		if(viewClass===undefined) {
+			viewClass = rangeData.viewClass;
+		}
+		
+		return rangeData.ui.chartViews[viewClass].termNodesHash;
+	}
+	
+	function getSeriesNodes(rangeData,viewClass) {
+		if(rangeData === undefined) {
+			return [];
+		}
+		if(viewClass===undefined) {
+			if(rangeData.viewClass === undefined) {
+				return [];
+			}
+			viewClass = rangeData.viewClass;
+		}
+		
+		return rangeData.ui.chartViews[viewClass].termNodes;
+	}
+	
+	function getGroupBySeriesNodes(rangeData,viewClass) {
+		if(viewClass===undefined) {
+			viewClass = rangeData.viewClass;
+		}
+		
+		return ('groupBySeriesNodesFacet' in RedrawSelector[viewClass]) ? rangeData[RedrawSelector[viewClass].groupBySeriesNodesFacet] : [];
+	}
+	
+	function getLegendTitle(viewClass,rangeData) {
+		if(viewClass===undefined) {
+			if(rangeData === undefined || rangeData.viewClass === undefined) {
+				return '';
+			}
+			viewClass = rangeData.viewClass;
+		}
+		
+		return RedrawSelector[viewClass].legendTitle;
 	}
 	
 	// This is almost identical to processGeneralChartData
@@ -2337,6 +2432,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		timeoutFunc(charts,0);
 	}
 	
+	function redrawCharts(charts,doGenerate,stillLoading,viewClass,localScope) {
+		if('ui' in charts) {
+			var rangeData = charts;
+			
+			viewClass = rangeData.viewClass;
+			localScope = rangeData.localScope;
+		}
+		if(viewClass===undefined) {
+			viewClass = VIEW_GENERAL;
+		}
+		if(viewClass in RedrawSelector) {
+			// Normalizing doGenerate and stillLoading
+			abstractRedrawCharts(charts,!!doGenerate,!!stillLoading,viewClass,localScope);
+		}
+	}
+	
 	
 	function selectGeneral(rangeData,viewClass/*,dumbIndex*/) {
 		rangeData.ui.chartViews[viewClass].termNodes = rangeData.termNodes;
@@ -2368,7 +2479,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	// Filling the exported view array
-	var EXPORTED_VIEWS = [
+	EXPORTED_VIEWS = [
 		{
 			viewClass: VIEW_GENERAL,
 			viewDesc: 'General Charts',
@@ -2401,74 +2512,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	];
 	
 	// Filling the redraw selector
-	var RedrawSelector = {};
+	RedrawSelector = {};
 	EXPORTED_VIEWS.forEach(function(view) {
 		RedrawSelector[view.viewClass] = view;
 	});
 	
-	function getCharts(rangeData,viewClass) {
-		if(rangeData === undefined) {
-			return [];
-		}
-		if(viewClass===undefined) {
-			if(rangeData.viewClass === undefined) {
-				return [];
-			}
-			viewClass = rangeData.viewClass;
-		}
-		
-		return rangeData.ui.chartViews[viewClass].charts;
-	}
-	
-	
-	function getChartMaps(rangeData,viewClass) {
-		if(viewClass===undefined) {
-			viewClass = rangeData.viewClass;
-		}
-		
-		return rangeData.chartMaps[RedrawSelector[viewClass].chartMapsFacet];
-	}
-	
-	function getSeriesNodesHash(rangeData,viewClass) {
-		if(viewClass===undefined) {
-			viewClass = rangeData.viewClass;
-		}
-		
-		return rangeData.ui.chartViews[viewClass].termNodesHash;
-	}
-	
-	function getSeriesNodes(rangeData,viewClass) {
-		if(rangeData === undefined) {
-			return [];
-		}
-		if(viewClass===undefined) {
-			if(rangeData.viewClass === undefined) {
-				return [];
-			}
-			viewClass = rangeData.viewClass;
-		}
-		
-		return rangeData.ui.chartViews[viewClass].termNodes;
-	}
-	
-	function getGroupBySeriesNodes(rangeData,viewClass) {
-		if(viewClass===undefined) {
-			viewClass = rangeData.viewClass;
-		}
-		
-		return ('groupBySeriesNodesFacet' in RedrawSelector[viewClass]) ? rangeData[RedrawSelector[viewClass].groupBySeriesNodesFacet] : [];
-	}
-	
-	function getLegendTitle(viewClass,rangeData) {
-		if(viewClass===undefined) {
-			if(rangeData === undefined || rangeData.viewClass === undefined) {
-				return '';
-			}
-			viewClass = rangeData.viewClass;
-		}
-		
-		return RedrawSelector[viewClass].legendTitle;
-	}
 	
 	function switchSeriesNode(event,theSeriesNode,rangeData,viewClass) {
 		var seriesNodes = getSeriesNodes(rangeData,viewClass);
@@ -2627,22 +2675,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return count;
 	}
 	
-	
-	function redrawCharts(charts,doGenerate,stillLoading,viewClass,localScope) {
-		if('ui' in charts) {
-			var rangeData = charts;
-			
-			viewClass = rangeData.viewClass;
-			localScope = rangeData.localScope;
-		}
-		if(viewClass===undefined) {
-			viewClass = VIEW_GENERAL;
-		}
-		if(viewClass in RedrawSelector) {
-			// Normalizing doGenerate and stillLoading
-			abstractRedrawCharts(charts,!!doGenerate,!!stillLoading,viewClass,localScope);
-		}
-	}
 	
 	function resetColorMap() {
 		Palette.resetHighColorMark();
@@ -3340,7 +3372,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	function switchAllTranscripts(chart) {
 		chart.showAllTranscripts = !chart.showAllTranscripts;
 		chart.fDraw.showAllCategories(chart.showAllTranscripts);
-		doReflow(rangeData.localScope);
 	}
 	
 	return {

@@ -196,7 +196,7 @@
 
           // on window resize, re-render d3 canvas
           window.onresize = function() {
-            return scope.$apply();
+            return scope.$applyAsync();
           };
           scope.$watch(function(){
               return angular.element(window)[0].innerWidth;

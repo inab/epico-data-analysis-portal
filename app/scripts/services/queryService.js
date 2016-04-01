@@ -1953,13 +1953,13 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 															//		}
 															//	}
 															//},
-															//{
-															//	query: {
-															//		match: {
-															//			symbol: query 
-															//		}
-															//	}
-															//}
+															{
+																query: {
+																	match: {
+																		keyword: query 
+																	}
+																}
+															}
 														]
 													}
 												}

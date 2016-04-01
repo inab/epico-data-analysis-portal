@@ -1190,6 +1190,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return rangeData.ui.chartViews[viewClass].charts;
 	}
 	
+	// Idea taken from https://github.com/pablojim/highcharts-ng/issues/243
 	function synchronizedZoomHandler(event,originChart,rangeData) {
 		var charts = getCharts(rangeData);
 		if(event.xAxis) {

@@ -32,7 +32,7 @@
 
 <script type="text/ng-template" id="datagrid.html">
 	<div class="modal-header">
-		<h3 class="modal-title">{{modalDataGrid.title}} (showing only first {{modalDataGrid.limit}} entries)</h3>
+		<h3 class="modal-title">{{::modalDataGrid.title}} (showing only first {{::modalDataGrid.limit}} entries)</h3>
 	</div>
 	<div class="modal-body bp-data-grid">
 		<!--
@@ -41,12 +41,12 @@
 		<table class="table table-striped bp-data-grid">
 			<thead>
 				<tr>
-					<th ng-repeat="columnName in modalDataGrid.columns">{{columnName}}</th>
+					<th ng-repeat="columnName in modalDataGrid.columns">{{::columnName}}</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr ng-repeat="row in modalDataGrid.table | limitTo:modalDataGrid.limit track by $index">
-					<td ng-repeat="cell in row track by $index" ng-bind-html="cellFormatter(cell)"></td>
+					<td ng-repeat="cell in row track by $index" ng-bind-html="::cellFormatter(cell)"></td>
 				</tr>
 			</tbody>
 			<!--
@@ -96,18 +96,18 @@
             </div>
             <div class="col-xs-12 col-sm-4 col-md-6 col-lg-8">
                 <h2>Explore the behaviour of your candidate genes, pathways or genome regions across the Blueprint datasets.</h2>
-                <p>The Blueprint project is providing in this release epigenomic analysis from {{numSamples}} samples to the scientific community. Their associated epigenomes are characterized by: gene and transcript expression (from RNA-Seq experiments), hyper and hypo methylated regions (derived from WGBS experiments), chromatin accessibility (DNAse-Seq), and {{numHistones}} Histone marks binding activity (ChIP-Seq)</p>
-                <p>Use this tool to explore the behaviour of your genes and pathways in the BLUEPRINT analysis for {{termNodes.length}} cellular types and cellular lines</p>
+                <p>The Blueprint project is providing in this release epigenomic analysis from {{::numSamples}} samples to the scientific community. Their associated epigenomes are characterized by: gene and transcript expression (from RNA-Seq experiments), hyper and hypo methylated regions (derived from WGBS experiments), chromatin accessibility (DNAse-Seq), and {{::numHistones}} Histone marks binding activity (ChIP-Seq)</p>
+                <p>Use this tool to explore the behaviour of your genes and pathways in the BLUEPRINT analysis for {{::termNodes.length}} cellular types and cellular lines</p>
                 <p style="line-height:1.2em">
-			<b>{{projectName}} software release - {{swVersion}}</b>
+			<b>{{::projectName}} software release - {{::swVersion}}</b>
 			<br />
-			<a tooltip-placement="right" uib-tooltip="{{getDataDesc()}}"><b>Data release - {{dataRelease}}</b></a>
+			<a tooltip-placement="right" uib-tooltip="{{getDataDesc()}}"><b>Data release - {{::dataRelease}}</b></a>
 			<br />
-			EnsEMBL version: <b><a href="http://{{ensemblArchive}}.archive.ensembl.org/" target="_blank">{{ensemblVer}}</a></b>
+			EnsEMBL version: <b><a href="http://{{::ensemblArchive}}.archive.ensembl.org/" target="_blank">{{::ensemblVer}}</a></b>
 			<br />
-			GENCODE version: <b><a href="http://www.gencodegenes.org/releases/{{gencodeVer}}.html" target="_blank">{{gencodeVer}}</a></b>
+			GENCODE version: <b><a href="http://www.gencodegenes.org/releases/{{::gencodeVer}}.html" target="_blank">{{::gencodeVer}}</a></b>
 			<br />
-			REACTOME version: <b><a href="http://www.reactome.org/" target="_blank">{{reactomeVer}}</a></b>
+			REACTOME version: <b><a href="http://www.reactome.org/" target="_blank">{{::reactomeVer}}</a></b>
                 </p>
             </div>
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
@@ -134,7 +134,7 @@
 			<i class="glyphicon glyphicon-remove"></i> No Suggestions Found
 		</div>
             <!-- <p class="small">Chromosome regions should be shorter than 10Kb</p> -->
-	    <p class="text-center">Examples: <a ng-click="query='myc'; search()" style="cursor: pointer;">Myc</a>, <a ng-click="query='TET1'; search()" style="cursor: pointer;">TET1</a>, <a ng-click="query='IRF8'; search()" style="cursor: pointer;">IRF8</a>, <a ng-click="query='NFIB'; search()" style="cursor: pointer;">NFIB</a>, <a ng-click="query='chr1:208856422-208956421'; search()" style="cursor: pointer;">chr1:208856422-208956421</a>, <a ng-click="query='REACT_160159.2'; search()" style="cursor: pointer;">REACT_160159.2</a>, <a ng-click="query='pathway:Cell Cycle, Mitotic'; search()" style="cursor: pointer;">Pathway <i>Cell Cycle, Mitotic</i></a></p>
+	    <p class="text-center">Examples: <a href="#!/?q=myc">Myc</a>, <a href="#!/?q=TET1:1000">TET1</a>, <a href="#!/?q=gene:IRF8">IRF8</a>, <a href="#!/?q=NFIB">NFIB</a>, <a href="#!/?q=chr1:208856422-208956421">chr1:208856422-208956421</a>, <a href="#!/?q=REACT_160159.2">REACT_160159.2</a>, <a href="#!/?q=pathway:Cell Cycle, Mitotic">Pathway <i>Cell Cycle, Mitotic</i></a></p>
           </div>
           <div class="col-sm-3 text-center"><button ng-click="search()" ng-disabled="queryInProgress" type="button" class="btn btn-primary btn-bp btn-lg" ng-bind-html="searchButtonText">Search</button></div>
         </div>
@@ -164,7 +164,7 @@
 
 			
 			<!-- Selection tree -->
-			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCellTypes'">
+			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCellTypes'" ng-unless="uiFuncs.selectableCellTypesFromHints(rangeData)">
 				<h3 class="text-center">Step 2: Found {{rangeData.ui.numCellTypesInRange}} cellular types which are involved on {{rangeData.ui.numAnalysesInRange}} analysis products in this range</h3>
 				<h4 class="text-center">Please, select below the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 				<div class="col-sm-1 text-center">
@@ -174,20 +174,20 @@
 					<img ng-src="{{rangeData.ui.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.ui.gChro.n}}">
 				</div>
 				<div class="col-sm-11">
-						<treecontrol style="margin-bottom:1em" ng-repeat="ontology in rangeData.treedata" class="col-sm-6 tree-light" tree-model="ontology.root" selected-nodes="ontology.selectedNodes" expanded-nodes="ontology.expandedNodes" on-selection="onTreeSelection(ontology,node,selected,$event)" options="commonTreeControlOptions">
-						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}">{{node.name}} <i class="glyphicon glyphicon-eye-open" ng-show="node.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{node.samplesInRange.length}}" popover-placement="right" uib-popover-html="node.samplesInRangeHtml" uib-tooltip="Click to see the sample names from this cellular type in this range" tooltip-placement="left" tooltip-append-to-body="true"></i> (<a href="{{node.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{node.o}}</a>)</span>
+					<treecontrol style="margin-bottom:1em" ng-repeat="ontology in rangeData.treedata" class="col-sm-6 tree-light" tree-model="ontology.root" selected-nodes="ontology.selectedNodes" expanded-nodes="ontology.expandedNodes" on-selection="onTreeSelection(ontology,node,selected,$event)" options="commonTreeControlOptions">
+						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}">{{::node.name}} <i class="glyphicon glyphicon-eye-open" ng-show="node.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{::node.samplesInRange.length}}" popover-placement="right" uib-popover-html="node.samplesInRangeHtml" uib-tooltip="Click to see the sample names from this cellular type in this range" tooltip-placement="left" tooltip-append-to-body="true"></i> (<a href="{{::node.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{::node.o}}</a>)</span>
 					</treecontrol>
 				</div>
 				<h4 class="text-center">Please, select above the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 			</div>
 			
 			<!-- Chart selection tree -->
-			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCharts'">
+			<div class="row" style="clear:both;" ng-show="rangeData.state==='selectCharts'" ng-unless="uiFuncs.selectableChartsFromHints(rangeData)">
 				<h3 class="text-center">Step 3: There are {{rangeData.ui.numChartsForSelectedCellTypes}} general charts available for the {{rangeData.ui.numSelectedCellTypes}} cellular types in this range</h3>
 				<div class="initial-charts">
 					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
 						<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
-						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
+						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{:: chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
 					</div>
 					<br />
 					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of range data</label></div>
@@ -268,14 +268,14 @@
 						<div class="col-sm-12">&nbsp;</div>
 						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-hide="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 							<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.bpSideData.meanSeries.color }" ng-class="{'dash': !chart.meanSeriesHidden}"></span>
-							<span class="term">{{chart.title}}</span>
+							<span class="term">{{::chart.title}}</span>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
 						<uib-accordion class="col-sm-12" close-others="false">
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getChartsWithDataCount(rangeData,view.viewClass) - uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} charts disabled" panel-class="panel-info" class="row terms-selector">
 								<div class="col-xs-1 col-sm-12 termItem pointer chartHidden" ng-repeat="chart in rangeData.ui.chartViews[view.viewClass].charts" ng-click="switchChart($event,chart,rangeData)" ng-unless="chart.isEmpty" ng-show="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 									<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color}"></span>
-									<span class="term">{{chart.title}}</span>
+									<span class="term">{{::chart.title}}</span>
 								</div>
 							</uib-accordion-group>
 						</uib-accordion>
@@ -292,7 +292,7 @@
 						<div class="col-sm-12">&nbsp;</div>
 						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-hide="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
 							<span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>
-							<span class="term">{{termNode.name}}</span>
+							<span class="term">{{::termNode.name}}</span>
 							<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
@@ -300,7 +300,7 @@
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getLegendTitle(view.viewClass)}}: {{uiFuncs.getSeenSeriesCount(rangeData,view.viewClass) - uiFuncs.getVisibleSeriesCount(rangeData,view.viewClass)}} hidden" panel-class="panel-info" class="row terms-selector">
 								<div class="col-xs-1 col-sm-12 termItem pointer termHidden" ng-repeat="termNode in rangeData.ui.chartViews[view.viewClass].termNodes" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-show="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
 									<span class="circle" ng-style="{'border-color': termNode.color }"></span>
-									<span class="term">{{termNode.name}}</span>
+									<span class="term">{{::termNode.name}}</span>
 									<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>
 								</div>
 							</uib-accordion-group>
@@ -322,14 +322,15 @@
 							-->
 							<div style="float:right;clear:right;">
 								<!-- Hide chart button -->
-								<i class="glyphicon glyphicon-eye-close space-glyphicon" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon glyphicon-eye-close" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon space-glyphicon" ng-class="{'glyphicon-text-height': !chart.showAllTranscripts, 'glyphicon-text-width': chart.showAllTranscripts}" ng-click="uiFuncs.switchAllTranscripts(chart)" uib-tooltip="Show all transcripts / show main transcript" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Switch mean series -->
 								<!-- Functional, but unfancy
 								<i class="glyphicon glyphicon-indent-right" ng-style="{'color': chart.meanSeriesHidden ? 'gray' : 'initial'}"ng-click="uiFuncs.switchMeanSeries(chart,true,rangeData.localScope)" uib-tooltip="Hide/show mean series" tooltip-popup-delay="500" tooltip-popup-close-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								-->
 								<!-- Visible, but not yet functional -->
 								<i class="glyphicon glyphicon-list-alt" ng-click="viewChartDataGrid(view.viewClass,rangeData,chart)" tooltip-popup-delay="500" uib-tooltip="Inspect the data" tooltip-append-to-body="true" tooltip-placement="top"></i>
-								<i class="glyphicon glyphicon-list" ng-click="uiFuncs.switchLegend(chart)" tooltip-popup-delay="500" uib-tooltip="Show / hide legend" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon" ng-class="{'glyphicon-tags': !uiFuncs.isLegendEnabled(chart), 'glyphicon-tag': uiFuncs.isLegendEnabled(chart) }"  ng-click="uiFuncs.switchLegend(chart)" tooltip-popup-delay="500" uib-tooltip="Show / hide legend" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Zoom button -->
 								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="chart.isZoomed = !chart.isZoomed;" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="left" tooltip-popup-delay="500"></i>
 							</div>

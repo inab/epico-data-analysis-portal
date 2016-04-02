@@ -1409,6 +1409,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					chart.isHidden = gData.isInitiallyHidden;
 				}
 				chart.meanSeriesHidden = !rangeData.ui.initiallyShowMeanSeries;
+				chart.isZoomed = false;
 				
 				// And now, specific customizations for this library
 				switch(chart.library) {

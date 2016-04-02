@@ -680,6 +680,10 @@ angular.module('blueprintApp')
 		
 		return retval;
 	};
+
+	$scope.doChangeView = function(rangeData) {
+		return ChartService.uiFuncs.redrawCharts(rangeData);
+	};
 	
 	$scope.hideAllCharts = function($event,rangeData) {
 		var retval = ChartService.uiFuncs.hideAllCharts($event,rangeData);

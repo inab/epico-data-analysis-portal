@@ -935,6 +935,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	
 	FeatureDrawer.prototype.addFeatureType = function(featureType) {
 		var series = {
+			id: featureType,
 			name: featureType,
 			type: 'polygon',
 			animation: false,
@@ -950,6 +951,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		this.featureSeriesHash[featureType] = series;
 		
 		var extendedSeries = angular.copy(series);
+		extendedSeries.id += '-ex';
 		this.extendedFeatureSeries.push(extendedSeries);
 		this.extendedFeatureSeriesHash[featureType] = extendedSeries;
 	};
@@ -1423,13 +1425,13 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									backgroundColor: null,
 									events: {
 										// reflowing after load and redraw events led to blank drawings
-										addSeries: function() {
-											var chart = this;
-											//this.reflow();
-											setTimeout(function() {
-												chart.reflow();
-											},0);
-										}
+										//addSeries: function() {
+										//	var chart = this;
+										//	//this.reflow();
+										//	setTimeout(function() {
+										//		chart.reflow();
+										//	},0);
+										//}
 									},
 									animation: false,
 									zoomType: 'x',
@@ -2309,6 +2311,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						switch(chart.library) {
 							case LIBRARY_HIGHCHARTS:
 								series.seriesDest = 'data';
+								series.series.id = data[seriesIdFacet]+'-'+iGraphType;
 								series.series.name = seriesName;
 								series.series.color = seriesColor;
 								
@@ -2415,20 +2418,26 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					timeoutFunc(charts,iChart+1);
 				} else {
 					chart.options.loading = true;
-					setTimeout(function() {
+					var theFunc = function() {
 						try {
 							chart.seriesAggregator(chart,doGenerate,stillLoading);
 							chart.options.loading = stillLoading;
+							doProcessSeries(localScope,chart.options);
 						} catch(e) {
 							console.log(e);
 						}
 						//chart.pendingRedraws = false;
 						timeoutFunc(charts,iChart+1);
-					},10);
+					};
+					if(localScope!==undefined) {
+						localScope.$applyAsync(theFunc);
+					} else {
+						setTimeout(theFunc,10);
+					}
 				}
-			} else if(localScope!==undefined) {
-				// Revalidating the scope
-				localScope.$applyAsync();
+			//} else if(localScope!==undefined) {
+			//	// Revalidating the scope
+			//	localScope.$applyAsync();
 			}
 		};
 		timeoutFunc(charts,0);
@@ -2620,9 +2629,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	function doReflow(localScope) {
-		setTimeout(function() {
-			localScope.$broadcast('highchartsng.reflow');
-		},10);
+		localScope.$broadcast('highchartsng.reflow');
+	}
+
+	function doProcessSeries(localScope,chartOptions) {
+		localScope.$broadcast('highchartsng.processSeries',chartOptions);
 	}
 	
 	function getSeenSeriesCount(rangeData,viewClass) {
@@ -2893,6 +2904,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				},
 				series: [
 					{
+						id: 'subtotals',
 						type: 'pie',
 						name: 'Stats',
 						innerSize: '50%',

@@ -595,7 +595,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				var label = ensIdObj.label;
 				
 				if(label in chart.regionFeature) {
-					label = chart.regionFeature[label].label + '\n('+label+')';
+					label = chart.regionFeature[label].label + " \n("+label+')';
 				}
 				
 				categories.push(label);
@@ -942,6 +942,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			enableMouseTracking: false,
 			showInLegend: true,
 			yAxis: 1,
+			// Disabling turboThreshold, as Highcharts does not
+			// allow nulls on series longer than the threshold
+			turboThreshold: 0,
 			data: []
 		};
 		if(featureType in DRAWABLE_REGION_FEATURES_V1) {
@@ -1040,6 +1043,19 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	};
 	
 	FeatureDrawer.prototype.close = function() {
+		// Removing empty feature series
+		for(i=this.featureSeries.length-1;i>=0;i--) {
+			if(this.featureSeries[i].data.length === 0) {
+				this.featureSeries.splice(i,1);
+			}
+		}
+		// Also here
+		for(i=this.extendedFeatureSeries.length-1;i>=0;i--) {
+			if(this.extendedFeatureSeries[i].data.length === 0) {
+				this.extendedFeatureSeries.splice(i,1);
+			}
+		}
+		
 		// Adjusting the space for the categories
 		for(var i=0, origCatLength = this.category.length; i<(FeatureSeriesFraction-1)*origCatLength; i++) {
 			this.category.push('');
@@ -1053,18 +1069,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		// Putting a new line on the last series name
 		// due Highcharts limitations on legend rendering
 		// (it is not possible to put two legends or to force a new row / column)
-		for(i=this.featureSeries.length-1;i>=0;i--) {
-			if(this.featureSeries[i].data.length > 0) {
-				this.featureSeries[i].name += new Array(60).join(' ');
-				break;
-			}
+		if(this.featureSeries.length > 0) {
+			this.featureSeries[this.featureSeries.length-1].name += new Array(60).join(' ');
 		}
 		// Also here
-		for(i=this.extendedFeatureSeries.length-1;i>=0;i--) {
-			if(this.extendedFeatureSeries[i].data.length > 0) {
-				this.extendedFeatureSeries[i].name += new Array(80).join(' ');
-				break;
-			}
+		if(this.extendedFeatureSeries.length > 0) {
+			this.extendedFeatureSeries[this.extendedFeatureSeries.length-1].name += new Array(60).join(' ');
 		}
 		
 		// Setting up
@@ -1504,8 +1514,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										text: 'Ensembl Ids (at '+rangeData.rangeStrEx+')'
 									},
 									labels: {
-										style: {
-											whiteSpace: 'pre-line',
+										//style: {
+										//	whiteSpace: 'pre',
+										//},
+										formatter: function() {
+											return (this.value+'').replace("\n","<br/>");
 										},
 									},
 									categories: [],
@@ -2232,7 +2245,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											shared: true,
 											shadow: false,
 										},
-										turboThreshold: 1000,
+										// Disabling turboThreshold, as Highcharts does not
+										// allow nulls on series longer than the threshold
+										turboThreshold: 0,
 										step: 'left',
 									}
 								};
@@ -2251,7 +2266,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											shared: true,
 											shadow: false,
 										},
-										turboThreshold: 1000,
+										// Disabling turboThreshold, as Highcharts does not
+										// allow nulls on series longer than the threshold
+										turboThreshold: 0,
 									}
 								};
 								break;
@@ -2271,7 +2288,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											shared: true,
 											shadow: false,
 										},
-										turboThreshold: 1000,
+										// Disabling turboThreshold, as Highcharts does not
+										// allow nulls on series longer than the threshold
+										turboThreshold: 0,
 									}
 								};
 								break;
@@ -2291,7 +2310,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											shared: true,
 											shadow: false,
 										},
-										turboThreshold: 1000,
+										// Disabling turboThreshold, as Highcharts does not
+										// allow nulls on series longer than the threshold
+										turboThreshold: 0,
 									}
 								};
 								break;

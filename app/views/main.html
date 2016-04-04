@@ -89,9 +89,9 @@
 
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
-		<div class="row">
-			<nvd3 ng-if="subtotals.library==='nvd3'" options="subtotals.options" data="subtotals.data"></nvd3>
-			<highchart class="datachart" ng-if="subtotals.library==='highcharts'" config="subtotals.options"></highchart>
+		<div class="row" ng-switch on="::subtotals.library">
+			<nvd3 ng-switch-when="nvd3" options="subtotals.options" data="subtotals.data"></nvd3>
+			<highchart class="datachart" ng-switch-when="highcharts" config="subtotals.options"></highchart>
 		</div>
             </div>
             <div class="col-xs-12 col-sm-4 col-md-6 col-lg-8">
@@ -111,9 +111,9 @@
                 </p>
             </div>
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
-		<div class="row">
-			<nvd3 ng-if="analysisSubtotals.library==='nvd3'" options="analysisSubtotals.options" data="analysisSubtotals.data"></nvd3>
-			<highchart class="datachart" ng-if="analysisSubtotals.library==='highcharts'" config="analysisSubtotals.options"></highchart>
+		<div class="row" ng-switch on="::analysisSubtotals.library">
+			<nvd3 ng-switch-when="nvd3" options="analysisSubtotals.options" data="analysisSubtotals.data"></nvd3>
+			<highchart class="datachart" ng-switch-when="highcharts" config="analysisSubtotals.options"></highchart>
 		</div>
             </div>
 </div>
@@ -254,7 +254,7 @@
 					</div>
 				</div>
 				<!-- This trick allows reflowing the charts which were drawn in background -->
-				{{doReflow()}}
+				
 				<uib-accordion class="col-xs-12 col-sm-2 col-lg-1" close-others="false">
 					<uib-accordion-group heading="&#x25BC; Showing {{uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} charts" panel-class="panel-info" class="row terms-selector">
 						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData)">
@@ -310,7 +310,7 @@
 				
 				<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
 					<div class="row" style="width:100%">
-						<div class="panel-info" ng-class="{'zoomed': chart.isZoomed,'unzoomed': !chart.isZoomed, 'col-md-12':!chart.isZoomed, 'col-lg-6': !chart.isZoomed}" ng-repeat="chart in chartView.charts track by chart.chartId" ng-hide="chart.isEmpty || chart.isHidden">
+						<div class="panel-info" ng-class="{'zoomed': chart.isZoomed,'unzoomed': !chart.isZoomed, 'col-md-12':!chart.isZoomed, 'col-lg-6': !chart.isZoomed}" ng-repeat="chart in ::chartView.charts track by chart.chartId" ng-hide="chart.isEmpty || chart.isHidden" ng-switch on="::chart.library">
 							<!--
 							<div style="float:left;clear:left;">
 								Chart features: 
@@ -332,12 +332,12 @@
 								<i class="glyphicon glyphicon-list-alt" ng-click="viewChartDataGrid(view.viewClass,rangeData,chart)" tooltip-popup-delay="500" uib-tooltip="Inspect the data" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<i class="glyphicon" ng-class="{'glyphicon-tags': !uiFuncs.isLegendEnabled(chart), 'glyphicon-tag': uiFuncs.isLegendEnabled(chart) }"  ng-click="uiFuncs.switchLegend(chart)" tooltip-popup-delay="500" uib-tooltip="Show / hide legend" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Zoom button -->
-								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="chart.isZoomed = !chart.isZoomed;" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="left" tooltip-popup-delay="500"></i>
+								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="doZoom(chart);" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="left" tooltip-popup-delay="500"></i>
 							</div>
-							<nvd3 class="datachart" ng-if="chart.library==='nvd3'" options="chart.options" data="chart.data"></nvd3>
-							<canvasjs class="datachart" ng-if="chart.library==='canvasjs'" config="chart.options"></canvasjs>
-							<chartjs class="datachart" ng-if="chart.library==='chartjs'" config="chart.options"></chartjs>
-							<highchart class="datachart" ng-if="chart.library==='highcharts'" config="chart.options"></highchart>
+							<nvd3 class="datachart" ng-switch-when="nvd3" options="chart.options" data="chart.data"></nvd3>
+							<canvasjs class="datachart" ng-switch-when="canvasjs" config="chart.options"></canvasjs>
+							<chartjs class="datachart" ng-switch-when="chartjs" config="chart.options"></chartjs>
+							<highchart class="datachart" ng-switch-when="highcharts" config="chart.options" disable-data-watch="'1'"></highchart>
 						</div>
 					</div>
 					

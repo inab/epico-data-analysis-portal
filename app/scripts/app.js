@@ -31,10 +31,14 @@ angular.module('blueprintApp', [
     'ngTouch',
     'ui.bootstrap',
     'elasticsearch',
+//    'digestHud',
 //    'smart-table',
     'ngCsv'
   ])
   .config(function ($routeProvider,$uibTooltipProvider) {
+//  .config(function ($routeProvider,$uibTooltipProvider,digestHudProvider) {
+//	digestHudProvider.enable();
+
     $routeProvider
       .when('/', {
         templateUrl: 'views/main.html',

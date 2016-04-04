@@ -698,6 +698,12 @@ angular.module('blueprintApp')
 		
 		return retval;
 	};
+
+	$scope.doZoom = function(chart) {
+		chart.isZoomed = !chart.isZoomed;
+
+		ChartService.uiFuncs.doReflow($scope);
+	};
 	
 	$scope.switchChart = function($event,chart,rangeData) {
 		var retval = ChartService.uiFuncs.switchChart($event,chart,rangeData);
@@ -830,13 +836,15 @@ angular.module('blueprintApp')
 	};
 	
 	$scope.selectVisibleCharts = function(rangeData) {
-		ChartService.uiFuncs.selectVisibleCharts(rangeData);
-		
 		// Changing to this state
 		rangeData.state = ConstantsService.STATE_SHOW_DATA;
-		doState(rangeData);
-		
-		updateLocation(rangeData.localScope);
+		rangeData.localScope.$evalAsync(function() {
+			ChartService.uiFuncs.selectVisibleCharts(rangeData);
+			
+			doState(rangeData);
+			
+			updateLocation(rangeData.localScope);
+		});
 	};
 	
 	$scope.deselectAllVisibleCellTypes = function(rangeData) {

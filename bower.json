@@ -3,7 +3,7 @@
   "version": "0.9.5",
   "description": "BLUEPRINT Data Analysis Portal",
   "dependencies": {
-    "es6-shim": "~0.35.0",
+    "es5-shim": "~4.5.7",
     "json3": "~3.3.2",
     "angular": "~1.5.4",
     "d3": "~3.5.16",
@@ -18,7 +18,7 @@
     "angular-tree-control": "jmfernandez/angular-tree-control#6c71da1d8fb8b021af1e900cc53483b08ef3bb55",
     "elasticsearch": "~10.1.3",
     "highcharts-release": "v4.2.3",
-    "highcharts-ng": "inab/highcharts-ng#f26ff5d584e08279ae3cc029def3317bdca8175d",
+    "highcharts-ng": "inab/highcharts-ng#5a3d1168caa5b47031f57d920d0752859bb0dc95",
     "highcharts-export-csv": "highcharts/export-csv#257af53a0c5bc7fe438e0306ef514d87e2299af2",
     "jalette": "jalette#b9b4108c652baef9d77ef4f32d8f09000c7dc2d8",
     "roboto-fontface": "~0.4.5",
@@ -43,6 +43,7 @@
     "angular-smart-table": "~2.1.6",
     "dagre-d3": "~0.4.11",
     "bower-canvasjs": "inab/bower-canvasjs#~1.7.0",
+    "angular-digest-hud": "~0.1.14",
     "angular-mocks": "~1.5.4",
     "angular-scenario": "~1.5.4"
   },

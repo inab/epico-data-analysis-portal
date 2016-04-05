@@ -124,7 +124,7 @@ angular.module('blueprintApp')
 	
 	var preventLocationChange;
 	
-	function updateLocation(localScope/*,w*/) {
+	function updateLocation(localScope,doReplace) {
 		preventLocationChange = true;
 		
 		var searchObj = ChartService.uiFuncs.buildCurrentState(localScope);
@@ -132,6 +132,9 @@ angular.module('blueprintApp')
 			searchObj.q = localScope.qString;
 		}
 		$location.search(angular.element.param(searchObj));
+		if(doReplace) {
+			$location.replace();
+		}
 	}
 	
 	var TABSTART = 'tabs[';
@@ -697,7 +700,7 @@ angular.module('blueprintApp')
 		if(!skipDoState) {
 			retval = doState(rangeData);
 		}
-		updateLocation(localScope);
+		updateLocation(localScope,true);
 		
 		return retval;
 	};
@@ -708,14 +711,14 @@ angular.module('blueprintApp')
 	
 	$scope.hideAllCharts = function($event,rangeData) {
 		var retval = ChartService.uiFuncs.hideAllCharts($event,rangeData);
-		updateLocation(rangeData.localScope);
+		updateLocation(rangeData.localScope,true);
 		
 		return retval;
 	};
 	
 	$scope.showAllCharts = function($event,rangeData) {
 		var retval = ChartService.uiFuncs.showAllCharts($event,rangeData);
-		updateLocation(rangeData.localScope);
+		updateLocation(rangeData.localScope,true);
 		
 		return retval;
 	};
@@ -728,28 +731,28 @@ angular.module('blueprintApp')
 	
 	$scope.switchChart = function($event,chart,rangeData) {
 		var retval = ChartService.uiFuncs.switchChart($event,chart,rangeData);
-		updateLocation(rangeData.localScope);
+		updateLocation(rangeData.localScope,true);
 		
 		return retval;
 	};
 	
 	$scope.hideAllSeries = function(rangeData,viewClass) {
 		var retval = ChartService.uiFuncs.hideAllSeries(rangeData,viewClass);
-		updateLocation(rangeData.localScope);
+		updateLocation(rangeData.localScope,true);
 		
 		return retval;
 	};
 	
 	$scope.showAllSeries = function(rangeData,viewClass) {
 		var retval = ChartService.uiFuncs.showAllSeries(rangeData,viewClass);
-		updateLocation(rangeData.localScope);
+		updateLocation(rangeData.localScope,true);
 		
 		return retval;
 	};
 	
 	$scope.switchSeriesNode = function($event,termNode,rangeData,viewClass) {
 		var retval = ChartService.uiFuncs.switchSeriesNode($event,termNode,rangeData,viewClass);
-		updateLocation(rangeData.localScope);
+		updateLocation(rangeData.localScope,true);
 		
 		return retval;
 	};
@@ -853,7 +856,7 @@ angular.module('blueprintApp')
 		rangeData.state = ConstantsService.STATE_SELECT_CHARTS;
 		doState(rangeData);
 		
-		updateLocation(rangeData.localScope);
+		updateLocation(rangeData.localScope,true);
 	};
 	
 	$scope.selectVisibleCharts = function(rangeData) {
@@ -864,7 +867,7 @@ angular.module('blueprintApp')
 			
 			doState(rangeData);
 			
-			updateLocation(rangeData.localScope);
+			updateLocation(rangeData.localScope,true);
 		});
 	};
 	

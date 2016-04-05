@@ -256,7 +256,7 @@
 				<!-- This trick allows reflowing the charts which were drawn in background -->
 				
 				<uib-accordion class="col-xs-12 col-sm-2 col-lg-1" close-others="false">
-					<uib-accordion-group heading="&#x25BC; Showing {{uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} charts" panel-class="panel-info" class="row terms-selector">
+					<uib-accordion-group heading="&#x25BC; Showing {{uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} of {{uiFuncs.getChartsWithDataCount(rangeData,view.viewClass)}} charts" panel-class="panel-info" class="row terms-selector">
 						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData)">
 							<span class="square" style="border-color: #202020 ; background-color: white;"></span>
 							<span class="term">Hide all charts / mean series</span>

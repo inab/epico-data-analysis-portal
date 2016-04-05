@@ -66,6 +66,7 @@ angular.module('blueprintApp')
     
 	$scope.graphData = [];
 	$scope.currentTab = null;
+	$scope.currentTabId = null;
 	$scope.qString = null;
 	// The default flanking window size
 	$scope.flankingWindowSize = ConstantsService.DEFAULT_FLANKING_WINDOW_SIZE;
@@ -284,6 +285,7 @@ angular.module('blueprintApp')
 			// Now, let's prepare the backbones!
 			localScope.graphData = [];
 			localScope.currentTab = null;
+			localScope.currentTabId = null;
 			
 			localScope.rangeQuery.forEach(function(range,i) {
 				if(!range.isDisabled) {
@@ -297,11 +299,9 @@ angular.module('blueprintApp')
 					regions += "<a href='"+localScope.REGION_SEARCH_URI+rangeStr+"' target='_blank'>chr"+rangeStr+"</a>";
 					
 					ChartService.storeRange(localScope,range);
-					if(localScope.currentTab === null && localScope.graphData.length > 0) {
-						localScope.currentTab = localScope.graphData[0].id;
-					}
 				}
 			});
+			
 			localScope.found = "Query '"+qString+"' displaying information from ";
 			localScope.currentQueries.forEach(function(currentQuery) {
 				if(currentQuery.additivity !== DIFF_ADDITIVITY) {
@@ -323,6 +323,14 @@ angular.module('blueprintApp')
 				// This is needed, as future development can integrate several queries in the tabs
 				rangeData.queryFound = localScope.found;
 			});
+			
+			
+			if(localScope.currentTabId === null && localScope.graphData.length > 0) {
+				localScope.currentTabId = 0;
+			}
+			if(localScope.currentTabId !== null) {
+				localScope.doSelectTab(localScope.currentTabId);
+			}
 			
 			deferred.resolve(localScope);
 		}
@@ -672,11 +680,24 @@ angular.module('blueprintApp')
 	}
 	
 	// All these methods are needed in order to update the query string properly
-	$scope.doSelectTab = function(rangeData) {
-		rangeData.localScope.currentTab = rangeData.id;
+	$scope.doSelectTab = function(rangeData, /*optional*/ skipDoState) {
+		var skipDoState = typeof rangeData === 'number';
+		var localScope;
 		
-		var retval = doState(rangeData);
-		updateLocation(rangeData.localScope);
+		if(skipDoState) {
+			localScope = $scope;
+			rangeData = localScope.graphData[rangeData];
+		} else {
+			localScope = rangeData.localScope;
+		}
+		
+		localScope.currentTab = rangeData.id;
+		
+		var retval;
+		if(!skipDoState) {
+			retval = doState(rangeData);
+		}
+		updateLocation(localScope);
 		
 		return retval;
 	};

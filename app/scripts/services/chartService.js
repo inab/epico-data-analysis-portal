@@ -649,9 +649,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 		
 		// It is assigned only once
-		if(!stillLoading && chart.isEmpty === undefined) {
-			chart.isEmpty = isEmpty;
-		}
+		chart.isEmpty = isEmpty;
+		chart.isLoading = stillLoading;
 	}
 	
 	function defaultSeriesAggregator(chart,doGenerate,stillLoading) {
@@ -696,9 +695,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 		
 		// It is assigned only once
-		if(!stillLoading && chart.isEmpty === undefined) {
-			chart.isEmpty = isEmpty;
-		}
+		chart.isEmpty = isEmpty;
+		chart.isLoading = stillLoading;
 	}
 	
 	function dataSeriesComparator(a,b) {
@@ -943,7 +941,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			showInLegend: true,
 			yAxis: 1,
 			// Disabling turboThreshold, as Highcharts does not
-			// allow nulls on series longer than the threshold
+			// allow pure nulls on series longer than the threshold
 			turboThreshold: 0,
 			data: []
 		};
@@ -971,7 +969,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var coord = feature.coordinates[0];
 		// Needed to separate one polygon from another
 		if(featureSeries.length > 0) {
-			featureSeries.push(null);
+			featureSeries.push([featureSeries[featureSeries.length-1][0],null]);
 		}
 		switch(feature.feature) {
 			case ConstantsService.REGION_FEATURE_GENE:
@@ -1421,6 +1419,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					chart.isHidden = gData.isInitiallyHidden;
 				}
 				chart.meanSeriesHidden = !rangeData.ui.initiallyShowMeanSeries;
+				// Initial state, before any data
+				chart.isLoading = true;
+				chart.isEmpty = true;
 				chart.isZoomed = false;
 				
 				// And now, specific customizations for this library
@@ -2245,9 +2246,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											shared: true,
 											shadow: false,
 										},
-										// Disabling turboThreshold, as Highcharts does not
-										// allow nulls on series longer than the threshold
-										turboThreshold: 0,
+										// Put turboThreshold=0 if you are pushing pure nulls,
+										// as Highcharts does not allow nulls on series longer
+										// than the threshold
+										turboThreshold: 1000,
 										step: 'left',
 									}
 								};
@@ -2266,9 +2268,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											shared: true,
 											shadow: false,
 										},
-										// Disabling turboThreshold, as Highcharts does not
-										// allow nulls on series longer than the threshold
-										turboThreshold: 0,
+										// Put turboThreshold=0 if you are pushing pure nulls,
+										// as Highcharts does not allow nulls on series longer
+										// than the threshold
+										turboThreshold: 1000,
 									}
 								};
 								break;
@@ -2288,9 +2291,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											shared: true,
 											shadow: false,
 										},
-										// Disabling turboThreshold, as Highcharts does not
-										// allow nulls on series longer than the threshold
-										turboThreshold: 0,
+										// Put turboThreshold=0 if you are pushing pure nulls,
+										// as Highcharts does not allow nulls on series longer
+										// than the threshold
+										turboThreshold: 1000,
 									}
 								};
 								break;
@@ -2310,9 +2314,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 											shared: true,
 											shadow: false,
 										},
-										// Disabling turboThreshold, as Highcharts does not
-										// allow nulls on series longer than the threshold
-										turboThreshold: 0,
+										// Put turboThreshold=0 if you are pushing pure nulls,
+										// as Highcharts does not allow nulls on series longer
+										// than the threshold
+										turboThreshold: 1000,
 									}
 								};
 								break;
@@ -2435,9 +2440,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var timeoutFunc = function(charts,iChart) {
 			if(iChart<charts.length) {
 				var chart = charts[iChart];
-				if(chart.isHidden) {
+				if(chart.isHidden && !chart.isLoading) {
 					timeoutFunc(charts,iChart+1);
 				} else {
+					// Visual indicator, with different semantics of chart.loading
 					chart.options.loading = true;
 					var theFunc = function() {
 						try {
@@ -3062,6 +3068,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				}
 				return retval;
 			});
+		}
+		
+		if(localScope.currentQueryHints !== null && localScope.currentQueryHints !== undefined && rangeData.id === localScope.currentQueryHints.selectedTab) {
+			localScope.currentTabId = localScope.graphData.length;
 		}
 		
 		localScope.graphData.push(rangeData);

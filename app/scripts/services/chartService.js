@@ -3414,9 +3414,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return state;
 	}
 	
-	function switchAllTranscripts(chart) {
+	function switchAllTranscripts(chart,rangeData) {
 		chart.showAllTranscripts = !chart.showAllTranscripts;
 		chart.fDraw.showAllCategories(chart.showAllTranscripts);
+		doProcessSeries(rangeData.localScope,chart.options);
 	}
 	
 	return {

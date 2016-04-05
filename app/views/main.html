@@ -323,7 +323,7 @@
 							<div style="float:right;clear:right;">
 								<!-- Hide chart button -->
 								<i class="glyphicon glyphicon-eye-close" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
-								<i class="glyphicon space-glyphicon" ng-class="{'glyphicon-text-height': !chart.showAllTranscripts, 'glyphicon-text-width': chart.showAllTranscripts}" ng-style="{'visibility': chart.fDraw!==undefined ? 'initial':'hidden'}" ng-click="uiFuncs.switchAllTranscripts(chart)" uib-tooltip="Show all transcripts / show main transcript" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon space-glyphicon" ng-class="{'glyphicon-text-height': !chart.showAllTranscripts, 'glyphicon-text-width': chart.showAllTranscripts}" ng-style="{'visibility': chart.fDraw!==undefined ? 'initial':'hidden'}" ng-click="uiFuncs.switchAllTranscripts(chart,rangeData)" uib-tooltip="Show all transcripts / show main transcript" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Switch mean series -->
 								<!-- Functional, but unfancy
 								<i class="glyphicon glyphicon-indent-right" ng-style="{'color': chart.meanSeriesHidden ? 'gray' : 'initial'}"ng-click="uiFuncs.switchMeanSeries(chart,true,rangeData.localScope)" uib-tooltip="Hide/show mean series" tooltip-popup-delay="500" tooltip-popup-close-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>

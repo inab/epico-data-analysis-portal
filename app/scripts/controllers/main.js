@@ -683,7 +683,7 @@ angular.module('blueprintApp')
 	}
 	
 	// All these methods are needed in order to update the query string properly
-	$scope.doSelectTab = function(rangeData, /*optional*/ skipDoState) {
+	$scope.doSelectTab = function(rangeData) {
 		var skipDoState = typeof rangeData === 'number';
 		var localScope;
 		

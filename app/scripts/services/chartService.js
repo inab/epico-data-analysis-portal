@@ -3390,13 +3390,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						var visibleMeanSeries = [];
 						
 						getCharts(rangeData,VIEW_GENERAL).forEach(function(chart) {
-							if(!chart.isEmpty) {
-								if(!chart.meanSeriesHidden) {
-									visibleMeanSeries.push(chart.chartId);
-								}
-								if(!chart.isHidden) {
-									visibleCharts.push(chart.chartId);
-								}
+							if(!chart.meanSeriesHidden) {
+								visibleMeanSeries.push(chart.chartId);
+							}
+							if(!chart.isHidden) {
+								visibleCharts.push(chart.chartId);
 							}
 						});
 						

@@ -191,6 +191,17 @@
 					</div>
 					<br />
 					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of range data</label></div>
+					
+					<div><label>Filter by healthy / disease status</label>
+					<ui-select class="row" style="width: -moz-available; width: -webkit-fill-available; width: available; margin-bottom: 5px;" ng-model="rangeData.ui.diseaseSelected" theme="select2" title="Filter by health / disease status" ng-if="rangeData.diseaseNodes.length &gt; 0">
+						<ui-select-match placeholder="Any health status" allow-clear="true">{{$select.selected.name}}</ui-select-match>
+						<ui-select-choices repeat="diseaseTerm in rangeData.diseaseNodes | filter: { wasSeen: true, name: $select.search } track by diseaseTerm.o">
+							<div ng-bind-html="diseaseTerm.name | highlight: $select.search"></div>
+							<small><a ng-href="{{diseaseTerm.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{diseaseTerm.o}}</a></small>
+						</ui-select-choices>
+					</ui-select>
+					</div>
+					
 					<div class="form-group">
 						<label>Stats Tree</label>
 						<label style="font-weight:normal;">
@@ -256,6 +267,14 @@
 				<!-- This trick allows reflowing the charts which were drawn in background -->
 				
 				<uib-accordion class="col-xs-12 col-sm-2 col-lg-1" close-others="false">
+					<ui-select class="row" style="width: -moz-available; width: -webkit-fill-available; width: available; margin-bottom: 5px;" ng-model="rangeData.ui.diseaseSelected" theme="select2" title="Filter by health / disease status" ng-if="rangeData.diseaseNodes.length &gt; 0" ng-show="view.viewClass !== 'Diseases'" on-select="filterByDisease(rangeData,$item)">
+						<ui-select-match placeholder="Any health status" allow-clear="true">{{$select.selected.name}}</ui-select-match>
+						<ui-select-choices repeat="diseaseTerm in rangeData.diseaseNodes | filter: { wasSeen: true, name: $select.search } track by diseaseTerm.o">
+							<div ng-bind-html="diseaseTerm.name | highlight: $select.search"></div>
+							<small><a ng-href="{{diseaseTerm.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{diseaseTerm.o}}</a></small>
+						</ui-select-choices>
+					</ui-select>
+					
 					<uib-accordion-group heading="&#x25BC; Showing {{uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} of {{uiFuncs.getChartsWithDataCount(rangeData,view.viewClass)}} charts" panel-class="panel-info" class="row terms-selector">
 						<div class="col-xs-1 col-sm-12 termItem pointer" ng-click="hideAllCharts($event,rangeData)">
 							<span class="square" style="border-color: #202020 ; background-color: white;"></span>
@@ -271,7 +290,7 @@
 							<span class="term">{{::chart.title}}</span>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
-						<uib-accordion class="col-sm-12" close-others="false">
+						<uib-accordion class="col-sm-12" close-others="false" ng-show="uiFuncs.getChartsWithDataCount(rangeData,view.viewClass) &gt; uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)">
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getChartsWithDataCount(rangeData,view.viewClass) - uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} charts disabled" panel-class="panel-info" class="row terms-selector">
 								<div class="col-xs-1 col-sm-12 termItem pointer chartHidden" ng-repeat="chart in chartView.charts track by chart.chartId" ng-click="switchChart($event,chart,rangeData)" ng-if="!chart.isEmpty" ng-show="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 									<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color}"></span>
@@ -296,7 +315,7 @@
 							<i class="glyphicon glyphicon-eye-open" ng-show="termNode.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{termNode.samplesInRange.length}}" popover-placement="right" uib-popover-html="termNode.samplesInRangeHtml" uib-tooltip="Click to see the sample names which contributed to this data series" tooltip-placement="bottom" tooltip-append-to-body="true"></i>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
-						<uib-accordion class="col-sm-12" close-others="false">
+						<uib-accordion class="col-sm-12" close-others="false" ng-show="uiFuncs.getSeenSeriesCount(rangeData,view.viewClass) &gt; uiFuncs.getVisibleSeriesCount(rangeData,view.viewClass)">
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getLegendTitle(view.viewClass)}}: {{uiFuncs.getSeenSeriesCount(rangeData,view.viewClass) - uiFuncs.getVisibleSeriesCount(rangeData,view.viewClass)}} hidden" panel-class="panel-info" class="row terms-selector">
 								<div class="col-xs-1 col-sm-12 termItem pointer termHidden" ng-repeat="termNode in chartView.termNodes track by termNode.o" ng-click="switchSeriesNode($event,termNode,rangeData,view.viewClass)" ng-if="termNode.wasSeen" ng-show="termNode.termHidden" uib-tooltip-template="'tooltip/term.html'" tooltip-append-to-body="true" tooltip-popup-delay="500">
 									<span class="circle" ng-style="{'border-color': termNode.color }"></span>

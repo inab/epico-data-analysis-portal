@@ -757,6 +757,13 @@ angular.module('blueprintApp')
 		return retval;
 	};
 	
+	$scope.filterByDisease = function(rangeData,diseaseTerm) {
+		var retval = ChartService.uiFuncs.filterByDisease(rangeData,diseaseTerm);
+		updateLocation(rangeData.localScope,true);
+		
+		return retval;
+	};
+	
 	$scope.suggestSearch = QueryService.suggestSearch;
 	
 	$scope.enterSearch = function(keyEvent) {
@@ -865,6 +872,7 @@ angular.module('blueprintApp')
 		rangeData.localScope.$evalAsync(function() {
 			ChartService.uiFuncs.selectVisibleCharts(rangeData);
 			
+			
 			doState(rangeData);
 			
 			updateLocation(rangeData.localScope,true);
@@ -880,21 +888,11 @@ angular.module('blueprintApp')
 	$scope.viewDataGrid = openModalDataGrid;
 	
 	$scope.viewChartDataGrid = function(viewClass,rangeData,chart) {
-		var table = [];
 		var dataGrid = {
 			columns: [ChartService.uiFuncs.getLegendTitle(viewClass),'chromosome','chromosome_start','chromosome_end',chart.yAxisLabel,'payload','analysis_id'],
-			table: table,
+			table: ChartService.getChartSupportingData(rangeData,chart),
 			title: chart.title,
 		};
-		chart.allData.forEach(function(series) {
-			if(series.series.visible) {
-				var arrayPrefix = [ series.series.name, rangeData.range.chr ];
-				
-				series.seriesValues.forEach(function(value) {
-					table.push(arrayPrefix.concat(value));
-				});
-			}
-		});
 		
 		openModalDataGrid(dataGrid);
 	};

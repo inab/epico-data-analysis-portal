@@ -450,12 +450,18 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return featureSymbol.value[0];
 	}
 	
-	function genBoxPlotSeries(origValues) {
+	// This function was designed as a method from series (i.e. it does not work alone)
+	function genBoxPlotSeries() {
+		// jshint validthis:true
+		var origValues = this.filteredSeriesValues;
+		// jshint validthis:false
+		
 		// First, process data
 		var samps = {};
 		var sampsPos = [];
 		
-		origValues.forEach(function(data) {
+		origValues.forEach(function(augData) {
+			var data = augData.sDataS;
 			var label = data[3];
 			var samp;
 			if(label in samps) {
@@ -567,13 +573,39 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return boxplots;
 	}
 	
-	function highchartsBoxPlotAggregator(chart,doGenerate,stillLoading) {
+	// This function was designed as a method from chart (i.e. it does not work alone)
+	function highchartsBoxPlotAggregator(doGenerate,stillLoading,filterFunc) {
+		// jshint validthis:true
+		var chart = this;
+		// jshint validthis:false
+		
+		// Invalidating the boxplot categories
+		chart.allData.some(function(series) {
+			if(series.filteredSeriesValues === null || series.filteredSeriesValues === undefined) {
+				chart.boxPlotCategories = null;
+				return true;
+			}
+			return false;
+		});
+		
 		if(doGenerate || !chart.boxPlotCategories) {
 			var allEnsIds = [];
 			var allEnsIdsHash = {};
 			chart.allData.forEach(function(series) {
+				if(series.filteredSeriesValues === null || series.filteredSeriesValues === undefined) {
+					if(filterFunc) {
+						series.filteredSeriesValues = series.seriesValues.filter(filterFunc);
+					} else {
+						series.filteredSeriesValues = series.seriesValues;
+					}
+					
+					// Invalidate pre-digested and digested values
+					series.seriesPreDigestedValues = null;
+					series.seriesDigestedValues = null;
+				}
+				
 				if(doGenerate || !series.seriesPreDigestedValues) {
-					series.seriesPreDigestedValues = series.seriesGenerator(series.seriesValues);
+					series.seriesPreDigestedValues = series.seriesGenerator();
 				}
 				
 				series.seriesPreDigestedValues.forEach(function(boxplot) {
@@ -611,12 +643,13 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		// Now, second pass!!
 		var isEmpty = true;
 		chart.allData.forEach(function(series) {
+			var reDigest = !stillLoading || !('term_type' in series);
+			
 			// isEmpty detector
-			if(series.seriesValues.length > 0) {
+			if(series.filteredSeriesValues.length > 0) {
 				isEmpty = false;
 			}
 			
-			var reDigest = !stillLoading || !('term_type' in series);
 			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
 				var preparedValues = new Array(chart.options.xAxis.categories.length);
 				
@@ -653,18 +686,34 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		chart.isLoading = stillLoading;
 	}
 	
-	function defaultSeriesAggregator(chart,doGenerate,stillLoading) {
+	// This function was designed as a method from chart (i.e. it does not work alone)
+	function defaultSeriesAggregator(doGenerate,stillLoading,filterFunc) {
+		// jshint validthis:true
+		var chart = this;
+		// jshint validthis:false
+		
 		var isEmpty = true;
 		stillLoading = !!stillLoading;
 		chart.allData.forEach(function(series) {
+			var reDigest = series.filteredSeriesValues === null || series.filteredSeriesValues === undefined || !stillLoading || !('term_type' in series);
+			if(series.filteredSeriesValues === null || series.filteredSeriesValues === undefined) {
+				if(filterFunc) {
+					series.filteredSeriesValues = series.seriesValues.filter(filterFunc);
+				} else {
+					series.filteredSeriesValues = series.seriesValues;
+				}
+				
+				// Invalidate digested values
+				series.seriesDigestedValues = null;
+			}
+			
 			// isEmpty detector
-			if(series.seriesValues.length > 0) {
+			if(series.filteredSeriesValues.length > 0) {
 				isEmpty = false;
 			}
 			
-			var reDigest = !stillLoading || !('term_type' in series);
 			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
-				series.seriesDigestedValues = series.seriesGenerator(series.seriesValues);
+				series.seriesDigestedValues = series.seriesGenerator();
 				series.series[series.seriesDest] = series.seriesDigestedValues;
 			}
 			//console.log("DEBUG "+g.name);
@@ -703,12 +752,18 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return a[0] - b[0];
 	}
 	
-	function genMeanSeries(origValues) {
+	// This function was designed as a method from series (i.e. it does not work alone)
+	function genMeanSeries() {
+		// jshint validthis:true
+		var origValues = this.filteredSeriesValues;
+		// jshint validthis:false
+		
 		var meanValues = [];
 		
 		// Pre-processing the original values
 		var values = [];
-		origValues.forEach(function(data) {
+		origValues.forEach(function(augData) {
+			var data = augData.sDataS;
 			var diff = data[1] - data[0];
 			var sDataS = [data[0],data[2],diff];
 			values.push(sDataS);
@@ -769,22 +824,31 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return meanValues;
 	}
 	
-	function genMeanSeriesHighcharts(origValues) {
-		return genMeanSeries(origValues).map(function(meanValue) {
+	// This function was designed as a method from series (i.e. it does not work alone)
+	function genMeanSeriesHighcharts() {
+		// jshint validthis:true
+		return genMeanSeries.call(this).map(function(meanValue) {
 			return [meanValue.x,meanValue.y];
 		});
+		// jshint validthis:false
 	}
 	
 	function dataSeriesValueComparator(segment1,segment2) {
 		return segment1[2] - segment2[2];
 	}
 	
-	function genAreaRangeSeries(origValues) {
+	// This function was designed as a method from series (i.e. it does not work alone)
+	function genAreaRangeSeries() {
+		// jshint validthis:true
+		var origValues = this.filteredSeriesValues;
+		// jshint validthis:false
+		
 		var minMaxValues = [];
 		
 		// Pre-processing the original values
 		var values = [];
-		origValues.forEach(function(data) {
+		origValues.forEach(function(augData) {
+			var data = augData.sDataS;
 			var diff = data[1] - data[0];
 			var sDataS = [data[0],data,diff];
 			values.push(sDataS);
@@ -854,10 +918,13 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return minMaxValues;
 	}
 	
-	function genAreaRangeSeriesHighcharts(origValues) {
-		return genAreaRangeSeries(origValues).map(function(rangeValue) {
+	// This function was designed as a method from series (i.e. it does not work alone)
+	function genAreaRangeSeriesHighcharts() {
+		// jshint validthis:true
+		return genAreaRangeSeries.call(this).map(function(rangeValue) {
 			return [rangeValue.x,rangeValue.min,rangeValue.max];
 		});
+		// jshint validthis:false
 	}
 	
 	function origSeriesComparator(a,b) {
@@ -870,12 +937,19 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return retval;
 	}
 	
-	function genSegmentSeries(origValues) {
+	// This function was designed as a method from series (i.e. it does not work alone)
+	function genSegmentSeries() {
+		// jshint validthis:true
+		var origValues = this.filteredSeriesValues;
+		// jshint validthis:false
+		
 		var retValues = [];
 		
 		// Pre-processing the original values
 		if(origValues.length > 0) {
-			var sortedOrigValues = origValues.clone(0);
+			var sortedOrigValues = origValues.map(function(augData) {
+				return augData.sDataS;
+			});
 			sortedOrigValues.sort(origSeriesComparator);
 			
 			sortedOrigValues.forEach(function(data) {
@@ -1041,6 +1115,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	};
 	
 	FeatureDrawer.prototype.close = function() {
+		var i;
 		// Removing empty feature series
 		for(i=this.featureSeries.length-1;i>=0;i--) {
 			if(this.featureSeries[i].data.length === 0) {
@@ -1054,8 +1129,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			}
 		}
 		
+		var origCatLength;
 		// Adjusting the space for the categories
-		for(var i=0, origCatLength = this.category.length; i<(FeatureSeriesFraction-1)*origCatLength; i++) {
+		for(i=0, origCatLength = this.category.length; i<(FeatureSeriesFraction-1)*origCatLength; i++) {
 			this.category.push('');
 		}
 		
@@ -2333,6 +2409,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						}
 						
 						// Saving the real series location
+						series.filteredSeriesValue = null;
 						series.seriesValues = seriesValues;
 						switch(chart.library) {
 							case LIBRARY_HIGHCHARTS:
@@ -2404,7 +2481,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								
 								// Add to all of them
 								seriesValuesArray.forEach(function(seriesValues) {
-									seriesValues.push(data.sDataS);
+									// We need the metadata data for this data (data.sDataS)
+									seriesValues.push(data);
 								});
 							});
 						}
@@ -2419,9 +2497,15 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return retval;
 	}
 	
+
+	function doProcessSeries(localScope,chartOptions) {
+		localScope.$broadcast('highchartsng.processSeries',chartOptions);
+	}
+	
 	
 	// This is almost identical to redrawGeneralCharts, but generalized
 	function abstractRedrawCharts(charts /* optional */,doGenerate,stillLoading,viewClass,localScope) {
+		var filterFunc;
 		if('ui' in charts) {
 			var rangeData = charts;
 			
@@ -2433,6 +2517,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			}
 			
 			charts = getCharts(rangeData,viewClass);
+			if(rangeData.filterFunc) {
+				filterFunc = rangeData.filterFunc;
+			}
 		} else if(!Array.isArray(charts)) {
 			charts = [ charts ];
 		}
@@ -2443,11 +2530,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				if(chart.isHidden && !chart.isLoading) {
 					timeoutFunc(charts,iChart+1);
 				} else {
-					// Visual indicator, with different semantics of chart.loading
+					// Visual indicator, with different semantics of chart.isLoading
 					chart.options.loading = true;
 					var theFunc = function() {
 						try {
-							chart.seriesAggregator(chart,doGenerate,stillLoading);
+							chart.seriesAggregator(doGenerate,stillLoading,filterFunc);
 							chart.options.loading = stillLoading;
 							doProcessSeries(localScope,chart.options);
 						} catch(e) {
@@ -2657,10 +2744,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	
 	function doReflow(localScope) {
 		localScope.$broadcast('highchartsng.reflow');
-	}
-
-	function doProcessSeries(localScope,chartOptions) {
-		localScope.$broadcast('highchartsng.processSeries',chartOptions);
 	}
 	
 	function getSeenSeriesCount(rangeData,viewClass) {
@@ -2969,8 +3052,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 		var diseaseNodes = angular.copy(localScope.diseaseNodes);
 		var diseaseNodesHash = {};
+		// This one is used later
+		var diseaseNodesHashAlt = {};
 		diseaseNodes.forEach(function(diseaseNode) {
 			diseaseNodesHash[diseaseNode.o_uri] = diseaseNode;
+			diseaseNodesHashAlt[diseaseNode.o] = diseaseNode;
 		});
 		
 		var tissueNodes = angular.copy(localScope.tissueNodes);
@@ -3030,6 +3116,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				gChro: (range.chr in ChromosomesHash) ? ChromosomesHash[range.chr] : UnknownChromosome,
 				treeDisplay: 'compact',
 				treeDisplayState: ConstantsService.TREE_STATE_INITIAL,
+				diseaseSelected: null,
 				chartViews: chartViews
 			},
 			// Initially, the default view
@@ -3064,6 +3151,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					// Setting default viewClass
 					if(tab.selectedView!==undefined && (tab.selectedView in RedrawSelector)) {
 						rangeData.viewClass = tab.selectedView;
+					}
+					
+					// Setting default filtered disease
+					if(tab.filteredDisease !== undefined && (tab.filteredDisease in diseaseNodesHashAlt)) {
+						rangeData.ui.diseaseSelected = diseaseNodesHashAlt[tab.filteredDisease];
 					}
 				}
 				return retval;
@@ -3322,6 +3414,34 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return (rangeData.viewHints !==  undefined && rangeData.viewHints.initiallyShowMeanSeries !== undefined);
 	}
 	
+	// This can be reused in the future for additional filters
+	function invalidateFilteredSeries(charts) {
+		charts.forEach(function(chart) {
+			chart.allData.forEach(function(series) {
+				series.filteredSeriesValues = null;
+			});
+		});
+	}
+	
+	function filterByDisease(rangeData,diseaseTerm,/* optional */ skipRedraw) {
+		// First the filtering callback setup
+		if(diseaseTerm!==null && diseaseTerm!==undefined) {
+			rangeData.filterFunc = function(data) {
+				return diseaseTerm.o_uri === data.diseaseSeriesId;
+			};
+		} else {
+			rangeData.filterFunc = null;
+		}
+		
+		if(!skipRedraw) {
+			// Then, filtered values invalidation
+			invalidateFilteredSeries(getCharts(rangeData));
+			
+			// And at last, redrawing of the charts
+			redrawCharts(rangeData);
+		}
+	}
+	
 	function selectVisibleCharts(rangeData) {
 		// Normalizing
 		var hasChartHints = selectableChartsFromHints(rangeData);
@@ -3361,6 +3481,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				chart.meanSeriesHidden = !(chart.chartId in visibleMeanSeriesHash);
 			}
 		});
+		
+		// At last, setting up the filters
+		if(rangeData.ui.diseaseSelected) {
+			filterByDisease(rangeData,rangeData.ui.diseaseSelected,true);
+		}
 	}
 	
 	function buildCurrentState(localScope) {
@@ -3402,6 +3527,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						tabState.visibleCharts = visibleCharts;
 						tabState.visibleMeanSeries = visibleMeanSeries;
 						tabState.treeDisplay = rangeData.ui.treeDisplay;
+						
+						// Saving the selected disease
+						if(rangeData.ui.diseaseSelected !== undefined && rangeData.ui.diseaseSelected !== null) {
+							tabState.filteredDisease = rangeData.ui.diseaseSelected.o;
+						}
 					}
 				}
 				
@@ -3416,6 +3546,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		chart.showAllTranscripts = !chart.showAllTranscripts;
 		chart.fDraw.showAllCategories(chart.showAllTranscripts);
 		doProcessSeries(rangeData.localScope,chart.options);
+	}
+	
+	function getChartSupportingData(rangeData,chart) {
+		var table = [];
+		chart.allData.forEach(function(series) {
+			if(series.series.visible) {
+				var arrayPrefix = [ series.series.name, rangeData.range.chr ];
+				
+				var seriesValues = (series.filteredSeriesValues!==null && series.filteredSeriesValues !== undefined) ? series.filteredSeriesValues : series.seriesValues;
+				seriesValues.forEach(function(augData) {
+					table.push(arrayPrefix.concat(augData.sDataS));
+				});
+			}
+		});
+		
+		return table;
 	}
 	
 	return {
@@ -3433,6 +3579,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		linkMeanSeriesToAnalysis: linkMeanSeriesToAnalysis,
 		chooseLabelFromSymbols: chooseLabelFromSymbols,
 		storeRange: storeRange,
+		
+		getChartSupportingData: getChartSupportingData,
 		
 		uiFuncs: {
 			redrawCharts: redrawCharts,
@@ -3470,6 +3618,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			selectableChartsFromHints: selectableChartsFromHints,
 			
 			switchAllTranscripts: switchAllTranscripts,
+			
+			filterByDisease: filterByDisease,
 		},
 	};
 }]);

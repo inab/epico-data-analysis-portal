@@ -26,6 +26,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		'T-cell acute leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023449',
 	};
 	
+	var DEFAULT_TIMEOUT = '5m';
+	
 	function DataModel(theDataModel,theCVHash) {
 		// Risky, but it is so easier to get the domains and other data
 		angular.extend(this,theDataModel);
@@ -98,6 +100,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			index: ConstantsService.METADATA_MODEL_INDEX,
 			type: ConstantsService.CVTERM_CONCEPT,
 			size: 10000,
+			timeout: DEFAULT_TIMEOUT,
 			body: {
 				query: {
 					filtered: {
@@ -159,6 +162,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			index: ConstantsService.METADATA_MODEL_INDEX,
 			type: [ConstantsService.DATA_MODEL_CONCEPT,ConstantsService.CV_CONCEPT],
 			size: 1000,
+			timeout: DEFAULT_TIMEOUT,
 			body: {},
 		}).then(function(resp) {
 			if(typeof(resp.hits.hits) !== undefined) {
@@ -199,6 +203,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		return es.search({
 			index: ConstantsService.SAMPLE_TRACKING_DATA_INDEX,
 			size: 100000,
+			timeout: DEFAULT_TIMEOUT,
 			body:{},
 		}).then(function(resp){
 			if(typeof(resp.hits.hits) !== undefined) {
@@ -362,8 +367,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		localScope.analysesHash = {};
 		
 		return es.search({
-			size: 10000000,
 			index: ConstantsService.METADATA_DATA_INDEX,
+			size: 10000000,
+			timeout: DEFAULT_TIMEOUT,
 			body: {
 				query: {
 					filtered: {
@@ -560,6 +566,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			index: ConstantsService.METADATA_MODEL_INDEX,
 			type: ConstantsService.CVTERM_CONCEPT,
 			size: 10000,
+			timeout: DEFAULT_TIMEOUT,
 			body: {
 				query: {
 					filtered: {
@@ -636,6 +643,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					index: ConstantsService.METADATA_MODEL_INDEX,
 					type: ConstantsService.CVTERM_CONCEPT,
 					size: 100000,
+					timeout: DEFAULT_TIMEOUT,
 					body: {
 						query: {
 							filtered: {
@@ -1386,9 +1394,10 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		
 		localScope.searchButtonText = FETCHING_LABEL;
 		es.search({
-			size: 10000,
 			index: ConstantsService.EXTERNAL_DATA_INDEX,
 			type: ConstantsService.EXTERNAL_FEATURES_CONCEPT,
+			size: 10000,
+			timeout: DEFAULT_TIMEOUT,
 			body: {
 				query: {
 					filtered: {
@@ -1428,10 +1437,11 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		localScope.searchButtonText = FETCHING_LABEL;
 		var total = 0;
 		es.search({
-			size: 10000000,
 			index: ConstantsService.PRIMARY_DATA_INDEX,
 			//scroll: '60s',
 			search_type: 'count',
+			size: 10000000,
+			timeout: DEFAULT_TIMEOUT,
 			query_cache: 'true',
 			body: {
 				query: {
@@ -1522,6 +1532,13 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									analysisStat.doc_count
 								];
 								uniqueSamplesInRangeHash[sample.sample_id] = null;
+								
+								// Early signaling the diseases
+								if(specimen.donor_disease in rangeData.diseaseNodesHash) {
+									var disease = rangeData.diseaseNodesHash[specimen.donor_disease];
+									disease.wasSeen = true;
+								}
+								
 								table.push(row);
 							}
 						});
@@ -1621,8 +1638,8 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 
 		var scrolled = false;
 		es.search({
-			size: 10000,
 			index: ConstantsService.PRIMARY_DATA_INDEX,
+			size: 10000,
 			scroll: '60s',
 			body: {
 				query: {
@@ -1715,9 +1732,10 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		
 		var total = 0;
 		es.search({
-			size: 10000000,
 			index: ConstantsService.PRIMARY_DATA_INDEX,
 			search_type: 'count',
+			size: 10000000,
+			timeout: DEFAULT_TIMEOUT,
 			query_cache: 'true',
 			body: {
 				query: {
@@ -1918,6 +1936,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					es.search({
 						index: ConstantsService.EXTERNAL_DATA_INDEX,
 						type: ConstantsService.EXTERNAL_FEATURES_CONCEPT,
+						timeout: DEFAULT_TIMEOUT,
 						size: 1000,
 						body: {
 							query:{
@@ -2085,6 +2104,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			return es.search({
 				index: ConstantsService.EXTERNAL_DATA_INDEX,
 				type: ConstantsService.EXTERNAL_FEATURES_CONCEPT,
+				//timeout: DEFAULT_TIMEOUT,
 				size: 5000,
 				body: {
 					query:{

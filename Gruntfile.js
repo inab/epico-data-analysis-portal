@@ -508,6 +508,11 @@ module.exports = function (grunt) {
           dest: '<%= yeoman.dist %>/images',
         }, {
           expand: true,
+          cwd: 'bower_components/select2',
+          src: ['*.png','*.gif'],
+          dest: '<%= yeoman.dist %>/styles',
+        }, {
+          expand: true,
           cwd: 'bower_components/roboto-fontface/fonts',
           src: '*',
           dest: '<%= yeoman.dist %>/fonts'

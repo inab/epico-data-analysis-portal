@@ -26,7 +26,15 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		'T-cell acute leukemia': 'http://ncimeta.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20MetaThesaurus&code=C0023449',
 	};
 	
-	function getColumn(conceptDomainName, conceptName, columnName) {
+	function DataModel(theDataModel,theCVHash) {
+		// Risky, but it is so easier to get the domains and other data
+		angular.extend(this,theDataModel);
+		
+		this.cvHash = theCVHash;
+	}
+	
+	// Method 
+	DataModel.prototype.getColumn = function(conceptDomainName, conceptName, columnName) {
 		var column;
 		
 		// First, get the column metadata
@@ -41,9 +49,9 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		}
 		
 		return column;
-	}
+	};
 	
-	function getCVIds(column) {
+	DataModel.prototype.getCVIds = function(column) {
 		var retval = [];
 		
 		if(column!==undefined) {
@@ -59,10 +67,10 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		}
 		
 		return retval;
-	}
+	};
 	
 	
-	function fetchCVTermsForColumn(localScope,conceptDomainName,conceptName,columnName, dest, /*optional*/callback) {
+	DataModel.prototype.fetchCVTermsForColumn = function(localScope,conceptDomainName,conceptName,columnName, dest, /*optional*/callback) {
 		if(dest in localScope) {
 			return localScope;
 		}
@@ -140,7 +148,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			}
 		});
 		return deferred.promise;
-	}
+	};
 	
 	function getDataModel(localScope) {
 		if(localScope.dataModel!==undefined) {
@@ -155,10 +163,11 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		}).then(function(resp) {
 			if(typeof(resp.hits.hits) !== undefined) {
 				var cvHash = {};
+				var theDataModel;
 				resp.hits.hits.forEach(function(entry) {
 					switch(entry._type) {
 						case ConstantsService.DATA_MODEL_CONCEPT:
-							localScope.dataModel = entry._source;
+							theDataModel = entry._source;
 							break;
 						case ConstantsService.CV_CONCEPT:
 							var cventry = entry._source;
@@ -169,11 +178,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 				});
 				
 				// These are needed to seek in the model
-				localScope.dataModel.cvHash = cvHash;
-				
-				localScope.dataModel.getColumn = getColumn;
-				localScope.dataModel.getCVIds = getCVIds;
-				localScope.dataModel.fetchCVTermsForColumn = fetchCVTermsForColumn;
+				localScope.dataModel = new DataModel(theDataModel,cvHash);
 			}
 			
 			return localScope;

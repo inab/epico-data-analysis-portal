@@ -2516,8 +2516,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				doGenerate = true;
 			}
 			
+			if(viewClass===undefined) {
+				viewClass = rangeData.viewClass;
+			}
 			charts = getCharts(rangeData,viewClass);
-			if(rangeData.filterFunc) {
+			if(RedrawSelector[viewClass].canFilter && rangeData.filterFunc) {
 				filterFunc = rangeData.filterFunc;
 			}
 		} else if(!Array.isArray(charts)) {
@@ -2613,6 +2616,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			selectGroupMethod: selectGeneral,
 			legendTitle: 'Cell Types',
 			chartMapsFacet: 'general',
+			canFilter: true,
 		},
 		{
 			viewClass: VIEW_BY_TISSUE,
@@ -2623,6 +2627,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			selectGroupMethod: selectTissueForCellTypes,
 			legendTitle: 'Cell Types',
 			chartMapsFacet: 'byTissue',
+			canFilter: true,
 		},
 		{
 			viewClass: VIEW_DISEASES,
@@ -2633,6 +2638,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			selectGroupMethod: selectCellTypeForDiseases,
 			legendTitle: 'Diseases',
 			chartMapsFacet: 'celltypeDisease',
+			canFilter: false,
 		},
 	];
 	

@@ -990,7 +990,11 @@ angular.module('blueprintApp')
 					console.error(err);
 				})
 				.then(function(data) {
+					// Basically, it is an array of scopes, all of them the same
 					ChartService.mapColorsToTerms(data[0]);
+					
+					// So, return the first to assure possibly chained promises work properly
+					return data[0];
 				}, function(dataErr) {
 					if(dataErr[0]) {
 						openModal('Initialization error','Error while fetching disease terms metadata');

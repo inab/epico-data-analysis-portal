@@ -194,10 +194,10 @@
 					
 					<div><label>Filter by healthy / disease status</label>
 					<ui-select class="row" style="width: -moz-available; width: -webkit-fill-available; width: available; margin-bottom: 5px;" ng-model="rangeData.ui.diseaseSelected" theme="select2" title="Filter by health / disease status" ng-if="rangeData.diseaseNodes.length &gt; 0">
-						<ui-select-match placeholder="Any health status" allow-clear="true">{{$select.selected.name}}</ui-select-match>
+						<ui-select-match placeholder="Any health status" allow-clear="true"><span class="circle" ng-style="{'border-color': $select.selected.color, 'background-color': $select.selected.color }"></span> {{$select.selected.name}}</ui-select-match>
 						<ui-select-choices repeat="diseaseTerm in rangeData.diseaseNodes | filter: { wasSeen: true, name: $select.search } track by diseaseTerm.o">
 							<div ng-bind-html="diseaseTerm.name | highlight: $select.search"></div>
-							<small><a ng-href="{{diseaseTerm.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{diseaseTerm.o}}</a></small>
+							<small><span class="circle" ng-style="{'border-color': diseaseTerm.color, 'background-color': diseaseTerm.color }"></span> <a ng-href="{{diseaseTerm.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{diseaseTerm.o}}</a></small>
 						</ui-select-choices>
 					</ui-select>
 					</div>
@@ -268,10 +268,10 @@
 				
 				<uib-accordion class="col-xs-12 col-sm-2 col-lg-1" close-others="false">
 					<ui-select class="row" style="width: -moz-available; width: -webkit-fill-available; width: available; margin-bottom: 5px;" ng-model="rangeData.ui.diseaseSelected" theme="select2" title="Filter by health / disease status" ng-if="view.canFilter && rangeData.diseaseNodes.length &gt; 0" on-select="filterByDisease(rangeData,$item)">
-						<ui-select-match placeholder="Any health status" allow-clear="true">{{$select.selected.name}}</ui-select-match>
+						<ui-select-match placeholder="Any health status" allow-clear="true"><span class="circle" ng-style="{'border-color': $select.selected.color, 'background-color': $select.selected.color }"></span> {{$select.selected.name}}</ui-select-match>
 						<ui-select-choices repeat="diseaseTerm in rangeData.diseaseNodes | filter: { wasSeen: true, name: $select.search } track by diseaseTerm.o">
 							<div ng-bind-html="diseaseTerm.name | highlight: $select.search"></div>
-							<small><a ng-href="{{diseaseTerm.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{diseaseTerm.o}}</a></small>
+							<small><span class="circle" ng-style="{'border-color': diseaseTerm.color, 'background-color': diseaseTerm.color }"></span> <a ng-href="{{diseaseTerm.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{diseaseTerm.o}}</a></small>
 						</ui-select-choices>
 					</ui-select>
 					

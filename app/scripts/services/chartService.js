@@ -2596,26 +2596,38 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		doChartLayout(rangeData,viewClass);
 	}
 	
-	function selectCellTypeForDiseases(rangeData,viewClass,cellTypeIndex) {
-		rangeData.ui.celltypeButtonSelected = cellTypeIndex;
-		rangeData.ui.celltypeSelected = rangeData.termNodes[cellTypeIndex];
+	function selectCellTypeForDiseases(rangeData,viewClass,celltypeIndex) {
+		var celltypeSelected;
+		if(typeof celltypeIndex === 'number') {
+			celltypeSelected = rangeData.termNodes[celltypeIndex];
+			rangeData.ui.celltypeButtonSelected = celltypeIndex;
+			rangeData.ui.celltypeSelected = celltypeSelected;
+		} else {
+			celltypeSelected = celltypeIndex;
+		}
 		
-		rangeData.ui.chartViews[viewClass].termNodes = rangeData.ui.celltypeSelected.termNodes;
-		rangeData.ui.chartViews[viewClass].termNodesHash = rangeData.ui.celltypeSelected.termNodesHash;
+		rangeData.ui.chartViews[viewClass].termNodes = celltypeSelected.termNodes;
+		rangeData.ui.chartViews[viewClass].termNodesHash = celltypeSelected.termNodesHash;
 		// Fixing redrawing issue
-		rangeData.processedData.byCellType[rangeData.ui.celltypeSelected.o_uri] = 0;
-		doChartLayout(rangeData,viewClass,rangeData.ui.celltypeSelected.name);
+		rangeData.processedData.byCellType[celltypeSelected.o_uri] = 0;
+		doChartLayout(rangeData,viewClass,celltypeSelected.name);
 	}
 	
 	function selectTissueForCellTypes(rangeData,viewClass,tissueIndex) {
-		rangeData.ui.tissueButtonSelected = tissueIndex;
-		rangeData.ui.tissueSelected = rangeData.tissueNodes[tissueIndex];
+		var tissueSelected;
+		if(typeof tissueIndex === 'number') {
+			tissueSelected = rangeData.tissueNodes[tissueIndex];
+			rangeData.ui.tissueButtonSelected = tissueIndex;
+			rangeData.ui.tissueSelected = tissueSelected;
+		} else {
+			tissueSelected = tissueIndex;
+		}
 		
-		rangeData.ui.chartViews[viewClass].termNodes = rangeData.ui.tissueSelected.termNodes;
-		rangeData.ui.chartViews[viewClass].termNodesHash = rangeData.ui.tissueSelected.termNodesHash;
+		rangeData.ui.chartViews[viewClass].termNodes = tissueSelected.termNodes;
+		rangeData.ui.chartViews[viewClass].termNodesHash = tissueSelected.termNodesHash;
 		// Fixing redrawing issue
-		rangeData.processedData.byTissue[rangeData.ui.tissueSelected.o_uri] = 0;
-		doChartLayout(rangeData,viewClass,rangeData.ui.tissueSelected.name);
+		rangeData.processedData.byTissue[tissueSelected.o_uri] = 0;
+		doChartLayout(rangeData,viewClass,tissueSelected.name);
 	}
 	
 	// Filling the exported view array

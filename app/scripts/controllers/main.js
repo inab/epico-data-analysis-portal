@@ -868,10 +868,9 @@ angular.module('blueprintApp')
 	
 	$scope.selectVisibleCharts = function(rangeData) {
 		// Changing to this state
-		rangeData.state = ConstantsService.STATE_SHOW_DATA;
 		rangeData.localScope.$evalAsync(function() {
+			rangeData.state = ConstantsService.STATE_SHOW_DATA;
 			ChartService.uiFuncs.selectVisibleCharts(rangeData);
-			
 			
 			doState(rangeData);
 			
@@ -983,25 +982,31 @@ angular.module('blueprintApp')
 					console.error(err);
 				})
 				.then(QueryService.getAnalysisMetadata)
-				.then(QueryService.fetchDiseaseTerms, function(err) {
+				.then(function(localScope) {
+					return $q.all([QueryService.fetchDiseaseTerms(localScope),QueryService.fetchTissueTerms(localScope),QueryService.fetchCellTerms(localScope)]);
+				}, function(err) {
 					openModal('Initialization error','Error while fetching analysis metadata');
 					console.error('Initialization error AnalysisMetadata');
 					console.error(err);
 				})
-				.then(QueryService.fetchTissueTerms, function(err) {
-					openModal('Initialization error','Error while fetching disease terms metadata');
-					console.error('Initialization error DiseaseTerms');
-					console.error(err);
-				})
-				.then(QueryService.fetchCellTerms, function(err) {
-					openModal('Initialization error','Error while fetching tissue terms metadata');
-					console.error('Initialization error TissueTerms');
-					console.error(err);
-				})
-				.catch(function(err) {
-					openModal('Initialization error','Error while fetching cell terms metadata');
-					console.error('Initialization error CellTerms');
-					console.error(err);
+				.then(function(data) {
+					ChartService.mapColorsToTerms(data[0]);
+				}, function(dataErr) {
+					if(dataErr[0]) {
+						openModal('Initialization error','Error while fetching disease terms metadata');
+						console.error('Initialization error DiseaseTerms');
+						console.error(dataErr[0]);
+					}
+					if(dataErr[1]) {
+						openModal('Initialization error','Error while fetching tissue terms metadata');
+						console.error('Initialization error TissueTerms');
+						console.error(dataErr[1]);
+					}						
+					if(dataErr[2]) {
+						openModal('Initialization error','Error while fetching cell terms metadata');
+						console.error('Initialization error CellTerms');
+						console.error(dataErr[2]);
+					}
 				});
 		
 		var lObj = decodeLocationSearch();

@@ -907,14 +907,15 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						// Sort by root uri
 						localScope.fetchedTreeData = roots.sort(function(a,b) { return a.o_uri.localeCompare(b.o_uri); });
 						
-						// Resetting on first usage
-						ChartService.resetColorMap();
-						ChartService.assignCellTypesColorMap(localScope,termNodes);
-						ChartService.assignMeanSeriesColorMap(localScope);
-						// Diseases
-						ChartService.assignTermsColorMap(localScope.diseaseNodes);
-						// Tissues
-						ChartService.assignTermsColorMap(localScope.tissueNodes);
+						// This is needed for the data model
+						termNodes.forEach(function(termNode,i) {
+							// By default, they are hidden
+							termNode.termHidden = true;
+							termNode.analysisInRange = [];
+							termNode.numDataEntries = 0;
+							termNode.analysisTypes = {};
+						});
+						localScope.termNodes = termNodes;
 						
 						// At last, linking analysis to their corresponding cell types and the mean series
 						localScope.samples.forEach(function(sample) {

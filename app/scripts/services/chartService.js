@@ -2829,28 +2829,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	
-	function resetColorMap() {
-		Palette.resetHighColorMark();
-	}
-	
-	function assignCellTypesColorMap(localScope,termNodes) {
-		var cellTypeColors = Palette.getNextColors(termNodes.length);
-		
-		// Coloring the cell types
-		termNodes.forEach(function(termNode,i) {
-			var theColor = cellTypeColors[i];
-			termNode.color = theColor;
-			// By default, they are hidden
-			termNode.termHidden = true;
-			termNode.analysisInRange = [];
-			termNode.numDataEntries = 0;
-			termNode.analysisTypes = {};
-		});
-		
-		// This is needed for the data model
-		localScope.termNodes = termNodes;
-	}
-	
 	function assignMeanSeriesColorMap(localScope) {
 		// And now, the colors for the AVG_SERIES
 		var avgSeriesRGBColors = Palette.getNextColors(localScope.AVG_SERIES.length);
@@ -3604,14 +3582,24 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return table;
 	}
 	
+	function mapColorsToTerms(localScope) {
+		// Resetting on first usage
+		Palette.resetHighColorMark();
+		// Order DOES matter!!!
+		assignTermsColorMap(localScope.termNodes);
+		assignMeanSeriesColorMap(localScope);
+		// Diseases
+		assignTermsColorMap(localScope.diseaseNodes);
+		// Tissues
+		assignTermsColorMap(localScope.tissueNodes);
+		
+		return localScope;
+	}
+						
 	return {
 		doRegionFeatureLayout: doRegionFeatureLayout,
 		recordAnalysisOnCellType: recordAnalysisOnCellType,
 		storeFetchedData: storeFetchedData,
-		resetColorMap: resetColorMap,
-		assignCellTypesColorMap: assignCellTypesColorMap,
-		assignMeanSeriesColorMap: assignMeanSeriesColorMap,
-		assignTermsColorMap: assignTermsColorMap,
 		assignSeriesDataToChart: assignSeriesDataToChart,
 		getChartSeriesData: getChartSeriesData,
 		initializeAvgSeries: initializeAvgSeries,
@@ -3621,6 +3609,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		storeRange: storeRange,
 		
 		getChartSupportingData: getChartSupportingData,
+		
+		mapColorsToTerms: mapColorsToTerms,
 		
 		uiFuncs: {
 			redrawCharts: redrawCharts,

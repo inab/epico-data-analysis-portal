@@ -1306,6 +1306,21 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	var EXPORTED_VIEWS;
 	var RedrawSelector;
 	
+	function setChartSubtitle(chart,rangeData,viewClass) {
+		switch(chart.library) {
+			case LIBRARY_HIGHCHARTS:
+				if(chart.subtitle) {
+					chart.options.subtitle = {
+						text: chart.subtitle
+					};
+					if(rangeData.ui.filterDesc && RedrawSelector[viewClass].canFilter) {
+						chart.options.subtitle.text += ' (filtered by '+rangeData.ui.filterDesc+')';
+					}
+				}
+				break;
+		}
+	}
+	
 	function doChartLayout(rangeData,viewClass,postTitle) {
 		var view;
 		if(viewClass===undefined || !(viewClass in RedrawSelector)) {
@@ -1621,11 +1636,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								break;
 						}
 						
-						if(chart.subtitle!==null) {
-							chart.options.subtitle = {
-								text: chart.subtitle
-							};
-						}
+						// Setting the subtitle (if it is appropiate)
+						setChartSubtitle(chart,rangeData,viewClass);
 						var yAxis = {
 							title: {
 								text: chart.yAxisLabel
@@ -3421,11 +3433,19 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	// This can be reused in the future for additional filters
-	function invalidateFilteredSeries(charts) {
-		charts.forEach(function(chart) {
-			chart.allData.forEach(function(series) {
-				series.filteredSeriesValues = null;
-			});
+	function invalidateFilteredSeries(rangeData) {
+		// Invalidating in all the views
+		EXPORTED_VIEWS.forEach(function(view) {
+			if(view.canFilter) {
+				var charts = getCharts(rangeData,view.viewClass);
+				charts.forEach(function(chart) {
+					chart.allData.forEach(function(series) {
+						series.filteredSeriesValues = null;
+					});
+					// Resetting the title
+					setChartSubtitle(chart,rangeData,view.viewClass);
+				});
+			}
 		});
 	}
 	
@@ -3435,13 +3455,15 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			rangeData.filterFunc = function(data) {
 				return diseaseTerm.o_uri === data.diseaseSeriesId;
 			};
+			rangeData.ui.filterDesc = "'"+diseaseTerm.name+"' disease";
 		} else {
 			rangeData.filterFunc = null;
+			rangeData.ui.filterDesc = null;
 		}
 		
 		if(!skipRedraw) {
 			// Then, filtered values invalidation
-			invalidateFilteredSeries(getCharts(rangeData));
+			invalidateFilteredSeries(rangeData);
 			
 			// And at last, redrawing of the charts
 			redrawCharts(rangeData);

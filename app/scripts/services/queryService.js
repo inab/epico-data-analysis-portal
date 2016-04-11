@@ -129,7 +129,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			}
 		}, function(err,resp) {
 			if(resp.hits.total > 0) {
-				localScope[dest] = resp.hits.hits.map(function(v) {
+				var fetchedNodes = resp.hits.hits.map(function(v) {
 					var n = v.fields;
 					var theNode = {
 						name: n.name[0],
@@ -140,6 +140,18 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 					
 					return theNode;
 				});
+				
+				fetchedNodes.sort(function(a,b) {
+					// Reverse by ontology
+					var retval = b.ont.localeCompare(a.ont);
+					if(retval === 0) {
+						retval = a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase());
+					}
+					
+					return retval;
+				});
+				
+				localScope[dest] = fetchedNodes;
 				
 				if(typeof(callback) === 'function') {
 					return callback(localScope,deferred);

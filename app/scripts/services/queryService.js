@@ -1641,6 +1641,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			index: ConstantsService.PRIMARY_DATA_INDEX,
 			size: 10000,
 			scroll: '60s',
+			timeout: DEFAULT_TIMEOUT,
 			body: {
 				query: {
 					filtered: {

@@ -950,6 +950,7 @@ angular.module('blueprintApp')
 				.then(QueryService.getDataModel)
 				.then(function(localScope) {
 					localScope.ensemblVer = localScope.dataModel.annotations.EnsemblVer;
+					localScope.APPRISVer = localScope.dataModel.annotations.APPRISRel ? localScope.dataModel.annotations.APPRISRel : '(not in metadata)';
 					localScope.ensemblArchive = localScope.dataModel.annotations.EnsemblArchive;
 					localScope.gencodeVer = localScope.dataModel.annotations.GENCODEVer;
 					localScope.reactomeVer = localScope.dataModel.annotations.ReactomeVer;

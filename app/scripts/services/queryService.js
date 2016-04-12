@@ -908,7 +908,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						localScope.fetchedTreeData = roots.sort(function(a,b) { return a.o_uri.localeCompare(b.o_uri); });
 						
 						// This is needed for the data model
-						termNodes.forEach(function(termNode,i) {
+						termNodes.forEach(function(termNode) {
 							// By default, they are hidden
 							termNode.termHidden = true;
 							termNode.analysisInRange = [];

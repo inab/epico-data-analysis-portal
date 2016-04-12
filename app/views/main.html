@@ -227,7 +227,7 @@
 
 		<div class="no-margin-padding text-center" ng-if="rangeData.state==='showData' || rangeData.state==='end'">
 			<div class="btn-group">
-				<label class="btn btn-default" ng-repeat="view in uiFuncs.EXPORTED_VIEWS track by view.viewClass" ng-model="rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'" ng-click="doChangeView(rangeData)">{{view.viewDesc}}</label>
+				<label class="btn btn-default" ng-repeat="view in uiFuncs.EXPORTED_VIEWS track by view.viewClass" ng-model="rangeData.viewClass" uib-btn-radio="view.viewClass" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'" ng-click="doChangeView(rangeData,view.viewClass)">{{view.viewDesc}}</label>
 			</div>
 		</div>
 		
@@ -262,35 +262,21 @@
 					-->
 				</div>
 				<!-- Single button for Diseases -->
-				<div class="no-margin-padding text-center" style="margin-bottom: 0.5em;" ng-if="view.viewClass === 'Diseases'">
-					<ui-select style="text-align:left;" ng-model="rangeData.ui.celltypeSelected" theme="select2" title="Filter by celltype" on-select="uiFuncs.selectGroup(rangeData,$item)" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'">
-						<ui-select-match placeholder="Choose a cellular type">Cellular type: <span class="circle" ng-style="{'border-color': $select.selected.color, 'background-color': $select.selected.color }"></span> {{$select.selected.name}}</ui-select-match>
+				<div class="no-margin-padding text-center" style="margin-bottom: 0.5em;" ng-if="!view.disabled && view.viewClass === 'Diseases'">
+					<span class="no-margin-padding filter-heading">Aggregated cellular types to the disease comparison. Click and type to add more</span><br />
+					<ui-select multiple style="text-align:left; max-width:50%;" ng-model="rangeData.ui.celltypesSelected" theme="select2" title="Filter by celltype" ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'">
+						<ui-select-match placeholder="Choose one or more cellular types" allow-clear="true"><span class="circle" ng-style="{'border-color': $item.color, 'background-color': $item.color }"></span> {{$item.name}}</ui-select-match>
 						<ui-select-choices repeat="termNode in uiFuncs.getGroupBySeriesNodes(rangeData,view.viewClass) | filter: { wasSeen: true, name: $select.search } track by termNode.o">
 							<div ng-bind-html="termNode.name | highlight: $select.search"></div>
 							<small><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>&nbsp;<a ng-href="{{termNode.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{termNode.o}}</a></small>
 						</ui-select-choices>
 					</ui-select>
-					
-					<!--
-					<div class="btn-group" uib-dropdown uib-keyboard-nav is-open="rangeData.ui.celltypeButtonIsOpen">
-						<button id="celltype-button" type="button" class="btn btn-default selector-button" uib-dropdown-toggle ng-disabled="rangeData.fetchState === 'fetch_initial' || rangeData.fetchState === 'fetching'">
-							Cellular type: <span class="circle" ng-style="{'border-color': rangeData.ui.celltypeSelected.color, 'background-color': rangeData.ui.celltypeSelected.color }"></span>{{rangeData.ui.celltypeSelected.name}} <span class="caret"></span>
-						</button>
-						<ul uib-dropdown-menu class="celltype-menu" aria-labelledby="celltype-button">
-							<li role="menuitem" class="pointer" ng-class="{'celltype-chosen': rangeData.ui.celltypeButtonSelected === $index}" ng-repeat="termNode in uiFuncs.getGroupBySeriesNodes(rangeData,view.viewClass) track by termNode.o" ng-if="termNode.wasSeen"><a ng-click="uiFuncs.selectGroup(rangeData,$index);"><span class="circle" ng-style="{'border-color': termNode.color, 'background-color': termNode.color }"></span>{{termNode.name}}</a></li>
-							<!- -
-							<li class="divider"></li>
-							<li role="menuitem"><a href="#">Separated link</a></li>
-							- ->
-						</ul>
-					</div>
-					-->
 				</div>
 				<!-- This trick allows reflowing the charts which were drawn in background -->
 				
 				<uib-accordion class="col-xs-12 col-sm-2 col-lg-1" close-others="false">
 					<div class="no-margin-padding" ng-if="view.canFilter && rangeData.diseaseNodes.length &gt; 0">
-						<div class="no-margin-padding" style="text-align:center; color: #31708f; background-color: #d9edf7;">Filter by disease</div>
+						<div class="no-margin-padding filter-heading">Filter by disease</div>
 						<ui-select class="row" style="width: -moz-available; width: -webkit-fill-available; width: available; margin-bottom: 5px;" ng-model="rangeData.ui.diseaseSelected" theme="select2" title="Filter by health / disease status" on-select="filterByDisease(rangeData,$item)">
 							<ui-select-match placeholder="Any health status" allow-clear="true"><span class="circle" ng-style="{'border-color': $select.selected.color, 'background-color': $select.selected.color }"></span> {{$select.selected.name}}</ui-select-match>
 							<ui-select-choices repeat="diseaseTerm in rangeData.diseaseNodes | filter: { wasSeen: true, name: $select.search } track by diseaseTerm.o">

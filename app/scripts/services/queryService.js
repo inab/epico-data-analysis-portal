@@ -1544,15 +1544,53 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 									analysis._type,
 									analysisStat.doc_count
 								];
+								table.push(row);
 								uniqueSamplesInRangeHash[sample.sample_id] = null;
 								
-								// Early signaling the diseases
-								if(specimen.donor_disease in rangeData.diseaseNodesHash) {
-									var disease = rangeData.diseaseNodesHash[specimen.donor_disease];
-									disease.wasSeen = true;
+								// Early signaling By cell type
+								var cellTypeUri = sample.purified_cell_type;
+								// Labelling what we have seen
+								// We need this shared reference
+								var cell_type = rangeData.termNodesHash[cellTypeUri];
+								// and signal this cell_type
+								cell_type.wasSeen = true;
+								if(!(cellTypeUri in rangeData.fetchedData.byCellType.hash)) {
+									var cellDataArray = [];
+									rangeData.fetchedData.byCellType.hash[cellTypeUri] = cellDataArray;
+									rangeData.fetchedData.byCellType.orderedKeys.push(cellTypeUri);
+									rangeData.processedData.byCellType[cellTypeUri] = 0;
 								}
 								
-								table.push(row);
+								// Early signaling By tissue
+								var tissueUri = specimen.specimen_term;
+								// Labelling what we have seen
+								// We need this shared reference
+								var tissue = rangeData.tissueNodesHash[tissueUri];
+								// and signal this tissue
+								tissue.wasSeen = true;
+								if(!(tissueUri in rangeData.fetchedData.byTissue.hash)) {
+									var tissueDataArray = [];
+									rangeData.fetchedData.byTissue.hash[tissueUri] = tissueDataArray;
+									rangeData.fetchedData.byTissue.orderedKeys.push(tissueUri);
+									rangeData.processedData.byTissue[tissueUri] = 0;
+								}
+								// and signal the cell_type on the tissue
+								if(!(cellTypeUri in tissue.termNodesHash)) {
+									tissue.termNodes.push(cell_type);
+									tissue.termNodesHash[cellTypeUri] = cell_type;
+								}
+								
+								// Early signaling known diseases
+								var diseaseUri = specimen.donor_disease;
+								if(diseaseUri in rangeData.diseaseNodesHash) {
+									var disease = rangeData.diseaseNodesHash[diseaseUri];
+									disease.wasSeen = true;
+									// and signal this disease on the cell_type
+									if(!(specimen.donor_disease in cell_type.termNodesHash)) {
+										cell_type.termNodes.push(disease);
+										cell_type.termNodesHash[diseaseUri] = disease;
+									}
+								}
 							}
 						});
 						rangeData.uniqueSamplesInRangeHash = uniqueSamplesInRangeHash;

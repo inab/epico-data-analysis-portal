@@ -1262,18 +1262,24 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return fDraw;
 	};
 	
-	function getCharts(rangeData,viewClass) {
+	function getChartsView(rangeData,viewClass) {
 		if(rangeData === undefined) {
-			return [];
+			return undefined;
 		}
 		if(viewClass===undefined) {
 			if(rangeData.viewClass === undefined) {
-				return [];
+				return {};
 			}
 			viewClass = rangeData.viewClass;
 		}
 		
-		return rangeData.ui.chartViews[viewClass].charts;
+		return rangeData.ui.chartViews[viewClass];
+	}
+	
+	function getCharts(rangeData,viewClass) {
+		var chartViews = getChartsView(rangeData,viewClass);
+		
+		return chartViews.charts;
 	}
 	
 	// Idea taken from https://github.com/pablojim/highcharts-ng/issues/243
@@ -1335,7 +1341,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		}
 		var charts = [];
 		var chartsMap = {};
-		rangeData.ui.chartViews[viewClass].charts = charts;
+		getChartsView(rangeData,viewClass).charts = charts;
 		rangeData.chartMaps[view.chartMapsFacet] = chartsMap;
 		
 		var range_start = rangeData.range.start;
@@ -1863,14 +1869,18 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 	}
 	
+	function doViewChartLayout(rangeData,view,selectedViewData) {
+		var additionalText;
+		if('selectGroupMethod' in view) {
+			additionalText = view.selectGroupMethod(rangeData,view.viewClass,selectedViewData);
+		}
+		doChartLayout(rangeData,view.viewClass,additionalText);
+	}
+	
 	function doInitialChartsLayout(rangeData) {
-		EXPORTED_VIEWS.forEach(function(view) {
-			if('selectGroupMethod' in view) {
-				view.selectGroupMethod(rangeData,view.viewClass,0);
-			} else {
-				doChartLayout(rangeData,view.viewClass);
-			}
-		});
+		for(var iView=0;iView<EXPORTED_VIEWS.length;iView++) {
+			doViewChartLayout(rangeData,EXPORTED_VIEWS[iView]);
+		}
 	}
 	
 	var APPRIS_FACET_ID = 'APPRIS_PRINCIPAL';
@@ -2219,25 +2229,15 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	function getSeriesNodesHash(rangeData,viewClass) {
-		if(viewClass===undefined) {
-			viewClass = rangeData.viewClass;
-		}
+		var chartsView = getChartsView(rangeData,viewClass);
 		
-		return rangeData.ui.chartViews[viewClass].termNodesHash;
+		return chartsView.termNodesHash;
 	}
 	
 	function getSeriesNodes(rangeData,viewClass) {
-		if(rangeData === undefined) {
-			return [];
-		}
-		if(viewClass===undefined) {
-			if(rangeData.viewClass === undefined) {
-				return [];
-			}
-			viewClass = rangeData.viewClass;
-		}
+		var chartsView = getChartsView(rangeData,viewClass);
 		
-		return rangeData.ui.chartViews[viewClass].termNodes;
+		return chartsView.termNodes;
 	}
 	
 	function getGroupBySeriesNodes(rangeData,viewClass) {
@@ -2602,22 +2602,32 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		}
 	}
 	
-	
-	function selectGeneral(rangeData,viewClass/*,dumbIndex*/) {
-		rangeData.ui.chartViews[viewClass].termNodes = rangeData.termNodes;
-		rangeData.ui.chartViews[viewClass].termNodesHash = rangeData.termNodesHash;
+	function doChangeView(rangeData) {
+		var chartsView = getChartsView(rangeData);
 		
-		doChartLayout(rangeData,viewClass);
+		if(!chartsView.firstView) {
+			chartsView.firstView = true;
+			redrawCharts(rangeData);
+		}
 	}
 	
-	function selectCellTypesForDiseases(rangeData,viewClass,celltypeIndex) {
-		var celltypesSelected;
-		if(typeof celltypeIndex === 'number') {
-			celltypesSelected = [ rangeData.termNodes[celltypeIndex] ];
-			rangeData.ui.celltypeButtonSelected = celltypeIndex;
-			rangeData.ui.celltypesSelected = celltypesSelected;
-		} else {
-			celltypesSelected = Array.isArray(celltypeIndex) ? celltypeIndex : [ celltypeIndex ];
+	function selectGeneral(rangeData,viewClass/*,dumbData*/) {
+		var chartsView = getChartsView(rangeData,viewClass);
+		chartsView.termNodes = rangeData.termNodes;
+		chartsView.termNodesHash = rangeData.termNodesHash;
+		
+		return undefined;
+	}
+	
+	function selectCellTypesForDiseases(rangeData,viewClass,celltypesSelected) {
+		if(viewClass===undefined) {
+			viewClass = VIEW_DISEASES;
+		}
+		
+		var chartsView = getChartsView(rangeData,viewClass);
+		
+		if(celltypesSelected === undefined) {
+			celltypesSelected = rangeData.ui.celltypesSelected;
 		}
 		
 		var combinedName;
@@ -2639,16 +2649,16 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					}
 				}
 			});
-			rangeData.ui.chartViews[viewClass].termNodes = combinedTermNodes;
-			rangeData.ui.chartViews[viewClass].termNodesHash = combinedTermNodesHash;
-			combinedName = celltypesSelected.map(function(celltypeSelected) { return celltypeSelected.name; }).join(" + ");
+			chartsView.termNodes = combinedTermNodes;
+			chartsView.termNodesHash = combinedTermNodesHash;
+			combinedName = celltypesSelected.length + ' aggregated cell types';
 		} else if(celltypesSelected.length === 1) {
-			rangeData.ui.chartViews[viewClass].termNodes = celltypesSelected[0].termNodes;
-			rangeData.ui.chartViews[viewClass].termNodesHash = celltypesSelected[0].termNodesHash;
+			chartsView.termNodes = celltypesSelected[0].termNodes;
+			chartsView.termNodesHash = celltypesSelected[0].termNodesHash;
 			combinedName = celltypesSelected[0].name;
 		} else {
-			rangeData.ui.chartViews[viewClass].termNodes = [];
-			rangeData.ui.chartViews[viewClass].termNodesHash = {};
+			chartsView.termNodes = [];
+			chartsView.termNodesHash = {};
 			combinedName = '(empty)';
 		}
 		
@@ -2656,24 +2666,27 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		celltypesSelected.forEach(function(celltypeSelected) {
 			rangeData.processedData.byCellType[celltypeSelected.o_uri] = 0;
 		});
-		doChartLayout(rangeData,viewClass,combinedName);
+		
+		return combinedName;
 	}
 	
-	function selectTissueForCellTypes(rangeData,viewClass,tissueIndex) {
-		var tissueSelected;
-		if(typeof tissueIndex === 'number') {
-			tissueSelected = rangeData.tissueNodes[tissueIndex];
-			rangeData.ui.tissueButtonSelected = tissueIndex;
-			rangeData.ui.tissueSelected = tissueSelected;
-		} else {
-			tissueSelected = tissueIndex;
+	function selectTissueForCellTypes(rangeData,viewClass,tissueSelected) {
+		if(viewClass===undefined) {
+			viewClass = VIEW_BY_TISSUE;
 		}
 		
-		rangeData.ui.chartViews[viewClass].termNodes = tissueSelected.termNodes;
-		rangeData.ui.chartViews[viewClass].termNodesHash = tissueSelected.termNodesHash;
+		var chartsView = getChartsView(rangeData,viewClass);
+		
+		if(tissueSelected===undefined) {
+			tissueSelected = rangeData.ui.tissueSelected;
+		}
+		
+		chartsView.termNodes = tissueSelected.termNodes;
+		chartsView.termNodesHash = tissueSelected.termNodesHash;
 		// Fixing redrawing issue
 		rangeData.processedData.byTissue[tissueSelected.o_uri] = 0;
-		doChartLayout(rangeData,viewClass,tissueSelected.name);
+		
+		return tissueSelected.name;
 	}
 	
 	// Filling the exported view array
@@ -3126,7 +3139,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			chartViews[view.viewClass] = {
 				termNodes: [],
 				termNodesHash: {},
-				charts: []
+				charts: [],
+				firstView: false,
 			};
 		});
 		
@@ -3172,7 +3186,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				treeDisplayState: ConstantsService.TREE_STATE_INITIAL,
 				diseaseSelected: null,
 				celltypesSelected: [],
-				chartViews: chartViews
+				tissueSelected: tissueNodes[0],
+				chartViews: chartViews,
 			},
 			// Initially, the default view
 			viewClass: EXPORTED_VIEWS[0].viewClass,
@@ -3217,6 +3232,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			});
 		}
 		
+		// Initial view must be labelled as firstView!
+		getChartsView(rangeData).firstView = true;
+		
 		if(localScope.currentQueryHints !== null && localScope.currentQueryHints !== undefined && rangeData.id === localScope.currentQueryHints.selectedTab) {
 			localScope.currentTabId = localScope.graphData.length;
 		}
@@ -3224,12 +3242,16 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		localScope.graphData.push(rangeData);
 	}
 	
-	function selectGroup(rangeData,groupIndex,viewClass) {
+	function selectGroup(rangeData,viewClass,selectedGroup) {
 		if(viewClass===undefined) {
 			viewClass = rangeData.viewClass;
+		} else if(viewClass!==rangeData.viewClass) {
+			// Translate it into a noop, as it is not the visible view
+			return;
 		}
+		
 		if('selectGroupMethod' in RedrawSelector[viewClass]) {
-			RedrawSelector[viewClass].selectGroupMethod(rangeData,viewClass,groupIndex);
+			doViewChartLayout(rangeData,RedrawSelector[viewClass],selectedGroup);
 		}
 		redrawCharts(rangeData,undefined,undefined,viewClass);
 	}
@@ -3452,7 +3474,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		// Identify the enabled charts
 		rangeData.ui.numSelectedCellTypes = numSelected;
 		rangeData.ui.numChartsForSelectedCellTypes = availableChartIds.length;
+		
 		rangeData.ui.celltypesSelected = initialDiseaseByCellTypes;
+		doViewChartLayout(rangeData,RedrawSelector[VIEW_DISEASES]);
 		
 		var chartsForSelectedCellTypes = [];
 		rangeData.ui.chartsForSelectedCellTypes = chartsForSelectedCellTypes;
@@ -3664,11 +3688,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 		uiFuncs: {
 			redrawCharts: redrawCharts,
+			doChangeView: doChangeView,
 			doReflow: doReflow,
 			
 			EXPORTED_VIEWS: EXPORTED_VIEWS,
 			VIEW_GENERAL: VIEW_GENERAL,
-			VIEW_DISEASES: VIEW_DISEASES,
 			
 			getLegendTitle: getLegendTitle,
 			switchLegend: switchLegend,

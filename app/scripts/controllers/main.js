@@ -705,12 +705,14 @@ angular.module('blueprintApp')
 		return retval;
 	};
 
-	$scope.doChangeView = function(rangeData,viewClass) {
-		if(viewClass===ChartService.uiFuncs.VIEW_DISEASES) {
-			ChartService.uiFuncs.selectGroup(rangeData,rangeData.ui.celltypesSelected,viewClass);
-		}
+	$scope.doChangeView = function(rangeData) {
+		ChartService.uiFuncs.doChangeView(rangeData);
 		
-		return ChartService.uiFuncs.redrawCharts(rangeData);
+		updateLocation(rangeData.localScope,true);
+	};
+	
+	$scope.selectGroup = function(rangeData,viewClass) {
+		ChartService.uiFuncs.selectGroup(rangeData,viewClass);
 	};
 	
 	$scope.hideAllCharts = function($event,rangeData) {
@@ -946,20 +948,6 @@ angular.module('blueprintApp')
 		$scope.$on('$destroy',function() {
 			$rootScope.title = titlePrefix;
 		});
-		
-		// Let's listen to changes on disease views
-		$scope.$watch(function($scope) {
-			return $scope.graphData.map(function(rangeData) {
-				return (rangeData.ui.celltypesSelected && Array.isArray(rangeData.ui.celltypesSelected)) ? rangeData.ui.celltypesSelected.map(function(celltypeSelected) { return celltypeSelected.o_uri; }).sort() : [];
-			});
-		},function() {
-			$scope.graphData.forEach(function(rangeData) {
-				if(rangeData.viewClass === ChartService.uiFuncs.VIEW_DISEASES) {
-					ChartService.uiFuncs.selectGroup(rangeData,rangeData.ui.celltypesSelected,rangeData.viewClass);
-				}
-			});
-		},true);
-		
 		
 		var deferred = $q.defer();
 		var promise = deferred.promise;

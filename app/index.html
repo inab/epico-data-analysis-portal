@@ -63,6 +63,94 @@
               <div class="clearfix"></div>
         </div>
       </header>
+	<div class="m-app-loading" ng-if="stillLoading">
+		<!--
+			Ideas taken from:
+			* http://www.bennadel.com/blog/2758-creating-a-pre-bootstrap-loading-screen-in-angularjs.htm
+			* http://www.petercollingridge.co.uk/blog/svg-animation-rotating-elements
+		-->
+
+		<!--
+			HACKY CODE WARNING: I'm putting Style block inside directive so that it
+			will be removed from the DOM when we remove the directive container.
+		-->
+		<style type="text/css">
+
+			/*
+			div.m-app-loading {
+				position: fixed ;
+			}
+			*/
+
+			div.m-app-loading div.animated-container {
+				background-color: #00c0e4 ;
+				bottom: 0px ;
+				left: 0px ;
+				opacity: 0.7 ;
+				position: fixed ;
+				right: 0px ;
+				top: 0px ;
+				z-index: 1 ;
+			}
+
+			/* Used to initialize the ng-leave animation state. */
+			div.m-app-loading div.animated-container.ng-leave {
+				opacity: 1.0 ;
+				transition: all linear 200ms ;
+					-webkit-transition: all linear 200ms ;
+			}
+
+			/* Used to set the end properties of the ng-leave animation state. */
+			div.m-app-loading div.animated-container.ng-leave-active {
+				opacity: 0 ;
+			}
+
+			div.m-app-loading div.messaging {
+				color: #FFFFFF ;
+				font-family: monospace ;
+				left: 0px ;
+				margin-top: -37px ;
+				position: absolute ;
+				right: 0px ;
+				text-align: center ;
+				top: 50% ;
+			}
+
+			div.m-app-loading h1 {
+				font-size: 26px ;
+				line-height: 35px ;
+				margin: 0px 0px 20px 0px ;
+			}
+
+			div.m-app-loading p {
+				font-size: 18px ;
+				line-height: 14px ;
+				margin: 0px 0px 0px 0px ;
+			}
+			div#loading {
+				margin: auto;
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 25%;
+				width: auto;
+				text-align:center;
+			}
+
+		</style>
+		<div class="animated-container">
+			<div id="loading">
+				<h1><a href="http://www.blueprint-epigenome.eu/" target="_blank"><img id="logo" src="images/blueprint.png" style="height:50px" alt="BLUEPRINT" title="BLUEPRINT"></a>Data Analysis Portal <span class="label label-warning" style="font-size:12px;background-color:#5100ff;position: relative;top:-5px;">Initializing...</span></h1>
+				<object type="image/svg+xml" data="4gears.svg">
+					<iframe style="border:none;" src="4gears.svg">
+						<embed type="image/svg+xml" src="4gears.svg" />
+					</iframe>
+				</object>
+			</div>
+		</div>
+	</div>
       <div id="content" ng-view="" class="container-fluid"></div>
 
       <div class="footer">

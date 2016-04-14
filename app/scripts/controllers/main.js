@@ -905,6 +905,7 @@ angular.module('blueprintApp')
 	function init(/*$q,$scope,$rootScope*/) {
 		var titlePrefix =  $scope.projectName + ' ' + $scope.swVersion;
 		$rootScope.title = titlePrefix;
+		$rootScope.stillLoading = true;
 		
 		$scope.$on('$locationChangeStart', function(event) {
 			//console.log("He visto algo");
@@ -999,6 +1000,8 @@ angular.module('blueprintApp')
 					// Basically, it is an array of scopes, all of them the same
 					ChartService.mapColorsToTerms(data[0]);
 					
+					// Now we can disable the loading screen
+					$rootScope.stillLoading = false;
 					// So, return the first to assure possibly chained promises work properly
 					return data[0];
 				}, function(dataErr) {

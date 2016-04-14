@@ -458,14 +458,6 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 						}
 						localScope.analyses.push(analysis);
 						localScope.analysesHash[analysis.analysis_id] = analysis;
-						
-						// Linking everything
-						if(analysis.experiment_id in localScope.experimentsMap) {
-							var lab_experiment = localScope.experimentsMap[analysis.experiment_id];
-							
-							lab_experiment.analyses.push(analysis);
-							analysis.lab_experiment = lab_experiment;
-						}
 					}
 				});
 				
@@ -536,6 +528,20 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 			
 			return localScope;
 		});
+	}
+	
+	function linkAnalysesToExperiments(localScope) {
+		localScope.analyses.forEach(function(analysis) {
+			// Linking everything
+			if(analysis.experiment_id in localScope.experimentsMap) {
+				var lab_experiment = localScope.experimentsMap[analysis.experiment_id];
+				
+				lab_experiment.analyses.push(analysis);
+				analysis.lab_experiment = lab_experiment;
+			}
+		});
+		
+		return localScope;
 	}
 	
 	function fetchDiseaseTerms(localScope) {
@@ -2248,6 +2254,7 @@ factory('QueryService',['$q','es','portalConfig','ConstantsService','ChartServic
 		getDataModel: getDataModel,
 		getSampleTrackingData: getSampleTrackingData,
 		getAnalysisMetadata: getAnalysisMetadata,
+		linkAnalysesToExperiments: linkAnalysesToExperiments,
 		
 		fetchCellTerms: fetchCellTerms,
 		fetchDiseaseTerms: fetchDiseaseTerms,

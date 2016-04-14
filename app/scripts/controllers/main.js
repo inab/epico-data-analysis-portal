@@ -953,8 +953,17 @@ angular.module('blueprintApp')
 		var deferred = $q.defer();
 		var promise = deferred.promise;
 		promise = promise
-				.then(QueryService.getDataModel)
 				.then(function(localScope) {
+					return $q.all([
+						QueryService.getDataModel(localScope),
+						QueryService.getSampleTrackingData(localScope),
+						QueryService.getAnalysisMetadata(localScope),
+					]);
+				})
+				.then(function(data) {
+					var localScope = data[0];
+					
+					// Data model metadata
 					localScope.ensemblVer = localScope.dataModel.annotations.EnsemblVer;
 					localScope.APPRISVer = localScope.dataModel.annotations.APPRISRel ? localScope.dataModel.annotations.APPRISRel : '(not in metadata)';
 					localScope.ensemblArchive = localScope.dataModel.annotations.EnsemblArchive;
@@ -971,30 +980,30 @@ angular.module('blueprintApp')
 					localScope.SEARCH_URIS = SEARCH_URIS;
 					//console.log(localScope.dataModel);
 					
-					return localScope;
-				}, function(err) {
-					openModal('Initialization error','Error while fetching BLUEPRINT data model');
-					console.error('Initialization error DataModel');
-					console.error(err);
-				})
-				.then(QueryService.getSampleTrackingData)
-				.then(function(localScope) {
+					// Sample tracking metadata
 					localScope.numSamples = localScope.samples.length;
 					localScope.numHistones = localScope.histones.length; 
 					
-					return localScope;
-				}, function(err) {
-					openModal('Initialization error','Error while fetching samples and experiments metadata');
-					console.error('Initialization error SampleTrackingData');
-					console.error(err);
-				})
-				.then(QueryService.getAnalysisMetadata)
-				.then(function(localScope) {
+					// Analyses linkage
+					QueryService.linkAnalysesToExperiments(localScope);
+					
 					return $q.all([QueryService.fetchDiseaseTerms(localScope),QueryService.fetchTissueTerms(localScope),QueryService.fetchCellTerms(localScope)]);
-				}, function(err) {
-					openModal('Initialization error','Error while fetching analysis metadata');
-					console.error('Initialization error AnalysisMetadata');
-					console.error(err);
+				}, function(dataErr) {
+					if(dataErr[0]) {
+						openModal('Initialization error','Error while fetching BLUEPRINT data model');
+						console.error('Initialization error DataModel');
+						console.error(dataErr[0]);
+					}
+					if(dataErr[1]) {
+						openModal('Initialization error','Error while fetching samples and experiments metadata');
+						console.error('Initialization error SampleTrackingData');
+						console.error(dataErr[1]);
+					}
+					if(dataErr[2]) {
+						openModal('Initialization error','Error while fetching analysis metadata');
+						console.error('Initialization error AnalysisMetadata');
+						console.error(dataErr[2]);
+					}
 				})
 				.then(function(data) {
 					// Basically, it is an array of scopes, all of them the same

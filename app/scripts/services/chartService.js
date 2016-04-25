@@ -3193,6 +3193,15 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			viewClass: EXPORTED_VIEWS[0].viewClass,
 		};
 		
+		// This is going to be used in several places
+		var trimmedId = rangeData.id;
+		var rPointId = trimmedId.lastIndexOf('.');
+		if(rPointId !== -1) {
+			trimmedId = trimmedId.substring(0,rPointId);
+		}
+		
+		rangeData.trimmedId = trimmedId;
+		
 		// Only not taking into account flanking window size for explicit ranges
 		if(range.currentQuery.flankingWindowSize !== undefined) {
 			rangeData.flankingWindowSize = range.currentQuery.flankingWindowSize;
@@ -3201,7 +3210,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		// Now, rescueing hints
 		if(localScope.currentQueryHints !== null && localScope.currentQueryHints !== undefined && localScope.currentQueryHints.tabs!==undefined && Array.isArray(localScope.currentQueryHints.tabs)) {
 			localScope.currentQueryHints.tabs.some(function(tab) {
-				var retval = tab.id === rangeData.id;
+				var retval = tab.id === rangeData.id || tab.id === rangeData.trimmedId;
 				if(retval) {
 					rangeData.viewHints = tab;
 					
@@ -3235,7 +3244,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		// Initial view must be labelled as firstView!
 		getChartsView(rangeData).firstView = true;
 		
-		if(localScope.currentQueryHints !== null && localScope.currentQueryHints !== undefined && rangeData.id === localScope.currentQueryHints.selectedTab) {
+		if(localScope.currentQueryHints !== null && localScope.currentQueryHints !== undefined && (rangeData.id === localScope.currentQueryHints.selectedTab || rangeData.trimmedId === localScope.currentQueryHints.selectedTab)) {
 			localScope.currentTabId = localScope.graphData.length;
 		}
 		

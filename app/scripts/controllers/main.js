@@ -169,8 +169,31 @@ angular.module('blueprintApp')
 							var endSubBracket = subFacet.indexOf(']');
 							if(endSubBracket!==-1) {
 								var subFacetName = subFacet.substring(1,endSubBracket);
-								tab[subFacetName] = lObj[facet];
-								decoded = true;
+								var subsubFacet = subFacet.substring(endSubBracket+1);
+								if(subsubFacet.charAt(0) === '[') {
+									var endSubSubBracket = subsubFacet.indexOf(']');
+									if(endSubSubBracket!==-1) {
+										if(endSubSubBracket===1) {
+											tab[subFacetName] = lObj[facet];
+										} else {
+											var subFacetIndex = subsubFacet.substring(1,endSubSubBracket);
+											var isIndex = ValidIndexRE.test(subFacetIndex);
+											if(!(subFacetName in tab)) {
+												tab[subFacetName] = isIndex ? [] : {};
+											}
+											
+											if(Array.isArray(tab[subFacetName])) {
+												tab[subFacetName][parseInt(subFacetIndex)] = lObj[facet];
+											} else {
+												tab[subFacetName][subFacetIndex] = lObj[facet];
+											}
+										}
+										decoded = true;
+									}
+								} else {
+									tab[subFacetName] = lObj[facet];
+									decoded = true;
+								}
 							}
 						}
 					}

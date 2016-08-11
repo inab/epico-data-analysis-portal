@@ -1,8 +1,8 @@
 'use strict';
 
-angular.module('blueprintApp.config', [])
+angular.module('EPICOApp.config', [])
 	.constant('portalConfig',{
-		esHost: '<%- esHost %>',
+		epicoAPI: '<%- epicoAPI %>',
 		useLocalExportServer: '<%- useLocalExportServer %>',
 		dataRelease: '<%- dataRelease %>',
 		dataDesc: "<%- dataDesc %>",

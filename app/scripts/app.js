@@ -2,25 +2,24 @@
 /* globals Highcharts */
 /**
  * @ngdoc overview
- * @name blueprintApp
+ * @name EPICOApp
  * @description
- * # blueprintApp
+ * # EPICOApp
  *
  * Main module of the application.
  */
 // setup dependency injection
-angular.module('blueprintApp.d3',[]);
-//angular.module('blueprintApp.dagre-d3',[]);
-//angular.module('blueprintApp.canvasjs',[]);
-angular.module('blueprintApp.elasticsearch',[]);
-angular.module('blueprintApp.controllers', []);
+angular.module('EPICOApp.d3',[]);
+//angular.module('EPICOApp.dagre-d3',[]);
+//angular.module('EPICOApp.canvasjs',[]);
+angular.module('EPICOApp.controllers', []);
 
-var app = angular.module('blueprintApp', [
-    'blueprintApp.d3',
-//    'blueprintApp.dagre-d3',
-//    'blueprintApp.canvasjs',
-    'blueprintApp.elasticsearch',
-    'blueprintApp.controllers',
+var app = angular.module('EPICOApp', [
+    'EPICOApp.d3',
+//    'EPICOApp.dagre-d3',
+//    'EPICOApp.canvasjs',
+    'EPICOApp.config',
+    'EPICOApp.controllers',
     'treeControl',
     'highcharts-ng',
     'ngAnimate',
@@ -31,14 +30,14 @@ var app = angular.module('blueprintApp', [
     'ngTouch',
     'ui.bootstrap',
     'ui.select',
-    'elasticsearch',
 //    'digestHud',
 //    'smart-table',
     'ngCsv'
   ])
-  .config(function ($routeProvider,$uibTooltipProvider) {
+  .config(function ($locationProvider,$routeProvider,$uibTooltipProvider) {
 //  .config(function ($routeProvider,$uibTooltipProvider,digestHudProvider) {
 //	digestHudProvider.enable();
+	$locationProvider.hashPrefix("!");
 
     $routeProvider
       .when('/', {

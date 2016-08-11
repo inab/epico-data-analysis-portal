@@ -3,7 +3,7 @@
 /*jshint camelcase: false , quotmark: false */
 
 angular.
-module('blueprintApp').
+module('EPICOApp').
 factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorPalette','d3',function($q,$window,portalConfig,ConstantsService,ColorPalette,d3) {
 	
 	var METHYL_GRAPH = 'methyl';
@@ -1909,20 +1909,19 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var curRegionType = '';
 		var curRegionTypeNum;
 		results.sort(function(a,b) {
-			if(a._source.feature!==b._source.feature) {
-				return a._source.feature.localeCompare(b._source.feature);
-			} else if(a._source.coordinates[0].chromosome_start !== b._source.coordinates[0].chromosome_start) {
-				return a._source.coordinates[0].chromosome_start - b._source.coordinates[0].chromosome_start;
+			if(a.feature!==b.feature) {
+				return a.feature.localeCompare(b.feature);
+			} else if(a.coordinates[0].chromosome_start !== b.coordinates[0].chromosome_start) {
+				return a.coordinates[0].chromosome_start - b.coordinates[0].chromosome_start;
 			} else {
-				return a._source.coordinates[0].chromosome_end - b._source.coordinates[0].chromosome_end;
+				return a.coordinates[0].chromosome_end - b.coordinates[0].chromosome_end;
 			}
 		});
 		
 		// First pass, gather all features
 		var features = [];
 		var featuresHash = {};
-		results.forEach(function(feature) {
-			var featureRegion = feature._source;
+		results.forEach(function(featureRegion) {
 			features.push(featureRegion);
 			var dest = featureRegion.feature;
 			if(!(dest in rangeData.regionLayout)) {
@@ -3302,7 +3301,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	function storeFetchedData(rangeData,range_start,range_end,results) {
 		var localScope = rangeData.localScope;
 		results.forEach(function(segment) {
-			var analysis_id = segment._source.analysis_id;
+			var analysis_id = segment.analysis_id;
 			// We are storing only what we can process / understand
 			if(analysis_id in localScope.analysesHash) {
 				var analysis = localScope.analysesHash[analysis_id];
@@ -3318,38 +3317,38 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					case EXP_ANY_SERIES:
 						switch(segment._type) {
 							case ConstantsService.EXPG_CONCEPT:
-								value = segment._source.FPKM;
+								value = segment.FPKM;
 								meanCellTypeSeriesId = EXPG_SERIES;
-								payload = segment._source.gene_stable_id;
+								payload = segment.gene_stable_id;
 								break;
 							case ConstantsService.EXPT_CONCEPT:
-								value = segment._source.FPKM;
+								value = segment.FPKM;
 								meanCellTypeSeriesId = EXPT_SERIES;
-								payload = segment._source.transcript_stable_id;
+								payload = segment.transcript_stable_id;
 								break;
 						}
 						break;
 					case DLAT_HYPER_SERIES:
-						value = segment._source.meth_level;
+						value = segment.meth_level;
 						break;
 					case DLAT_HYPO_SERIES:
-						value = segment._source.meth_level;
+						value = segment.meth_level;
 						break;
 					case RREG_SERIES:
-						value = segment._source.z_score;
+						value = segment.z_score;
 						break;
 					default:
 						if(meanCellTypeSeriesId.indexOf(PDNA_NARROW_SERIES)===0) {
-							value = segment._source.log10_qvalue;
+							value = segment.log10_qvalue;
 						} else if(meanCellTypeSeriesId.indexOf(PDNA_BROAD_SERIES)===0) {
-							value = segment._source.log10_qvalue;
+							value = segment.log10_qvalue;
 						}
 						break;
 				}
 				
 				// Clipping to the viewed region
-				var chromosome_start = segment._source.chromosome_start;
-				var chromosome_end = segment._source.chromosome_end;
+				var chromosome_start = segment.chromosome_start;
+				var chromosome_end = segment.chromosome_end;
 				
 				if(chromosome_start < range_start) {
 					chromosome_start = range_start;
@@ -3364,8 +3363,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					meanCellTypeSeriesId: meanCellTypeSeriesId,
 					diseaseSeriesId: diseaseSeriesId,
 					analysis: analysis,
-					chromosome_start: segment._source.chromosome_start,
-					chromosome_end: segment._source.chromosome_end,
+					chromosome_start: segment.chromosome_start,
+					chromosome_end: segment.chromosome_end,
 					sDataS: sDataS
 				};
 				

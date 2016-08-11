@@ -2,7 +2,7 @@
 	'use strict';
 /* jshint camelcase: false , quotmark: false */
 
-angular.module('blueprintApp.dagre-d3',[])
+angular.module('EPICOApp.dagre-d3',[])
 	.factory('dagre-d3',[
 		function(){
 			// Got rid of internal, static, d3 library

@@ -2,7 +2,7 @@
 	'use strict';
 /* jshint camelcase: false , quotmark: false */
 
-	angular.module('blueprintApp.chartjs',[])
+	angular.module('EPICOApp.chartjs',[])
 		.factory('chartjsObj',[function() {
 			// Got rid of internal, static, CanvasJS library
 			return {Char: window.Chart};

@@ -4,12 +4,12 @@
 
 /**
  * @ngdoc function
- * @name blueprintApp.controller:ModalDataGridInstanceCtrl
+ * @name EPICOApp.controller:ModalDataGridInstanceCtrl
  * @description
  * # ModalDataGridInstanceCtrl
  * Controller of the modal data grid windows
  */
-angular.module('blueprintApp').controller('ModalDataGridInstanceCtrl', function ($scope, $sce, $uibModalInstance, modalDataGrid) {
+angular.module('EPICOApp').controller('ModalDataGridInstanceCtrl', function ($scope, $sce, $uibModalInstance, modalDataGrid) {
 	$scope.modalDataGrid = modalDataGrid;
 	if(modalDataGrid.limit===undefined) {
 		modalDataGrid.limit = 50;

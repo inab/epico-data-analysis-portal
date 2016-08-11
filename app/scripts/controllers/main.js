@@ -4,12 +4,12 @@
 
 /**
  * @ngdoc function
- * @name blueprintApp.controller:MainCtrl
+ * @name EPICOApp.controller:MainCtrl
  * @description
  * # MainCtrl
- * Controller of the blueprintApp
+ * Controller of the EPICOApp
  */
-angular.module('blueprintApp')
+angular.module('EPICOApp')
   .controller('MainCtrl', ['$rootScope','$scope','$sce','$location','$q','portalConfig','QueryService','ChartService','ConstantsService','$timeout','$uibModal','$interpolate','$anchorScroll',function($rootScope,$scope,$sce,$location,$q, portalConfig, QueryService, ChartService, ConstantsService, $timeout,$modal,$interpolate,$anchorScroll) {
 	
 	var SEARCHING_LABEL = "Searching...";
@@ -369,7 +369,7 @@ angular.module('blueprintApp')
 	topFeatures[ConstantsService.REGION_FEATURE_REACTION] = null;
 	topFeatures[ConstantsService.REGION_FEATURE_PATHWAY] = null;
 
-	function processRangeMatchNoResults(localScope,origQuery,queryTypes,deferred) {
+	function processRangeMatchNoResults(localScope,origQuery,queryTypes) {
 		var queryTypesStr;
 		queryTypes.forEach(function(queryType) {
 			if(queryTypesStr!==undefined) {
@@ -378,10 +378,14 @@ angular.module('blueprintApp')
 				queryTypesStr = queryType;
 			}
 		});
+		var deferred = $q.defer();
+		var promise = deferred.promise;
 		openModal('No results','Query '+origQuery.query+' did not match any '+queryTypesStr,function() {
 			localScope.query='';
 			deferred.reject('No results for '+origQuery.query);
 		});
+		
+		return promise;
 	}
 	
 	function preprocessQuery(localScope) {

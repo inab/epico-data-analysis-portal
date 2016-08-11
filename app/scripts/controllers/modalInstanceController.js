@@ -4,12 +4,12 @@
 
 /**
  * @ngdoc function
- * @name blueprintApp.controller:ModalInstanceCtrl
+ * @name EPICOApp.controller:ModalInstanceCtrl
  * @description
  * # ModalInstanceCtrl
  * Controller of the modal windows
  */
-angular.module('blueprintApp').controller('ModalInstanceCtrl', function ($scope, $uibModalInstance, modalState, modalMessage) {
+angular.module('EPICOApp').controller('ModalInstanceCtrl', function ($scope, $uibModalInstance, modalState, modalMessage) {
 	$scope.modalState = modalState;
 	$scope.modalMessage = modalMessage;
 	

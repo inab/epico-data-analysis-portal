@@ -2,7 +2,7 @@
   'use strict';
 /* jshint camelcase: false , quotmark: false */
 
-  angular.module('blueprintApp.d3',[])
+  angular.module('EPICOApp.d3',[])
     .factory('d3',[function(){
 	// Got rid of internal, static, d3 library
 	return window.d3;

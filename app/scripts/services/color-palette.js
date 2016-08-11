@@ -171,7 +171,7 @@ ColorPalette.prototype.getNextColors = function(numColors) {
 };
 
 angular.
-module('blueprintApp').
+module('EPICOApp').
 factory('ColorPalette', function ($http) {
 	
 	var service = {

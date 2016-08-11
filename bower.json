@@ -18,7 +18,6 @@
     "select2-bootstrap-css": "~1.4.6",
     "angular-ui-select": "~0.16.1",
     "angular-tree-control": "jmfernandez/angular-tree-control#6c71da1d8fb8b021af1e900cc53483b08ef3bb55",
-    "elasticsearch": "~10.1.3",
     "highcharts-release": "v4.2.3",
     "highcharts-ng": "inab/highcharts-ng#5a3d1168caa5b47031f57d920d0752859bb0dc95",
     "highcharts-export-csv": "highcharts/export-csv#257af53a0c5bc7fe438e0306ef514d87e2299af2",
@@ -27,9 +26,6 @@
     "ng-csv": "~0.3.6"
   },
   "overrides": {
-    "elasticsearch": {
-      "main": "elasticsearch.angular.js"
-    },
     "highcharts-release": {
       "main": [
         "highcharts.src.js",

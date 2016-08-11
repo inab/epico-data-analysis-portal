@@ -3,7 +3,7 @@
 /*jshint camelcase: false , quotmark: false */
 
 angular.
-module('blueprintApp').
+module('EPICOApp').
 factory('ConstantsService',function() {
 	var DEFAULT_SEARCH_URI = 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Human/Search/Results?site=ensembl;facet_species=Human;q=';
 	var REGION_SEARCH_URI = 'http://{{dataModel.annotations.EnsemblArchive}}.archive.ensembl.org/Homo_sapiens/Location/View?r=';

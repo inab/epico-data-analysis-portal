@@ -2,7 +2,7 @@
 	'use strict';
 /* jshint camelcase: false , quotmark: false */
 
-	angular.module('blueprintApp.canvasjs',[])
+	angular.module('EPICOApp.canvasjs',[])
 		.factory('canvasjsObj',[function() {
 			// Got rid of internal, static, CanvasJS library
 			return window.CanvasJS;

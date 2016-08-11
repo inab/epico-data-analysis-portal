@@ -1,5 +1,4 @@
 {
-	"esHost": "http://blueprint-dev.bioinfo.cnio.es/dev/es",
 	"epicoAPI": "http://blueprint-dev.bioinfo.cnio.es/epico-api",
 	"useLocalExportServer": "http://blueprint-dev.bioinfo.cnio.es/export-server/index.php",
 	"debug": true,

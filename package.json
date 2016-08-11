@@ -1,7 +1,7 @@
 {
-  "name": "blueprint-data-portal",
-  "version": "0.9.6",
-  "description": "BLUEPRINT Data Analysis Portal",
+  "name": "epico-data-analysis-portal",
+  "version": "1.0.0",
+  "description": "EPICO / BLUEPRINT Data Analysis Portal",
   "author": "José María Fernández <jmfernandez@cnio.es>",
   "contributors": [
     {
@@ -46,7 +46,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/inab/blueprint"
+    "url": "https://github.com/inab/epico-data-analysis-portal.git"
   },
   "private": true,
   "engines": {

@@ -1,5 +1,6 @@
 {
 	"esHost": "http://blueprint-data.bsc.es/elasticsearch",
+	"epicoAPI": "http://blueprint-data.bsc.es/epico-api",
 	"useLocalExportServer": "http://blueprint-dev.bioinfo.cnio.es/export-server/index.php",
 	"dataRelease": "August 2015",
 	"dataDesc": "This release includes data from {{termNodes.length}} cell types, including {{numCellularLines}} cell lines."

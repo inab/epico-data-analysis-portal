@@ -1,7 +1,7 @@
 {
-  "name": "blueprint-data-portal",
-  "version": "0.9.6",
-  "description": "BLUEPRINT Data Analysis Portal",
+  "name": "epico-data-analysis-portal",
+  "version": "1.0.0",
+  "description": "EPICO / BLUEPRINT Data Analysis Portal",
   "dependencies": {
     "es5-shim": "~4.5.7",
     "json3": "~3.3.2",
@@ -56,17 +56,17 @@
   },
   "authors": [
     {
-      "name": "Víctor de la Torre",
-      "email": "vdelatorre@cnio.es"
-    },
-    {
       "name": "José María Fernández",
       "email": "jmfernandez@cnio.es"
+    },
+    {
+      "name": "Víctor de la Torre",
+      "email": "vdelatorre@cnio.es"
     }
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/inab/blueprint-data-portal.git"
+    "url": "https://github.com/inab/epico-data-analysis-portal.git"
   },
   "private": true,
   "appPath": "app"

@@ -12,14 +12,14 @@ BASEPATH="$(dirname "${BASEZ}")"
 
 case "$(uname -n)" in
 	montblanc)
-		BLUEPRINT_DATAPORTAL_CONFIG="${BASEPATH}"/blueprint-dev-internal-montblanc-config.json
+		EPICO_DATAPORTAL_CONFIG="${BASEPATH}"/blueprint-dev-internal-montblanc-config.json
 		deployDir="${HOME}"/public_html/blueprint-internal
 		;;
 	*)
-		BLUEPRINT_DATAPORTAL_CONFIG="${BASEPATH}"/blueprint-dev-internal-config.json
+		EPICO_DATAPORTAL_CONFIG="${BASEPATH}"/blueprint-dev-internal-config.json
 		;;
 esac
-export BLUEPRINT_DATAPORTAL_CONFIG
+export EPICO_DATAPORTAL_CONFIG
 
 PATH="$(gem env gemdir)/bin:${PATH}"
 export PATH

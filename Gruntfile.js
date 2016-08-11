@@ -22,7 +22,7 @@ module.exports = function (grunt) {
     dist: 'dist'
   };
   
-  var dataportalConfigFile = process.env.BLUEPRINT_DATAPORTAL_CONFIG || 'default-config';
+  var dataportalConfigFile = process.env.EPICO_DATAPORTAL_CONFIG || 'default-config';
   if(dataportalConfigFile.indexOf('/') === -1 ) {
 	  dataportalConfigFile = './' + dataportalConfigFile;
   }

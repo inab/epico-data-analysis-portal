@@ -1411,6 +1411,10 @@ factory('QueryService',['$q','$http','portalConfig','ConstantsService','ChartSer
 			});
 	}
 	
+	function noMoreData() {
+		return $q.reject('No data returned');
+	}
+		
 	function getChartData(localScope,rangeData) {
 		var rangeSyntax = genRangeSyntax(rangeData);
 		
@@ -1423,64 +1427,74 @@ factory('QueryService',['$q','$http','portalConfig','ConstantsService','ChartSer
 		var scrolled = false;
 		var range_start = rangeData.range.start;
 		var range_end = rangeData.range.end;
+		var streamId;
+		var allResultsTotal;
 		
 		if(rangeData.flankingWindowSize!==undefined) {
 			range_start -= rangeData.flankingWindowSize;
 			range_end += rangeData.flankingWindowSize;
 		}
 		
-		return $http.get( [ portalConfig.epicoAPI , EPICO_DOMAIN , 'analysis' , 'data' , rangeSyntax[0] ].join('/') )
+		return $http.get( [ portalConfig.epicoAPI , EPICO_DOMAIN , 'analysis' , 'data' , rangeSyntax[0] , 'stream' ].join('/') )
 			.then(function getMoreChartDataUntilDone(response) {
-				var fetchedTotal = response.data.length;
-				var allResultsTotal = response.data.length;
-				localScope.maxResultsFetched = fetchedTotal;
-				
-				ChartService.storeFetchedData(rangeData,range_start,range_end,response.data);
-				total += fetchedTotal;
-				
-				// Re-drawing charts
-				var stillLoading = allResultsTotal > total;
+				if(Array.isArray(response.data)) {
+					var fetchedTotal = response.data.length;
+					localScope.maxResultsFetched = fetchedTotal;
+					
+					ChartService.storeFetchedData(rangeData,range_start,range_end,response.data);
+					total += fetchedTotal;
+					
+					// Re-drawing charts
+					var stillLoading = allResultsTotal > total;
 
-				// Now, updating the graphs
-				rangeData.numFetchEntries = total;
-				rangeData.numFetchTotal = allResultsTotal;
-				
-				// Is there any more data?
-				if(stillLoading) {
-					var percent = 100.0 * total / allResultsTotal;
+					// Now, updating the graphs
+					rangeData.numFetchEntries = total;
+					rangeData.numFetchTotal = allResultsTotal;
 					
-					localScope.searchButtonText = "Loaded "+percent.toPrecision(2)+'%';
-					
-					//console.log("Hay "+total+' de '+resp.hits.total);
-					scrolled = true;
-					//es.scroll({
-					//	index: ConstantsService.PRIMARY_DATA_INDEX,
-					//	scrollId: resp._scroll_id,
-					//	scroll: '60s'
-					//}, getMoreChartDataUntilDone);
-				} else {
-					//if(scrolled) {
-					//	es.clearScroll({scrollId: resp._scroll_id});
-					//}
-					
-					//console.log("Total: "+total+"; points: "+totalPoints);
-					
-					//console.log('All data ('+total+') was fetched');
-					if(fetchedTotal > 0) {
-						if(rangeData.state===ConstantsService.STATE_SHOW_DATA) {
-							localScope.searchButtonText = PLOTTING_LABEL;
-							localScope.resultsFetched = total;
-							//var xRange = [rangeData.range.start,rangeData.range.end];
-							
-							// Using the default view
-							ChartService.uiFuncs.redrawCharts(rangeData,true,stillLoading);
-						}
-						return localScope;
+					// Is there any more data?
+					if(stillLoading) {
+						var percent = 100.0 * total / allResultsTotal;
+						
+						localScope.searchButtonText = "Loaded "+percent.toPrecision(2)+'%';
+						
+						//console.log("Hay "+total+' de '+resp.hits.total);
+						scrolled = true;
+						//es.scroll({
+						//	index: ConstantsService.PRIMARY_DATA_INDEX,
+						//	scrollId: resp._scroll_id,
+						//	scroll: '60s'
+						//}, getMoreChartDataUntilDone);
+						return $http.post( [ portalConfig.epicoAPI , EPICO_DOMAIN , 'analysis' , 'data' , 'fetchStream' ].join('/') , { _stream_id: streamId } )
+							.then(getMoreChartDataUntilDone,noMoreData);
 					} else {
-						return $q.reject('No data returned');
+						//if(scrolled) {
+						//	es.clearScroll({scrollId: resp._scroll_id});
+						//}
+						
+						//console.log("Total: "+total+"; points: "+totalPoints);
+						
+						//console.log('All data ('+total+') was fetched');
+						if(fetchedTotal > 0) {
+							if(rangeData.state===ConstantsService.STATE_SHOW_DATA) {
+								localScope.searchButtonText = PLOTTING_LABEL;
+								localScope.resultsFetched = total;
+								//var xRange = [rangeData.range.start,rangeData.range.end];
+								
+								// Using the default view
+								ChartService.uiFuncs.redrawCharts(rangeData,true,stillLoading);
+							}
+							return localScope;
+						} else {
+							return $q.reject('No data returned');
+						}
 					}
+				} else if(response.data._stream_id !== undefined) {
+					streamId = response.data._stream_id;
+					allResultsTotal = response.data.total;
+					return $http.post( [ portalConfig.epicoAPI , EPICO_DOMAIN , 'analysis' , 'data' , 'fetchStream' ].join('/') , { _stream_id: streamId } )
+						.then(getMoreChartDataUntilDone,noMoreData);
 				}
-			});
+			},noMoreData);
 	}
 	
 	/*

@@ -27,7 +27,7 @@ factory('QueryService',['$q','$http','portalConfig','ConstantsService','ChartSer
 	};
 	
 	var DEFAULT_TIMEOUT = '5m';
-	var EPICO_DOMAIN = 'EPICO:2016-08';
+	var EPICO_DOMAIN = (portalConfig.epicoDomain !== undefined) ? portalConfig.epicoDomain : 'EPICO:2016-08';
 	
 	function DataModel(theDataModel,theCVHash) {
 		// Risky, but it is so easier to get the domains and other data

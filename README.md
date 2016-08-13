@@ -16,6 +16,7 @@ export EPICO_DATAPORTAL_CONFIG
 The configuration parameters are:
 
 * `epicoAPI`: The host of the EPICO REST API as a URL with the path, optionally giving the port.
+* `epicoDomain`: The domain inside EPICO REST API to use.
 
 Installation
 -----------

@@ -45,7 +45,7 @@ export PATH
 4) Clone this repository, and run `npm install`, so [Grunt] (http://gruntjs.com/), [Bower] (http://bower.io/) and other dependencies are installed:
 
 ```bash
-git clone https://github.com/inab/epico-data-analysis-portal.git epico-data-analysis-portal
+git clone -b 1.0 https://github.com/inab/epico-data-analysis-portal.git epico-data-analysis-portal
 cd epico-data-analysis-portal
 npm install
 ```

@@ -308,10 +308,6 @@ angular.module('EPICOApp')
 			});
 			
 			var regions = '';
-			// Now, let's prepare the backbones!
-			localScope.graphData = [];
-			localScope.currentTab = null;
-			localScope.currentTabId = null;
 			
 			localScope.rangeQuery.forEach(function(range,i) {
 				if(!range.isDisabled) {
@@ -535,7 +531,19 @@ angular.module('EPICOApp')
 			var deferred = $q.defer();
 			var promise = deferred.promise;
 			promise = promise.then(preprocessQuery)
-				.then(updateChromosomes)
+				.then(function(localScope) {
+					// First, let's prepare the backbones!
+					localScope.graphData = [];
+					localScope.currentTab = null;
+					localScope.currentTabId = null;
+					
+					return localScope;
+				})
+				.then(function(localScope) {
+					return $timeout(function() {
+						return updateChromosomes(localScope);
+					});
+				})
 				.then(QueryService.launch(QueryService.getGeneLayout),function(err) {
 					openModal('Data error','Error while issuing initial query');
 					console.error('updateChromosomes');

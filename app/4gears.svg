@@ -27,8 +27,19 @@
 	{
 		var element_to_rotate = svgDocument.getElementById(target_id);
 		var my_transform = svgDocument.createElementNS(svgNS, "animateTransform");
-
-		var bb = element_to_rotate.getBBox();
+		
+		var bb;
+		try {
+			bb = element_to_rotate.getBBox();
+		} catch(e) {
+			bb = {
+				x: element_to_rotate.clientLeft,
+				y: element_to_rotate.clientTop,
+				width: element_to_rotate.clientWidth,
+				height: element_to_rotate.clientHeight
+			};
+		}
+		
 		var cx = bb.x + bb.width/2;
 		var cy = bb.y + bb.height/2;
 

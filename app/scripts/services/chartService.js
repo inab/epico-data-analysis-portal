@@ -1611,6 +1611,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 										'Minimum: {point.low}<br/>',
 									backgroundColor: '#FFFFFF'
 								};
+								chart.options.options.plotOptions.series.groupPadding = 0.05;
 								chart.options.xAxis = {
 									title: {
 										text: 'Ensembl Ids (at '+rangeData.rangeStrEx+')'

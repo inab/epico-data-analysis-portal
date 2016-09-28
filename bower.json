@@ -22,6 +22,7 @@
     "highcharts-ng": "inab/highcharts-ng#5a3d1168caa5b47031f57d920d0752859bb0dc95",
     "highcharts-export-csv": "highcharts/export-csv#257af53a0c5bc7fe438e0306ef514d87e2299af2",
     "jalette": "jalette#b9b4108c652baef9d77ef4f32d8f09000c7dc2d8",
+    "simple-statistics": "=1.0.0",
     "roboto-fontface": "~0.4.5",
     "ng-csv": "~0.3.6"
   },
@@ -33,6 +34,7 @@
         "modules/broken-axis.src.js",
         "modules/exporting.src.js",
         "modules/no-data-to-display.src.js",
+        "modules/heatmap.src.js",
         "modules/drilldown.src.js"
       ]
     },

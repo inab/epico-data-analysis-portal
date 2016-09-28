@@ -4,7 +4,7 @@
 
 angular.
 module('EPICOApp').
-factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorPalette','d3',function($q,$window,portalConfig,ConstantsService,ColorPalette,d3) {
+factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorPalette','d3','SimpleStatistics',function($q,$window,portalConfig,ConstantsService,ColorPalette,d3,ss) {
 	
 	var METHYL_GRAPH = 'methyl';
 	var METHYL_HYPER_GRAPH = METHYL_GRAPH+'_hyper';
@@ -1559,7 +1559,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									},
 								},
 								legend: {
-									enabled: false,
+									enabled: true,
 									title: {
 										text: 'Genomic Features & '+legendTitle,
 									},

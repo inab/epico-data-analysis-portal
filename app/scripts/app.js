@@ -22,6 +22,7 @@ var app = angular.module('EPICOApp', [
     'EPICOApp.controllers',
     'treeControl',
     'highcharts-ng',
+    'plotly',
     'ngAnimate',
     'ngCookies',
     'ngResource',
@@ -37,7 +38,7 @@ var app = angular.module('EPICOApp', [
   .config(function ($locationProvider,$routeProvider,$uibTooltipProvider) {
 //  .config(function ($routeProvider,$uibTooltipProvider,digestHudProvider) {
 //	digestHudProvider.enable();
-	$locationProvider.hashPrefix("!");
+	$locationProvider.hashPrefix('!');
 
     $routeProvider
       .when('/', {

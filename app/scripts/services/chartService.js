@@ -19,11 +19,13 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	var LIBRARY_CANVASJS = 'canvasjs';
 	var LIBRARY_CHARTJS = 'chartjs';
 	var LIBRARY_HIGHCHARTS = 'highcharts';
+	var LIBRARY_PLOTLY = 'plotly';
 	
 	var GRAPH_TYPE_STEP_NVD3 = 'step-'+LIBRARY_NVD3;
 	var GRAPH_TYPE_STEP_CANVASJS = 'step-'+LIBRARY_CANVASJS;
 	var GRAPH_TYPE_STEP_CHARTJS = 'step-'+LIBRARY_CHARTJS;
 	var GRAPH_TYPE_BOXPLOT_HIGHCHARTS = 'boxplot-'+LIBRARY_HIGHCHARTS;
+	var GRAPH_TYPE_BOXPLOT_PLOTLY = 'boxplot-'+LIBRARY_PLOTLY;
 	var GRAPH_TYPE_STEP_HIGHCHARTS = 'step-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_SPLINE_HIGHCHARTS = 'spline-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_AREARANGE_HIGHCHARTS = 'arearange-'+LIBRARY_HIGHCHARTS;
@@ -119,8 +121,14 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			yAxisLabel: 'FPKM',
 			views: [
 				{
+					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
+					subtitle: 'mean series',
+				},
+				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 					subtitle: 'mean series',
+					viewPostTitle: ' (old)',
+					isInitiallyHidden: true,
 				},
 			],
 		},
@@ -132,8 +140,14 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			yAxisLabel: 'FPKM',
 			views: [
 				{
+					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
+					subtitle: 'mean series',
+				},
+				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 					subtitle: 'mean series',
+					viewPostTitle: ' (old)',
+					isInitiallyHidden: true,
 				},
 			],
 		},
@@ -450,10 +464,124 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return featureSymbol.value[0];
 	}
 	
-	// This function was designed as a method from series (i.e. it does not work alone)
-	function genBoxPlotSeries() {
+	function genPlotlyBoxPlotSeries(/*optional*/origValues) {
 		// jshint validthis:true
-		var origValues = this.filteredSeriesValues;
+		if(origValues===undefined || origValues===null) {
+			origValues = this.filteredSeriesValues;
+		}
+		// jshint validthis:false
+		
+		// Very simple model: x contains the values, y contains the 
+		var x = [];
+		var y = [];
+		
+		origValues.forEach(function(augData) {
+			var data = augData.sDataS;
+			var label = data[3];
+			
+			x.push(label);
+			y.push(data[2]);
+		});
+		
+		return { x: x, y: y };
+	}
+	
+	// This function was designed as a method from chart (i.e. it does not work alone)
+	function plotlyBoxPlotAggregator(doGenerate,stillLoading,filterFunc) {
+		// jshint validthis:true
+		var chart = this;
+		// jshint validthis:false
+		
+		var isEmpty = true;
+		stillLoading = !!stillLoading;
+		chart.allData.forEach(function(series) {
+			var reDigest = series.filteredSeriesValues === null || series.filteredSeriesValues === undefined || !stillLoading || !('term_type' in series);
+			
+			if(series.filteredSeriesValues === null || series.filteredSeriesValues === undefined) {
+				if(filterFunc) {
+					series.filteredSeriesValues = series.seriesValues.filter(filterFunc);
+				} else {
+					series.filteredSeriesValues = series.seriesValues;
+				}
+				
+				// Invalidate digested values
+				series.seriesDigestedValues = null;
+			}
+			
+			// isEmpty detector
+			if(series.filteredSeriesValues.length > 0) {
+				isEmpty = false;
+			}
+			
+			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
+				series.seriesDigestedValues = series.seriesGenerator();
+				
+				// As the series generator knows nothing about 
+				var labelCache = {};
+				series.seriesDigestedValues.x = series.seriesDigestedValues.x.map(function(label) {
+					if(label in labelCache) {
+						label = labelCache[label];
+					} else {
+						if(label in chart.regionFeature) {
+							label = labelCache[label] = chart.regionFeature[label].label + " \n("+label+')';
+						} else {
+							labelCache[label] = label;
+						}
+					}
+					
+					return label;
+				});
+				series.series.x = series.seriesDigestedValues.x;
+				series.series.y = series.seriesDigestedValues.y;
+			}
+			//console.log("DEBUG "+g.name);
+			//console.log(series.seriesValues);
+			//series.seriesValues = undefined;
+			var visibilityState;
+			var showInLegend;
+			if(series.linkedTo !== undefined) {
+				visibilityState = series.linkedTo.series.visible;
+				showInLegend = false;
+			} else {
+				if('term_type' in series) {
+					visibilityState = !stillLoading && !series.term_type.termHidden;
+				} else {
+					visibilityState = stillLoading || !chart.meanSeriesHidden;
+				}
+				showInLegend = visibilityState;
+			}
+			
+			switch(chart.library) {
+				case LIBRARY_HIGHCHARTS:
+					series.series.visible = visibilityState;
+					series.series.showInLegend = showInLegend;
+					break;
+				case LIBRARY_PLOTLY:
+					series.series.visible = visibilityState;
+					series.series.showlegend = showInLegend;
+					break;
+				case LIBRARY_NVD3:
+					if(visibilityState) {
+						series.series[series.seriesDest] = [];
+					} else {
+						series.series[series.seriesDest] = series.seriesDigestedValues;
+					}
+					break;
+			}
+		});
+		
+		// It is assigned only once
+		chart.isEmpty = isEmpty;
+		chart.isLoading = stillLoading;
+		console.log('Chartie',chart);
+	}
+	
+	// This function was designed as a method from series (i.e. it does not work alone)
+	function genBoxPlotSeries(/*optional*/origValues) {
+		// jshint validthis:true
+		if(origValues===undefined || origValues===null) {
+			origValues = this.filteredSeriesValues;
+		}
 		// jshint validthis:false
 		
 		// First, process data
@@ -487,35 +615,41 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			var Q3;
 			var Wl;
 			var Wh;
-			var outliers = [];
+			//var outliers = [];
+			
+			var sseries = samp.series;
+			
 			if(lastPos>1) {
-				samp.series.sort(function(a,b) { return a-b; });
+				sseries.sort(function(a,b) { return a-b; });
 				
-				var Q2pos = (lastPos >> 1);
-				var lastQ1pos = Q2pos;
-				var firstQ3pos = Q2pos;
-				if((lastPos & 1)===0) {	// fast remainder by 2
-					Q2 = samp.series[Q2pos];
-				} else {
-					Q2 = (samp.series[Q2pos] + samp.series[Q2pos+1]) / 2.0;
-					
-					// Calibrating it for next step
-					firstQ3pos++;
-				}
+				//var Q2pos = (lastPos >> 1);
+				//var lastQ1pos = Q2pos;
+				//var firstQ3pos = Q2pos;
+				//if((lastPos & 1)===0) {	// fast remainder by 2
+				//	Q2 = samp.series[Q2pos];
+				//} else {
+				//	Q2 = (samp.series[Q2pos] + samp.series[Q2pos+1]) / 2.0;
+				//	
+				//	// Calibrating it for next step
+				//	firstQ3pos++;
+				//}
+				//
+				//var Q1pos = lastQ1pos>>1;
+				//var Q3pos = firstQ3pos + Q1pos;
+				//if((lastQ1pos & 1)===0) {	// fast remainder by 2
+				//	Q1 = samp.series[Q1pos];
+				//	Q3 = samp.series[Q3pos];
+				//} else if((lastPos & 3)===0) {	// fast remainder by 4
+				//	Q1 = (samp.series[Q1pos] + 3.0*samp.series[Q1pos+1]) / 4.0;
+				//	Q3 = (3.0*samp.series[Q3pos] + samp.series[Q3pos+1]) / 4.0;
+				//} else {
+				//	Q1 = (3.0*samp.series[Q1pos] + samp.series[Q1pos+1]) / 4.0;
+				//	Q3 = (samp.series[Q3pos] + 3.0*samp.series[Q3pos+1]) / 4.0;
+				//}
 				
-				var Q1pos = lastQ1pos>>1;
-				var Q3pos = firstQ3pos + Q1pos;
-				if((lastQ1pos & 1)===0) {	// fast remainder by 2
-					Q1 = samp.series[Q1pos];
-					Q3 = samp.series[Q3pos];
-				} else if((lastPos & 3)===0) {	// fast remainder by 4
-					Q1 = (samp.series[Q1pos] + 3.0*samp.series[Q1pos+1]) / 4.0;
-					Q3 = (3.0*samp.series[Q3pos] + samp.series[Q3pos+1]) / 4.0;
-				} else {
-					Q1 = (3.0*samp.series[Q1pos] + samp.series[Q1pos+1]) / 4.0;
-					Q3 = (samp.series[Q3pos] + 3.0*samp.series[Q3pos+1]) / 4.0;
-				}
-				
+				Q1 = ss.quantileSorted(sseries,0.25);
+				Q2 = ss.quantileSorted(sseries,0.5);
+				Q3 = ss.quantileSorted(sseries,0.75);
 				// The "wishkers"
 				var IQR = Q3 - Q1;
 				Wl = Q1 - 1.5 * IQR;
@@ -529,14 +663,14 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				}
 				
 				// And last, the outliers
-				samp.series.forEach(function(d) {
-					if(d<Wl || d>Wh) {
-						outliers.push(d);
-					}
-				});
+				//samp.series.forEach(function(d) {
+				//	if(d<Wl || d>Wh) {
+				//		outliers.push(d);
+				//	}
+				//});
 			} else if(lastPos===1) {
-				Q1 = samp.series[0];
-				Q3 = samp.series[1];
+				Q1 = sseries[0];
+				Q3 = sseries[1];
 				Q2 = (Q1+Q3) / 2.0;
 				if(Q1>Q3) {
 					var Qtmp = Q3;
@@ -546,7 +680,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				Wl = Q1;
 				Wh = Q3;
 			} else {
-				Wl = Wh = Q1 = Q2 = Q3 = samp.series[0];
+				Wl = Wh = Q1 = Q2 = Q3 = sseries[0];
 			}
 			
 			//return {
@@ -563,7 +697,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			
 			// Outliers are available, but they must be injected in a different chart
 			//return {label:samp.label, start:samp.start, data:[Wl,Q1,Q2,Q3,Wh]};
-			return {label:samp.label, start:samp.start, data:{low: Wl,q1: Q1,median: Q2,q3: Q3,high: Wh, number: samp.series.length}};
+			return {label:samp.label, start:samp.start, data:{low: Wl,q1: Q1,median: Q2,q3: Q3,high: Wh, number: samp.series.length, outliers: sseries}};
 		});
 		
 		//console.log("Orig values");
@@ -589,6 +723,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 		
 		if(doGenerate || !chart.boxPlotCategories) {
+			console.log(chart);
+			
 			var allEnsIds = [];
 			var allEnsIdsHash = {};
 			chart.allData.forEach(function(series) {
@@ -733,13 +869,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				showInLegend = visibilityState;
 			}
 			
-			if(chart.library!==LIBRARY_NVD3) {
-				series.series.visible = visibilityState;
-				series.series.showInLegend = showInLegend;
-			} else if(visibilityState) {
-				series.series[series.seriesDest] = [];
-			} else {
-				series.series[series.seriesDest] = series.seriesDigestedValues;
+			switch(chart.library) {
+				case LIBRARY_HIGHCHARTS:
+					series.series.visible = visibilityState;
+					series.series.showInLegend = showInLegend;
+					break;
+				case LIBRARY_PLOTLY:
+					series.series.visible = visibilityState;
+					series.series.showlegend = showInLegend;
+					break;
+				case LIBRARY_NVD3:
+					if(visibilityState) {
+						series.series[series.seriesDest] = [];
+					} else {
+						series.series[series.seriesDest] = series.seriesDigestedValues;
+					}
+					break;
 			}
 		});
 		
@@ -753,9 +898,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	// This function was designed as a method from series (i.e. it does not work alone)
-	function genMeanSeries() {
+	function genMeanSeries(/*optional*/origValues) {
 		// jshint validthis:true
-		var origValues = this.filteredSeriesValues;
+		if(origValues===undefined || origValues===null) {
+			origValues = this.filteredSeriesValues;
+		}
 		// jshint validthis:false
 		
 		var meanValues = [];
@@ -838,9 +985,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	// This function was designed as a method from series (i.e. it does not work alone)
-	function genAreaRangeSeries() {
+	function genAreaRangeSeries(/*optional*/origValues) {
 		// jshint validthis:true
-		var origValues = this.filteredSeriesValues;
+		if(origValues===undefined || origValues===null) {
+			origValues = this.filteredSeriesValues;
+		}
 		// jshint validthis:false
 		
 		var minMaxValues = [];
@@ -938,9 +1087,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 	// This function was designed as a method from series (i.e. it does not work alone)
-	function genSegmentSeries() {
+	function genSegmentSeries(/*optional*/origValues) {
 		// jshint validthis:true
-		var origValues = this.filteredSeriesValues;
+		if(origValues===undefined || origValues===null) {
+			origValues = this.filteredSeriesValues;
+		}
 		// jshint validthis:false
 		
 		var retValues = [];
@@ -1287,7 +1438,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var charts = getCharts(rangeData);
 		if(event.xAxis) {
 			charts.forEach(function(oChart) {
-				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
+				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS && oChart.library === LIBRARY_HIGHCHARTS) {
 					var chart = oChart.options.getHighcharts();
 					chart.xAxis[0].setExtremes(event.xAxis[0].min,event.xAxis[0].max);
 					if(!chart.resetZoomButton) {
@@ -1297,7 +1448,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			});
 		} else {
 			charts.forEach(function(oChart) {
-				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
+				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS && oChart.library === LIBRARY_HIGHCHARTS) {
 					var chart = oChart.options.getHighcharts();
 					chart.xAxis[0].setExtremes(null,null);
 					if(chart.resetZoomButton) {
@@ -1369,8 +1520,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				title += ' on ' + postTitle;
 			}
 			
-			var chartViews = gData.views.map(function(gDataView) {
+			var chartViews = gData.views.map(function(gDataView,iG) {
 				var chart;
+				
+				var listTitle = title;
+				if(gDataView.viewPostTitle !== undefined) {
+					listTitle += gDataView.viewPostTitle;
+				} else if(iG > 0) {
+					// This is to distinguish the different charts
+					// new they do not have a view post title
+					listTitle += ' (' + (iG+1) + ')';
+				}
 				
 				var gDataViewType = Array.isArray(gDataView.type) ? gDataView.type[0] :  gDataView.type;
 				var libraryChartType;
@@ -1459,6 +1619,19 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							library: LIBRARY_CANVASJS,
 						};
 						break;
+					case GRAPH_TYPE_BOXPLOT_PLOTLY:
+						chart = {
+							seriesAggregator: plotlyBoxPlotAggregator,
+							plotlyOptions: {
+								width: 1500,
+								height: 1500
+							},
+							data: [],
+							library: LIBRARY_PLOTLY,
+						};
+						libraryChartType = 'boxplot';
+						break;
+						
 					case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
 						chart = {
 							seriesAggregator: highchartsBoxPlotAggregator,
@@ -1502,10 +1675,14 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				
 				// Common attributes
 				chart.chartId = gName;
+				if(iG > 0) {
+					chart.chartId += '_'+iG;
+				}
 				chart.type = gDataViewType;
 				chart.graphTypes = Array.isArray(gDataView.type) ? gDataView.type : [ gDataView.type ];
 				
 				chart.title = title;
+				chart.listTitle = listTitle;
 				chart.subtitle = (gDataView.subtitle!==undefined) ? gDataView.subtitle : null;
 				chart.yAxisLabel = gData.yAxisLabel;
 				
@@ -1516,7 +1693,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					meanSeries: null
 				};
 				// Is this graph initially hidden?
-				if(gData.isInitiallyHidden !== undefined) {
+				if(gDataView.isInitiallyHidden !== undefined) {
+					chart.isHidden = gDataView.isInitiallyHidden;
+				} else if(gData.isInitiallyHidden !== undefined) {
 					chart.isHidden = gData.isInitiallyHidden;
 				}
 				chart.meanSeriesHidden = !rangeData.ui.initiallyShowMeanSeries;
@@ -1527,6 +1706,52 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				
 				// And now, specific customizations for this library
 				switch(chart.library) {
+					case LIBRARY_PLOTLY:
+						var axisTitleFont = {
+							family: 'Lucida Grande, Lucida Sans Unicode, Arial, Helvetica, sans-serif',
+							size: '12px'
+						};
+						chart.options = {
+							autosize: true,
+							title: chart.title,
+							font: {
+								family: axisTitleFont.family,
+								size: '11px'
+							},
+							titlefont: {
+								size: '18px'
+							},
+							showlegend: true,
+							legend: {
+								orientation: 'h',
+								y: -0.2
+							},
+							xaxis: {
+								titlefont: axisTitleFont,
+								tickangle: 0,
+							},
+							yaxis: {
+								title: chart.yAxisLabel,
+								titlefont: axisTitleFont,
+							},
+							margin: { 
+								t: 50,
+							},
+						};
+						switch(gDataViewType) {
+							case GRAPH_TYPE_BOXPLOT_PLOTLY:
+								chart.options.boxmode = 'group';
+								chart.options.boxgap = 0.1;
+								chart.options.xaxis.title = 'Ensembl Ids (at '+rangeData.rangeStrEx+')';
+								break;
+							default:
+								chart.options.xaxis = {
+									title: 'Coordinates (at '+rangeData.rangeStrEx+')'
+								};
+								break;
+						};
+
+						break;
 					case LIBRARY_HIGHCHARTS:
 						// Common options
 						chart.options = {
@@ -1647,7 +1872,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								break;
 						}
 						
-						// Setting the subtitle (if it is appropiate)
+						// Setting the subtitle (if it is appropriate)
 						setChartSubtitle(chart,rangeData,viewClass);
 						var yAxis = {
 							title: {
@@ -1700,156 +1925,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							}
 						}
 						
-						// Old style markup
-						if(false && gDataViewType !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
-							// Adding the gene and transcript regions
-							var plotBands = [];
-							var plotLines = [];
-							chart.options.xAxis.plotBands = plotBands;
-							chart.options.xAxis.plotLines = plotLines;
-							ConstantsService.REGION_FEATURES.forEach(function(featureType) {
-								if(featureType in DRAWABLE_REGION_FEATURES_V0) {
-									var drawableFeature = DRAWABLE_REGION_FEATURES_V0[featureType];
-									
-									// Consolidating the declared feature regions
-									var consolidatedFeatureRegions = [];
-									var consolidatedHash = {};
-									if(featureType in rangeData.regionLayout) {
-										rangeData.regionLayout[featureType].forEach(function(featureRegion) {
-											var uKey = '';
-											featureRegion.coordinates.forEach(function(coords) {
-												uKey += coords.chromosome_start + ':' + coords.chromosome_end + ';';
-											});
-											var feaRegion;
-											if(uKey in consolidatedHash) {
-												feaRegion = consolidatedHash[uKey];
-												feaRegion.label += ', ' + featureRegion.label;
-											} else {
-												feaRegion = {
-													label: featureRegion.label,
-													coordinates: featureRegion.coordinates,
-												};
-												consolidatedFeatureRegions.push(feaRegion);
-												consolidatedHash[uKey] = feaRegion;
-											}
-										});
-										
-										consolidatedFeatureRegions.forEach(function(featureRegion) {
-											featureRegion.coordinates.forEach(function(coords) {
-												switch(drawableFeature.type) {
-													case PLOTBAND_FEATURE:
-														var plotBand = {
-															//borderColor: drawableFeature.color,
-															//borderColor: {
-															//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-															//	stops: [
-															//		[0, drawableFeature.color],
-															//		[1, '#000000']
-															//	]
-															//},
-															//borderWidth: 1,
-															color: drawableFeature.color,
-															from: coords.chromosome_start,
-															to: coords.chromosome_end,
-															//zIndex: zIndex+5
-														};
-														plotBands.push(plotBand);
-														
-														if(drawableFeature.showLabel) {
-															var plotBandLabel = {
-																text: featureRegion.label,
-																style: {
-																	fontSize: '8px',
-																},
-																rotation: 330
-															};
-															plotBand.label = plotBandLabel;
-														}
-														break;
-													case BORDERED_PLOTBAND_FEATURE:
-														var borderedPlotBand = {
-															//borderColor: drawableFeature.color,
-															//borderColor: {
-															//	linearGradient: { x1: 0, x2: 1, y1:0, y2: 0 },
-															//	stops: [
-															//		[0, drawableFeature.color],
-															//		[1, '#000000']
-															//	]
-															//},
-															//borderWidth: 0,
-															color: drawableFeature.color,
-															from: coords.chromosome_start,
-															to: coords.chromosome_end,
-															//zIndex: 5
-														};
-														plotBands.push(borderedPlotBand);
-														
-														var borderedStart = {
-															color: 'gray',
-															dashStyle: 'DashDot',
-															width: 2,
-															value: coords.chromosome_start,
-															zIndex: 6
-														};
-														var borderedStop = {
-															color: 'gray',
-															dashStyle: 'Dash',
-															width: 2,
-															value: coords.chromosome_end,
-															zIndex: 6
-														};
-														plotLines.push(borderedStart,borderedStop);
-														
-														if(drawableFeature.showLabel) {
-															var borderedPlotBandLabel = {
-																text: featureRegion.label,
-																verticalAlign: 'middle',
-																textAlign: 'center',
-																align: 'center',
-																style: {
-																	fontSize: '2mm',
-																},
-																rotation: 90
-															};
-															if(drawableFeature.showAtBorders) {
-																borderedStart.label = borderedPlotBandLabel;
-																borderedStop.label = borderedPlotBandLabel;
-															} else {
-																borderedPlotBand.label = borderedPlotBandLabel;
-															}
-														}
-														break;
-													case PLOTLINE_FEATURE:
-														var plotLine = {
-															color: drawableFeature.color,
-															width: 2,
-															value: (featureType === ConstantsService.REGION_FEATURE_STOP_CODON) ? coords.chromosome_end : coords.chromosome_start,
-															zIndex: 5
-														};
-														plotLines.push(plotLine);
-														
-														if(drawableFeature.showLabel) {
-															var plotLineLabel = {
-																text: featureRegion.label,
-																style: {
-																	fontSize: '2mm',
-																}
-															};
-															if(featureType === ConstantsService.REGION_FEATURE_STOP_CODON) {
-																plotLineLabel.rotation = 270;
-																plotLineLabel.textAlign = 'right';
-																plotLineLabel.x = 10;
-															}
-															plotLine.label = plotLineLabel;
-														}
-														break;
-												}
-											});
-										});
-									}
-								}
-							});
-						}
 						break;
 				}
 				
@@ -2069,11 +2144,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			case LIBRARY_HIGHCHARTS:
 				chart.options.options.legend.enabled = ! chart.options.options.legend.enabled;
 				break;
+			case LIBRARY_PLOTLY:
+				chart.options.showlegend = ! chart.options.showlegend;
+				break;
 		}
 	}
 	
 	function isLegendEnabled(chart) {
-		return !!chart.options.options.legend.enabled;
+		switch(chart.library) {
+			case LIBRARY_HIGHCHARTS:
+				return !!chart.options.options.legend.enabled;
+			case LIBRARY_PLOTLY:
+				return !!chart.options.showlegend;
+				break;
+			default:
+				return true;
+		}
 	}
 	
 	
@@ -2328,6 +2414,20 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								};
 								break;
+							case GRAPH_TYPE_BOXPLOT_PLOTLY:
+								series = {
+									seriesGenerator: genPlotlyBoxPlotSeries,
+									series: {
+										type: 'box',
+										boxpoints: 'all',
+										boxmean: true,
+										line: {
+											width: 1,
+										},
+										jitter: 0.3,
+									}
+								};
+								break;
 							case GRAPH_TYPE_STEP_HIGHCHARTS:
 								series = {
 									seriesGenerator: genMeanSeriesHighcharts,
@@ -2454,6 +2554,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								series.seriesDest = 'dataPoints';
 								
 								chart.options.data.push(series.series);
+								break;
+							
+							case LIBRARY_PLOTLY:
+								series.seriesDest = 'y';
+								series.series.id = data[seriesIdFacet]+'-'+iGraphType;
+								series.series.name = seriesName;
+								series.series.marker = {
+									color: seriesColor,
+								};
+								
+								chart.data.push(series.series);
 								break;
 						}
 						
@@ -2908,6 +3019,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 	}
 	
+	// To be deprecated
 	function assignSeriesDataToChart(chart,data) {
 		// Very important, so we are managing the same array
 		switch(chart.library) {
@@ -2917,9 +3029,13 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			case LIBRARY_HIGHCHARTS:
 				chart.options.series[0].data = data;
 				break;
+			case LIBRARY_PLOTLY:
+				// TBI
+				break;
 		}
 	}
 	
+	// To be deprecated
 	function getChartSeriesData(chart) {
 		var data;
 		
@@ -2929,6 +3045,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				break;
 			case LIBRARY_HIGHCHARTS:
 				data = chart.options.series[0].data;
+				break;
+			case LIBRARY_PLOTLY:
+				// TBI
 				break;
 		}
 		
@@ -3439,7 +3558,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var initialDiseaseByCellTypes = [];
 		
 		var charts = getCharts(rangeData,VIEW_GENERAL);
-		
+		console.log('Charto',charts);
 		var enableTermNodeFunc = function(termNode) {
 			if(termNode.wasSeen) {
 				numSelected++;

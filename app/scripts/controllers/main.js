@@ -667,6 +667,7 @@ angular.module('EPICOApp')
 			case ConstantsService.STATE_SHOW_DATA:
 				$anchorScroll('resultTabs');
 			//	doRefresh(rangeData);
+				/*
 				if(rangeData.ui.treeDisplayState === ConstantsService.TREE_STATE_INITIAL) {
 					if(rangeData.ui.treeDisplay!=='none') {
 						rangeData.ui.treeDisplayState = ConstantsService.TREE_STATE_FETCHING;
@@ -703,6 +704,7 @@ angular.module('EPICOApp')
 						rangeData.ui.treeDisplayState = ConstantsService.TREE_STATE_END;
 					}
 				}
+				*/
 				switch(rangeData.fetchState) {
 					case ConstantsService.FETCH_STATE_END:
 						ChartService.uiFuncs.redrawCharts(rangeData);

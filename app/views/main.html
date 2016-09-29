@@ -204,6 +204,7 @@
 					</ui-select>
 					</div>
 					
+					<!--
 					<div class="form-group">
 						<label>Stats Tree</label>
 						<label style="font-weight:normal;">
@@ -216,6 +217,7 @@
 							<input type="radio" ng-model="rangeData.ui.treeDisplay" value="none"> Hide
 						</label>
 					</div>
+					-->
 				</div>
 				<h4 class="text-center">Please, (de)select the initial charts you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCharts(rangeData)">Go!</button></h4>
 			</div>
@@ -283,14 +285,14 @@
 						<div class="col-sm-12">&nbsp;</div>
 						<div class="col-xs-1 col-sm-12 termItem pointer" ng-repeat="chart in chartView.charts track by chart.chartId" ng-click="switchChart($event,chart,rangeData)" ng-if="!chart.isEmpty" ng-hide="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 							<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color, 'background-color': chart.bpSideData.meanSeries.color }" ng-class="{'dash': !chart.meanSeriesHidden}"></span>
-							<span class="term">{{chart.title}}</span>
+							<span class="term">{{chart.listTitle}}</span>
 						</div>
 						<div class="col-sm-12">&nbsp;</div>
 						<uib-accordion class="col-sm-12" close-others="false" ng-show="uiFuncs.getChartsWithDataCount(rangeData,view.viewClass) &gt; uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)">
 							<uib-accordion-group heading="&#x25BC; {{uiFuncs.getChartsWithDataCount(rangeData,view.viewClass) - uiFuncs.getVisibleChartsCount(rangeData,view.viewClass)}} charts disabled" panel-class="panel-info" class="row terms-selector">
 								<div class="col-xs-1 col-sm-12 termItem pointer chartHidden" ng-repeat="chart in chartView.charts track by chart.chartId" ng-click="switchChart($event,chart,rangeData)" ng-if="!chart.isEmpty" ng-show="chart.isHidden" uib-tooltip-template="'tooltip/chartSwitch.html'" tooltip-append-to-body="true">
 									<span class="square" ng-style="{'border-color': chart.bpSideData.meanSeries.color}"></span>
-									<span class="term">{{chart.title}}</span>
+									<span class="term">{{chart.listTitle}}</span>
 								</div>
 							</uib-accordion-group>
 						</uib-accordion>
@@ -353,6 +355,9 @@
 							<canvasjs class="datachart" ng-switch-when="canvasjs" config="chart.options"></canvasjs>
 							<chartjs class="datachart" ng-switch-when="chartjs" config="chart.options"></chartjs>
 							<highchart class="datachart" ng-switch-when="highcharts" config="chart.options" disable-data-watch="'1'"></highchart>
+							<div class="datachart" ng-switch-when="plotly">
+								<plotly plotly-data="chart.data" plotly-layout="chart.options" plotly-options="chart.plotlyOptions"></plotly>
+							</div>
 						</div>
 					</div>
 					
@@ -390,6 +395,7 @@
 				</div>
 				
 				<!-- Single tree for General -->
+				<!--
 				<div class="row" style="clear:both;" ng-if="view.viewClass==='General'" ng-show="rangeData.ui.treeDisplay!=='none'">
 					<div class="col-sm-1 text-center" style="margin-top:1em;">
 						<img ng-src="{{rangeData.ui.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.ui.gChro.n}}">
@@ -400,6 +406,7 @@
 						</div>
 					</div>
 				</div>
+				-->
 			</div>
 		</div>
 	</uib-tab>

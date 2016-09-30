@@ -26,6 +26,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	var GRAPH_TYPE_STEP_CHARTJS = 'step-'+LIBRARY_CHARTJS;
 	var GRAPH_TYPE_BOXPLOT_HIGHCHARTS = 'boxplot-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_BOXPLOT_PLOTLY = 'boxplot-'+LIBRARY_PLOTLY;
+	var GRAPH_TYPE_HEATMAP_HIGHCHARTS = 'heatmap-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_STEP_HIGHCHARTS = 'step-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_SPLINE_HIGHCHARTS = 'spline-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_AREARANGE_HIGHCHARTS = 'arearange-'+LIBRARY_HIGHCHARTS;
@@ -122,11 +123,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
-					subtitle: 'mean series',
 				},
 				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
-					subtitle: 'mean series',
 					viewPostTitle: ' (old)',
 					isInitiallyHidden: true,
 				},
@@ -141,11 +140,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			views: [
 				{
 					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
-					subtitle: 'mean series',
 				},
 				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
-					subtitle: 'mean series',
 					viewPostTitle: ' (old)',
 					isInitiallyHidden: true,
 				},
@@ -573,7 +570,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		// It is assigned only once
 		chart.isEmpty = isEmpty;
 		chart.isLoading = stillLoading;
-		console.log('Chartie',chart);
 	}
 	
 	// This function was designed as a method from series (i.e. it does not work alone)
@@ -723,8 +719,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		});
 		
 		if(doGenerate || !chart.boxPlotCategories) {
-			console.log(chart);
-			
 			var allEnsIds = [];
 			var allEnsIdsHash = {};
 			chart.allData.forEach(function(series) {
@@ -1464,15 +1458,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	var RedrawSelector;
 	
 	function setChartSubtitle(chart,rangeData,viewClass) {
+		var subtitle = chart.subtitle ? chart.subtitle : '';
+		if(rangeData.ui.filterDesc && RedrawSelector[viewClass].canFilter) {
+			subtitle += ' (filtered by '+rangeData.ui.filterDesc+')';
+		}
 		switch(chart.library) {
 			case LIBRARY_HIGHCHARTS:
-				if(chart.subtitle) {
-					chart.options.subtitle = {
-						text: chart.subtitle
-					};
-					if(rangeData.ui.filterDesc && RedrawSelector[viewClass].canFilter) {
-						chart.options.subtitle.text += ' (filtered by '+rangeData.ui.filterDesc+')';
-					}
+				chart.options.subtitle = {
+					text: subtitle
+				};
+				break;
+			// Plotly does not have subtitles
+			case LIBRARY_PLOTLY:
+				if(subtitle.length > 0) {
+					chart.options.title = chart.title + '<br><span style="font-size: smaller">' + subtitle+'</span>';
+				} else {
+					chart.options.title = chart.title;
 				}
 				break;
 		}
@@ -1872,8 +1873,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								break;
 						}
 						
-						// Setting the subtitle (if it is appropriate)
-						setChartSubtitle(chart,rangeData,viewClass);
 						var yAxis = {
 							title: {
 								text: chart.yAxisLabel
@@ -1927,6 +1926,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						
 						break;
 				}
+				// Setting the subtitle (if it is appropriate)
+				setChartSubtitle(chart,rangeData,viewClass);
 				
 				charts.push(chart);
 				

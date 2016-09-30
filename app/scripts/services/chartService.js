@@ -523,7 +523,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						label = labelCache[label];
 					} else {
 						if(label in chart.regionFeature) {
-							label = labelCache[label] = chart.regionFeature[label].label + " \n("+label+')';
+							label = labelCache[label] = chart.regionFeature[label].label + " <br>("+label+')';
 						} else {
 							labelCache[label] = label;
 						}
@@ -2420,7 +2420,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									series: {
 										type: 'box',
 										boxpoints: 'all',
+										fillcolor: 'white',
 										boxmean: true,
+										pointpos: 0,
 										line: {
 											width: 1,
 										},

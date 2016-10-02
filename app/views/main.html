@@ -96,7 +96,7 @@
             </div>
             <div class="col-xs-12 col-sm-4 col-md-6 col-lg-8">
                 <h2>Explore the behaviour of your candidate genes, pathways or genome regions across the Blueprint datasets.</h2>
-                <p>The Blueprint project is providing in this release epigenomic analysis from {{::numSamples}} samples to the scientific community. Their associated epigenomes are characterized by: gene and transcript expression (from RNA-Seq experiments), hyper and hypo methylated regions (derived from WGBS experiments), chromatin accessibility (DNAse-Seq), and {{::numHistones}} Histone marks binding activity (ChIP-Seq)</p>
+                <p>The Blueprint project is providing in this release epigenomic analysis from {{::numSamples}} samples to the scientific community. Their associated epigenomes are characterized by: gene and transcript expression (from RNA-Seq experiments), hyper and hypo methylated regions (derived from WGBS experiments), chromatin accessibility (DNAseI-Seq), and {{::numHistones}} Histone marks binding activity (ChIP-Seq)</p>
                 <p>Use this tool to explore the behaviour of your genes and pathways in the BLUEPRINT analysis for {{::termNodes.length}} cellular types and cellular lines</p>
                 <p style="line-height:1.2em">
 			<b>{{::projectName}} software release - {{::swVersion}}</b>
@@ -173,7 +173,9 @@
 					<div style="margin-bottom:1em">
 						<button class="btn btn-primary" type="button" ng-click="deselectAllVisibleCellTypes(rangeData)" uib-tooltip="Unselect all the cellular types">Clear!</button>
 					</div>
+					<!--
 					<img ng-src="{{rangeData.ui.gChro.f}}" class="img-responsive img-center vertical-center" title="Chromosome {{rangeData.ui.gChro.n}}">
+					-->
 				</div>
 				<div class="col-sm-11">
 					<treecontrol style="margin-bottom:1em" ng-repeat="ontology in rangeData.treedata" class="col-sm-6 tree-light" tree-model="ontology.root" selected-nodes="ontology.selectedNodes" expanded-nodes="ontology.expandedNodes" on-selection="onTreeSelection(ontology,node,selected,$event)" options="commonTreeControlOptions">
@@ -185,14 +187,14 @@
 			
 			<!-- Chart selection tree -->
 			<div class="row" style="clear:both;" ng-if="rangeData.state==='selectCharts'" ng-unless="::uiFuncs.selectableChartsFromHints(rangeData)">
-				<h3 class="text-center">Step 3: There are {{rangeData.ui.numChartsForSelectedCellTypes}} general charts available for the {{rangeData.ui.numSelectedCellTypes}} cellular types in this range</h3>
+				<h3 class="text-center">Step 3: There are {{rangeData.ui.numChartsForSelectedCellTypes}} general charts available for the {{rangeData.ui.numSelectedCellTypes}} selected cellular types in this range</h3>
 				<div class="initial-charts">
 					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes track by chart.chartId" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
 						<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
 						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{:: chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
 					</div>
 					<br />
-					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of range data</label></div>
+					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of whole data set</label></div>
 					
 					<div><label>Filter by healthy / disease status</label>
 					<ui-select class="row" style="width: -moz-available; width: -webkit-fill-available; width: available; margin-bottom: 5px;" ng-model="rangeData.ui.diseaseSelected" theme="select2" title="Filter by health / disease status" ng-if="rangeData.diseaseNodes.length &gt; 0">
@@ -327,7 +329,7 @@
 				
 				<div class="col-xs-12 col-sm-10 col-lg-11 text-center vertical-center">
 					<div class="row" style="width:100%">
-						<div class="panel-info" ng-class="{'zoomed': chart.isZoomed,'unzoomed': !chart.isZoomed, 'col-md-12':!chart.isZoomed, 'col-lg-6': !chart.isZoomed}" ng-repeat="chart in chartView.charts track by chart.chartId" ng-hide="(!chart.isLoading && chart.isEmpty) || chart.isHidden" ng-switch on="::chart.library">
+						<div class="panel-info" ng-class="{'zoomed': chart.isZoomed,'unzoomed': !chart.isZoomed, 'col-md-12':!chart.isZoomed, 'col-lg-6': !chart.isZoomed}" ng-repeat="chart in chartView.charts track by chart.chartId" ng-hide="(!chart.isLoading && chart.isEmpty) || chart.isHidden">
 							<!--
 							<div style="float:left;clear:left;">
 								Chart features: 
@@ -351,12 +353,30 @@
 								<!-- Zoom button -->
 								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="doZoom(chart);" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="left" tooltip-popup-delay="500"></i>
 							</div>
-							<nvd3 class="datachart" ng-switch-when="nvd3" options="chart.options" data="chart.data"></nvd3>
-							<canvasjs class="datachart" ng-switch-when="canvasjs" config="chart.options"></canvasjs>
-							<chartjs class="datachart" ng-switch-when="chartjs" config="chart.options"></chartjs>
-							<highchart class="datachart" ng-switch-when="highcharts" config="chart.options" disable-data-watch="'1'"></highchart>
-							<div class="datachart" ng-switch-when="plotly">
-								<plotly plotly-data="chart.data" plotly-layout="chart.options" plotly-options="chart.plotlyOptions"></plotly>
+							<div class="datachart" ng-switch on="::chart.library" ng-if="chart.subcharts === undefined">
+								<nvd3 ng-switch-when="nvd3" options="chart.options" data="chart.data"></nvd3>
+								<canvasjs ng-switch-when="canvasjs" config="chart.options"></canvasjs>
+								<chartjs ng-switch-when="chartjs" config="chart.options"></chartjs>
+								<highchart class="datachart" ng-switch-when="highcharts" config="chart.options" disable-data-watch="'1'"></highchart>
+								<plotly ng-switch-when="plotly" plotly-data="chart.data" plotly-layout="chart.options" plotly-options="chart.plotlyOptions"></plotly>
+							</div>
+							
+							<div class="no-margin-padding" style="float:left;clear:left;z-index:1" ng-if="chart.subcharts !== undefined">
+								{{chart.title}} t-tests on <ui-select ng-model="chart.subchartSelected" style="text-align:left;" theme="select2" title="Select EnsId">
+									<ui-select-match placeholder="Choose an EnsId">{{$select.selected.name}}</ui-select-match>
+									<ui-select-choices repeat="subchart in chart.subcharts | filter: { name: $select.search } track by $index">
+										<div ng-bind-html="subchart.name | highlight: $select.search"></div>
+									</ui-select-choices>
+								</ui-select>
+							</div>
+							<div ng-repeat="subchart in chart.subcharts track by $index" ng-if="chart.subcharts !== undefined">
+								<div class="datachart" ng-switch on="::subchart.library" ng-show="chart.subchartSelected && chart.subchartSelected.name === subchart.name">
+									<nvd3 ng-switch-when="nvd3" options="subchart.options" data="subchart.data"></nvd3>
+									<canvasjs ng-switch-when="canvasjs" config="subchart.options"></canvasjs>
+									<chartjs ng-switch-when="chartjs" config="subchart.options"></chartjs>
+									<highchart class="datachart" ng-switch-when="highcharts" config="subchart.options" disable-data-watch="'1'"></highchart>
+									<plotly ng-switch-when="plotly" plotly-data="subchart.data" plotly-layout="subchart.options" plotly-options="subchart.plotlyOptions"></plotly>
+								</div>
 							</div>
 						</div>
 					</div>

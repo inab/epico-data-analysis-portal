@@ -125,8 +125,14 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
 				},
 				{
+					type: GRAPH_TYPE_HEATMAP_HIGHCHARTS,
+					viewPostTitle: ' (t-test)',
+					subtitle: '|t-test| comparison'
+				},
+				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 					viewPostTitle: ' (old)',
+					subtitle: '(old 0.9.6 boxplots)',
 					isInitiallyHidden: true,
 				},
 			],
@@ -142,8 +148,14 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
 				},
 				{
+					type: GRAPH_TYPE_HEATMAP_HIGHCHARTS,
+					viewPostTitle: ' (t-test)',
+					subtitle: '|t-test| comparison'
+				},
+				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
 					viewPostTitle: ' (old)',
+					subtitle: '(old 0.9.6 boxplots)',
 					isInitiallyHidden: true,
 				},
 			],
@@ -468,7 +480,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		}
 		// jshint validthis:false
 		
-		// Very simple model: x contains the values, y contains the 
+		// Very simple model: x contains the labels, y contains the values
 		var x = [];
 		var y = [];
 		
@@ -492,6 +504,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var isEmpty = true;
 		stillLoading = !!stillLoading;
 		chart.allData.forEach(function(series) {
+			var visibilityState;
+			var showInLegend;
+			if(series.linkedTo !== undefined) {
+				visibilityState = series.linkedTo.series.visible;
+				showInLegend = false;
+			} else {
+				if('term_type' in series) {
+					visibilityState = !stillLoading && !series.term_type.termHidden;
+				} else {
+					visibilityState = stillLoading || !chart.meanSeriesHidden;
+				}
+				// With this, we are hiding the legend entries meanwhile it is loading
+				showInLegend = visibilityState && !stillLoading;
+			}
+			
+			// This cannot be skipped as it tells whether any series of the chart has data
 			var reDigest = series.filteredSeriesValues === null || series.filteredSeriesValues === undefined || !stillLoading || !('term_type' in series);
 			
 			if(series.filteredSeriesValues === null || series.filteredSeriesValues === undefined) {
@@ -510,42 +538,31 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				isEmpty = false;
 			}
 			
-			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
-				series.seriesDigestedValues = series.seriesGenerator();
-				
-				// As the series generator knows nothing about 
-				var labelCache = {};
-				series.seriesDigestedValues.x = series.seriesDigestedValues.x.map(function(label) {
-					if(label in labelCache) {
-						label = labelCache[label];
-					} else {
-						if(label in chart.regionFeature) {
-							label = labelCache[label] = chart.regionFeature[label].label + " <br>("+label+')';
-						} else {
-							labelCache[label] = label;
-						}
-					}
+			if(visibilityState) {
+				if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
+					series.seriesDigestedValues = series.seriesGenerator();
 					
-					return label;
-				});
-				series.series.x = series.seriesDigestedValues.x;
-				series.series.y = series.seriesDigestedValues.y;
-			}
-			//console.log("DEBUG "+g.name);
-			//console.log(series.seriesValues);
-			//series.seriesValues = undefined;
-			var visibilityState;
-			var showInLegend;
-			if(series.linkedTo !== undefined) {
-				visibilityState = series.linkedTo.series.visible;
-				showInLegend = false;
-			} else {
-				if('term_type' in series) {
-					visibilityState = !stillLoading && !series.term_type.termHidden;
-				} else {
-					visibilityState = stillLoading || !chart.meanSeriesHidden;
+					// As the series generator knows nothing about 
+					var labelCache = {};
+					series.seriesDigestedValues.x = series.seriesDigestedValues.x.map(function(label) {
+						if(label in labelCache) {
+							label = labelCache[label];
+						} else {
+							if(label in chart.regionFeature) {
+								label = labelCache[label] = chart.regionFeature[label].label + " <br>("+label+')';
+							} else {
+								labelCache[label] = label;
+							}
+						}
+						
+						return label;
+					});
+					series.series.x = series.seriesDigestedValues.x;
+					series.series.y = series.seriesDigestedValues.y;
 				}
-				showInLegend = visibilityState;
+				//console.log("DEBUG "+g.name);
+				//console.log(series.seriesValues);
+				//series.seriesValues = undefined;
 			}
 			
 			switch(chart.library) {
@@ -693,7 +710,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			
 			// Outliers are available, but they must be injected in a different chart
 			//return {label:samp.label, start:samp.start, data:[Wl,Q1,Q2,Q3,Wh]};
-			return {label:samp.label, start:samp.start, data:{low: Wl,q1: Q1,median: Q2,q3: Q3,high: Wh, number: samp.series.length, outliers: sseries}};
+			return {label:samp.label, start:samp.start, data:{low: Wl,q1: Q1,median: Q2,q3: Q3,high: Wh, number: samp.series.length}};
 		});
 		
 		//console.log("Orig values");
@@ -803,7 +820,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				}
 				
 				series.series.visible = visibilityState;
-				series.series.showInLegend =  visibilityState;
+				// With this, we are hiding the legend entries meanwhile it is loading
+				series.series.showInLegend =  visibilityState && !stillLoading;
 			} else {
 				// Linked series
 				series.series.visible = series.linkedTo.series.visible;
@@ -816,6 +834,223 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		chart.isLoading = stillLoading;
 	}
 	
+	function genHeatmapSeries(/*optional*/origValues) {
+		// jshint validthis:true
+		if(origValues===undefined || origValues===null) {
+			origValues = this.filteredSeriesValues;
+		}
+		// jshint validthis:false
+		
+		// Very simple model: x contains the values, y contains the 
+		var resH = {};
+		var res = [];
+		
+		origValues.forEach(function(augData) {
+			var data = augData.sDataS;
+			var label = data[3];
+			
+			var ensGroup;
+			if(label in resH) {
+				ensGroup = resH[label];
+			} else {
+				ensGroup = { label: label, data: [] };
+				resH[label] = ensGroup;
+				res.push(ensGroup);
+			}
+			
+			ensGroup.data.push(data[2]);
+		});
+		
+		return res;
+	}
+	
+	// This function was designed as a method from chart (i.e. it does not work alone)
+	function highchartsHeatmapAggregator(doGenerate,stillLoading,filterFunc) {
+		// jshint validthis:true
+		var chart = this;
+		// jshint validthis:false
+		
+		var isEmpty = true;
+		stillLoading = !!stillLoading;
+		
+		var subchartsDataH = {};
+		var subchartsData = [] ;
+		chart.allData.forEach(function(series) {
+			var visibilityState;
+			var showInLegend;
+			if(series.linkedTo !== undefined) {
+				visibilityState = series.linkedTo.series.visible;
+				showInLegend = false;
+			} else {
+				if('term_type' in series) {
+					visibilityState = !stillLoading && !series.term_type.termHidden;
+				} else {
+					visibilityState = stillLoading || !chart.meanSeriesHidden;
+				}
+				// With this, we are hiding the legend entries meanwhile it is loading
+				showInLegend = visibilityState && !stillLoading;
+			}
+			
+			// Do we save if for the next round?
+			if(visibilityState) {
+				// Step 1: gather
+				var reDigest = series.filteredSeriesValues === null || series.filteredSeriesValues === undefined || !stillLoading || !('term_type' in series);
+				if(series.filteredSeriesValues === null || series.filteredSeriesValues === undefined) {
+					if(filterFunc) {
+						series.filteredSeriesValues = series.seriesValues.filter(filterFunc);
+					} else {
+						series.filteredSeriesValues = series.seriesValues;
+					}
+					
+					// Invalidate digested values
+					series.seriesDigestedValues = null;
+				}
+				
+				if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
+					series.seriesDigestedValues = series.seriesGenerator();
+					//series.series[series.seriesDest] = series.seriesDigestedValues;
+				}
+				
+				//console.log("DEBUG "+g.name);
+				//console.log(series.seriesValues);
+				//series.seriesValues = undefined;
+
+				// Step 2: Scatter along the different labels
+				series.seriesDigestedValues.forEach(function(ensGroup) {
+					var subchartD;
+					if(ensGroup.label in subchartsDataH) {
+						subchartD = subchartsDataH[ensGroup.label];
+					} else {
+						subchartD = {
+							label: ensGroup.label,
+							dataSeries: []
+						};
+						
+						subchartsDataH[ensGroup.label] = subchartD;
+						subchartsData.push(subchartD);
+					}
+					
+					// We enrich the ensGroup with the term_type
+					if('term_type' in series) {
+						ensGroup.term_type = series.term_type;
+					}
+					subchartD.dataSeries.push(ensGroup);
+				});
+			}
+			
+			// This is more important than it seems, as it is also tied
+			// to the data fetching process
+			switch(chart.library) {
+				case LIBRARY_HIGHCHARTS:
+					series.series.visible = visibilityState;
+					series.series.showInLegend = showInLegend;
+					break;
+				case LIBRARY_PLOTLY:
+					series.series.visible = visibilityState;
+					series.series.showlegend = showInLegend;
+					break;
+				case LIBRARY_NVD3:
+					if(visibilityState) {
+						series.series[series.seriesDest] = [];
+					} else {
+						series.series[series.seriesDest] = series.seriesDigestedValues;
+					}
+					break;
+			}
+		});
+		
+		// Step 3: consolidate for each label through t-tests
+		chart.subcharts = [];
+		subchartsData.forEach(function(subchartD,subchartDi) {
+			var dataSeries = subchartD.dataSeries;
+			var dataSeriesL = dataSeries.length-1;
+			var categoriesX = [];
+			var categoriesY = [];
+			var data = [];
+			// All the categories, but the last
+			for(var i=0;i <= dataSeriesL; i++) {
+				var ensGroupY = dataSeries[i];
+				
+				var label = ('term_type' in ensGroupY) ? ensGroupY.term_type.name : 'all';
+				if(i < dataSeriesL) {
+					categoriesY.push(label);
+				}
+				if(i>0) {
+					categoriesX.push(label);
+				}
+				
+				// All the categories, but the first
+				for(var j=i+1; j <= dataSeriesL; j++) {
+					var ensGroupX = dataSeries[j];
+					var val = ss.tTestTwoSample(ensGroupX.data,ensGroupY.data);
+					// The category index is shifted
+					data.push([j-1,i,Math.abs(val)]);
+				}
+			}
+			
+			if(categoriesX.length > 0) {
+				var options = angular.copy(chart.options);
+				var subchartLabel = subchartD.label;
+				if(subchartLabel in chart.regionFeature) {
+					subchartLabel = chart.regionFeature[subchartLabel].label + " \n("+subchartLabel+')';
+				}
+				var chartSubtitle = chart.subtitle + ' for '+ subchartLabel;
+				options.subtitle = {
+					text: chartSubtitle,
+				};
+				
+				options.xAxis.categories = categoriesX;
+				
+				// We can have multiple y axes
+				var yAxis = options.yAxis[0];
+				yAxis.categories = categoriesY;
+				yAxis.title = null;
+				yAxis.labels = {
+					//style: {
+					//	whiteSpace: 'pre',
+					//},
+					formatter: function() {
+						return (this.value+'').split(" ").join("<br/>");
+					},
+				};
+						
+				
+				options.series = [{
+					name: subchartD.label,
+					//id: 'heatmap_'+subchartDi,
+					dataLabels: {
+						enabled: true,
+						format: '{point.value:.3f}',
+						style: {
+							textShadow: 'none'
+						},
+					},
+					data: data
+				}];
+				//options.options.legend.enabled = false;
+				options.loading = stillLoading;
+				
+				// Now, store it in the subcharts!
+				chart.subcharts.push({
+					name: subchartLabel,
+					subtitle: chartSubtitle,
+					options: options,
+					library: chart.library,
+					isLoading: stillLoading,
+					isEmpty: isEmpty,
+				});
+			}
+		});
+		
+		if(chart.subcharts.length > 0) {
+			chart.subchartSelected = chart.subcharts[0];
+		}
+		
+		// It is assigned only once
+		chart.isEmpty = chart.subcharts.length === 0;
+		chart.isLoading = stillLoading;
+	}
+	
 	// This function was designed as a method from chart (i.e. it does not work alone)
 	function defaultSeriesAggregator(doGenerate,stillLoading,filterFunc) {
 		// jshint validthis:true
@@ -825,6 +1060,22 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var isEmpty = true;
 		stillLoading = !!stillLoading;
 		chart.allData.forEach(function(series) {
+			var visibilityState;
+			var showInLegend;
+			if(series.linkedTo !== undefined) {
+				visibilityState = series.linkedTo.series.visible;
+				showInLegend = false;
+			} else {
+				if('term_type' in series) {
+					visibilityState = !stillLoading && !series.term_type.termHidden;
+				} else {
+					visibilityState = stillLoading || !chart.meanSeriesHidden;
+				}
+				// With this, we are hiding the legend entries meanwhile it is loading
+				showInLegend = visibilityState && !stillLoading;
+			}
+			
+			// This cannot be skipped, as it determines whether a series has data to be rendered
 			var reDigest = series.filteredSeriesValues === null || series.filteredSeriesValues === undefined || !stillLoading || !('term_type' in series);
 			if(series.filteredSeriesValues === null || series.filteredSeriesValues === undefined) {
 				if(filterFunc) {
@@ -842,25 +1093,14 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				isEmpty = false;
 			}
 			
-			if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
-				series.seriesDigestedValues = series.seriesGenerator();
-				series.series[series.seriesDest] = series.seriesDigestedValues;
-			}
-			//console.log("DEBUG "+g.name);
-			//console.log(series.seriesValues);
-			//series.seriesValues = undefined;
-			var visibilityState;
-			var showInLegend;
-			if(series.linkedTo !== undefined) {
-				visibilityState = series.linkedTo.series.visible;
-				showInLegend = false;
-			} else {
-				if('term_type' in series) {
-					visibilityState = !stillLoading && !series.term_type.termHidden;
-				} else {
-					visibilityState = stillLoading || !chart.meanSeriesHidden;
+			if(visibilityState) {
+				if(reDigest && (doGenerate || !series.seriesDigestedValues)) {
+					series.seriesDigestedValues = series.seriesGenerator();
+					series.series[series.seriesDest] = series.seriesDigestedValues;
 				}
-				showInLegend = visibilityState;
+				//console.log("DEBUG "+g.name);
+				//console.log(series.seriesValues);
+				//series.seriesValues = undefined;
 			}
 			
 			switch(chart.library) {
@@ -1432,7 +1672,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var charts = getCharts(rangeData);
 		if(event.xAxis) {
 			charts.forEach(function(oChart) {
-				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS && oChart.library === LIBRARY_HIGHCHARTS) {
+				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS && oChart.type !== GRAPH_TYPE_HEATMAP_HIGHCHARTS && oChart.library === LIBRARY_HIGHCHARTS) {
 					var chart = oChart.options.getHighcharts();
 					chart.xAxis[0].setExtremes(event.xAxis[0].min,event.xAxis[0].max);
 					if(!chart.resetZoomButton) {
@@ -1442,7 +1682,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			});
 		} else {
 			charts.forEach(function(oChart) {
-				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS && oChart.library === LIBRARY_HIGHCHARTS) {
+				if(originChart!==oChart && oChart.type !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS && oChart.type !== GRAPH_TYPE_HEATMAP_HIGHCHARTS && oChart.library === LIBRARY_HIGHCHARTS) {
 					var chart = oChart.options.getHighcharts();
 					chart.xAxis[0].setExtremes(null,null);
 					if(chart.resetZoomButton) {
@@ -1458,24 +1698,30 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	var RedrawSelector;
 	
 	function setChartSubtitle(chart,rangeData,viewClass) {
-		var subtitle = chart.subtitle ? chart.subtitle : '';
-		if(rangeData.ui.filterDesc && RedrawSelector[viewClass].canFilter) {
-			subtitle += ' (filtered by '+rangeData.ui.filterDesc+')';
-		}
-		switch(chart.library) {
-			case LIBRARY_HIGHCHARTS:
-				chart.options.subtitle = {
-					text: subtitle
-				};
-				break;
-			// Plotly does not have subtitles
-			case LIBRARY_PLOTLY:
-				if(subtitle.length > 0) {
-					chart.options.title = chart.title + '<br><span style="font-size: smaller">' + subtitle+'</span>';
-				} else {
-					chart.options.title = chart.title;
-				}
-				break;
+		if(chart.subcharts !== undefined) {
+			chart.subcharts.forEach(function(subchart) {
+				setChartSubtitle(subchart,rangeData,viewClass);
+			});
+		} else {
+			var subtitle = chart.subtitle ? chart.subtitle : '';
+			if(rangeData.ui.filterDesc && RedrawSelector[viewClass].canFilter) {
+				subtitle += ' (filtered by '+rangeData.ui.filterDesc+')';
+			}
+			switch(chart.library) {
+				case LIBRARY_HIGHCHARTS:
+					chart.options.subtitle = {
+						text: subtitle
+					};
+					break;
+				// Plotly does not have subtitles
+				case LIBRARY_PLOTLY:
+					if(subtitle.length > 0) {
+						chart.options.title = chart.title + '<br><span style="font-size: smaller">' + subtitle+'</span>';
+					} else {
+						chart.options.title = chart.title;
+					}
+					break;
+			}
 		}
 	}
 	
@@ -1641,6 +1887,15 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						libraryChartType = 'boxplot';
 						break;
 						
+					case GRAPH_TYPE_HEATMAP_HIGHCHARTS:
+						chart = {
+							seriesAggregator: highchartsHeatmapAggregator,
+							library: LIBRARY_HIGHCHARTS,
+							subcharts: []
+						};
+						libraryChartType = 'heatmap';
+						break;
+						
 					case GRAPH_TYPE_STEP_HIGHCHARTS:
 						chart = {
 							seriesAggregator: defaultSeriesAggregator,
@@ -1675,6 +1930,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				}
 				
 				// Common attributes
+				chart.chartGroupId = gName;
 				chart.chartId = gName;
 				if(iG > 0) {
 					chart.chartId += '_'+iG;
@@ -1737,6 +1993,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							},
 							margin: { 
 								t: 50,
+								l: 70,
+								r: 20,
 							},
 						};
 						switch(gDataViewType) {
@@ -1750,7 +2008,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									title: 'Coordinates (at '+rangeData.rangeStrEx+')'
 								};
 								break;
-						};
+						}
 
 						break;
 					case LIBRARY_HIGHCHARTS:
@@ -1823,6 +2081,15 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							},
 						};
 						
+						var labelsFormatter = {
+							//style: {
+							//	whiteSpace: 'pre',
+							//},
+							formatter: function() {
+								return (this.value+'').replace("\n","<br/>");
+							},
+						};
+
 						switch(gDataViewType) {
 							case GRAPH_TYPE_BOXPLOT_HIGHCHARTS:
 								chart.options.options.chart.zoomType = 'y';
@@ -1842,15 +2109,41 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									title: {
 										text: 'Ensembl Ids (at '+rangeData.rangeStrEx+')'
 									},
-									labels: {
-										//style: {
-										//	whiteSpace: 'pre',
-										//},
-										formatter: function() {
-											return (this.value+'').replace("\n","<br/>");
-										},
-									},
+									labels: labelsFormatter,
 									categories: [],
+								};
+								break;
+							case GRAPH_TYPE_HEATMAP_HIGHCHARTS:
+								chart.options.options.tooltip = {
+									animation: false,
+									shared: true,
+									backgroundColor: '#FFFFFF',
+									//style: {
+									//	whiteSpace: 'pre',
+									//},
+									formatter: function() {
+										return 't-test value for <b>' + this.series.xAxis.categories[this.point.x] + '</b><br>and <b>' +
+											this.series.yAxis.categories[this.point.y] + '</b> series <br><b>' + this.point.value + '</b>';
+									},
+								};
+								chart.options.xAxis = {
+									title: {
+										text: 'Series (at '+rangeData.rangeStrEx+')'
+									},
+									labels: labelsFormatter,
+								};
+								chart.options.options.colorAxis = {
+									min: 0,
+									max: 20,
+									minColor: '#FFFFFF',
+									maxColor: '#FF0000',
+								};
+								chart.options.options.legend = {
+									enabled: true,
+									align: 'right',
+									layout: 'vertical',
+									margin: 0,
+									verticalAlign: 'middle',
 								};
 								break;
 							default:
@@ -1898,8 +2191,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						
 						chart.options.yAxis = [ yAxis ];
 						
-						// New style markup
-						if(gDataViewType !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS) {
+						// New style genomic markup
+						if(gDataViewType !== GRAPH_TYPE_BOXPLOT_HIGHCHARTS && gDataViewType !== GRAPH_TYPE_HEATMAP_HIGHCHARTS) {
 							// Do axis generation only once!
 							if(rangeData.fDraw===undefined) {
 								rangeData.fDraw = FeatureDrawer.processGenomicLayout(rangeData.regionLayout);
@@ -2157,7 +2450,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				return !!chart.options.options.legend.enabled;
 			case LIBRARY_PLOTLY:
 				return !!chart.options.showlegend;
-				break;
 			default:
 				return true;
 		}
@@ -2431,6 +2723,14 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									}
 								};
 								break;
+							case GRAPH_TYPE_HEATMAP_HIGHCHARTS:
+								series = {
+									seriesGenerator: genHeatmapSeries,
+									series: {
+										type: 'heatmap',
+									},
+								};
+								break;
 							case GRAPH_TYPE_STEP_HIGHCHARTS:
 								series = {
 									seriesGenerator: genMeanSeriesHighcharts,
@@ -2575,8 +2875,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 							// Saving for later linkage
 							firstSeries = series;
 						} else {
-							// Main series linkage
-							series.linkedTo = firstSeries;
+							switch(chart.library) {
+								case LIBRARY_HIGHCHARTS:
+									// Main series linkage
+									series.linkedTo = firstSeries;
+									break;
+							}
 						}
 						if(term_type!==undefined) {
 							series.term_type = term_type;
@@ -2638,16 +2942,23 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	}
 	
 
-	function doProcessSeries(localScope,chartOptions) {
-		localScope.$broadcast('highchartsng.processSeries',chartOptions);
+	function issueChartLibraryProcessSeries(localScope,chart) {
+		if(!chart.isHidden) {
+			switch(chart.library) {
+				case LIBRARY_HIGHCHARTS:
+					localScope.$broadcast('highchartsng.processSeries',chart.options);
+					break;
+			}
+		}
 	}
 	
 	
 	// This is almost identical to redrawGeneralCharts, but generalized
 	function abstractRedrawCharts(charts /* optional */,doGenerate,stillLoading,viewClass,localScope) {
 		var filterFunc;
+		var rangeData;
 		if('ui' in charts) {
-			var rangeData = charts;
+			rangeData = charts;
 			
 			// We have to call here this method, to be sure
 			// we have fulfilled all the preconditions
@@ -2671,6 +2982,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			if(iChart<charts.length) {
 				var chart = charts[iChart];
 				if(chart.isHidden && !chart.isLoading) {
+				//if(chart.isHidden) {
+					// Skip this chart, as it is not being shown
 					timeoutFunc(charts,iChart+1);
 				} else {
 					// Visual indicator, with different semantics of chart.isLoading
@@ -2679,7 +2992,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						try {
 							chart.seriesAggregator(doGenerate,stillLoading,filterFunc);
 							chart.options.loading = stillLoading;
-							doProcessSeries(localScope,chart.options);
+							if(rangeData!==undefined) {
+								setChartSubtitle(chart,rangeData,viewClass);
+							}
+							issueChartLibraryProcessSeries(localScope,chart);
 						} catch(e) {
 							console.log(e);
 						}
@@ -3561,7 +3877,6 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		var initialDiseaseByCellTypes = [];
 		
 		var charts = getCharts(rangeData,VIEW_GENERAL);
-		console.log('Charto',charts);
 		var enableTermNodeFunc = function(termNode) {
 			if(termNode.wasSeen) {
 				numSelected++;
@@ -3604,7 +3919,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		
 		// Identify the enabled charts
 		rangeData.ui.numSelectedCellTypes = numSelected;
-		rangeData.ui.numChartsForSelectedCellTypes = availableChartIds.length;
+		//rangeData.ui.numChartsForSelectedCellTypes = availableChartIds.length;
 		
 		rangeData.ui.celltypesSelected = initialDiseaseByCellTypes;
 		doViewChartLayout(rangeData,RedrawSelector[VIEW_DISEASES]);
@@ -3613,7 +3928,9 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		rangeData.ui.chartsForSelectedCellTypes = chartsForSelectedCellTypes;
 		
 		charts.forEach(function(chart) {
-			if(chart.chartId in availableChartIdsHash) {
+			// This is for the cases where there is more than one chart for the same data series
+			// like, for instance, gene expression, where there are 3 different charts
+			if(chart.chartGroupId in availableChartIdsHash) {
 				chartsForSelectedCellTypes.push(chart);
 				//chart.isHidden = false;
 			} else {
@@ -3621,6 +3938,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				chart.isHidden = true;
 			}
 		});
+		rangeData.ui.numChartsForSelectedCellTypes = chartsForSelectedCellTypes.length;
 	}
 	
 	function selectableChartsFromHints(rangeData) {
@@ -3768,7 +4086,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 	function switchAllTranscripts(chart,rangeData) {
 		chart.showAllTranscripts = !chart.showAllTranscripts;
 		chart.fDraw.showAllCategories(chart.showAllTranscripts);
-		doProcessSeries(rangeData.localScope,chart.options);
+		issueChartLibraryProcessSeries(rangeData.localScope,chart);
 	}
 	
 	function getChartSupportingData(rangeData,chart) {

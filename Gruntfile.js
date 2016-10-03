@@ -166,7 +166,18 @@ module.exports = function (grunt) {
 			options: {
 				browserifyOptions: {
 					standalone: 'hypothesis'
-				}
+				},
+				transform: [
+					//"browserify-shim",
+					[
+						"babelify",
+						{
+							"presets": [
+								"es2015"
+							]
+						}
+					]
+				]
 			},
 			// The setup to use browserify-shim is in package.json
 			src: ['./node_modules/ttest/hypothesis.js'],

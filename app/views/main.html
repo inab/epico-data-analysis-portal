@@ -343,10 +343,11 @@
 							</div>
 							-->
 							<div style="float:right;clear:right;">
+								<sup ng-style="{'visibility': chart.noDataSeriesHtml!==undefined ? 'initial':'hidden'}">{{chart.noDataSeriesCount}}</sup>
 								<i class="glyphicon space-glyphicon glyphicon glyphicon-warning-sign"
 									ng-style="{'visibility': chart.noDataSeriesHtml!==undefined ? 'initial':'hidden'}"
 									popover-append-to-body="true"
-									popover-title="Series with no data"
+									popover-title="{{chart.noDataSeriesCount}} series with no data"
 									popover-placement="bottom"
 									uib-popover-html="chart.noDataSeriesHtml"
 									uib-tooltip="Click to see the visible data series with no data for this chart"

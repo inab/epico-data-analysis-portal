@@ -524,6 +524,7 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 		}
 		
 		if(noDataSeries.length > 0) {
+			chart.noDataSeriesCount = noDataSeries.length;
 			chart.noDataSeriesHtml = $sce.trustAsHtml(noDataSeries.map(function(seriesNode) {
 				var div = document.createElement('span');
 				div.appendChild(document.createTextNode(seriesNode.name));

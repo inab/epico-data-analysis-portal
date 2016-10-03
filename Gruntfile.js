@@ -62,6 +62,8 @@ module.exports = function (grunt) {
 	buildTasks = [
 	    'clean:dist',
 	    'bower-update',
+	    'newer:execute:precomputePalette',
+	    'newer:browserify',
 	    'wiredep',
 	    'template',
 	    'useminPrepare',
@@ -78,8 +80,9 @@ module.exports = function (grunt) {
 	    //'htmlmin'
 	  ];
 	buildTasksFast = [
-	    'clean:dist',
+	    //'clean:dist',
 	    //'bower-update',
+	    'newer:browserify',
 	    'wiredep',
 	    'template',
 	    'useminPrepare',
@@ -115,6 +118,7 @@ module.exports = function (grunt) {
 	    'clean:dist',
 	    'bower-update',
 	    'newer:execute:precomputePalette',
+	    'newer:browserify',
 	    'wiredep',
 	    'template',
 	    'useminPrepare',
@@ -133,6 +137,7 @@ module.exports = function (grunt) {
 	buildTasksFast = [
 	    'clean:dist',
 	    //'bower-update',
+	    'newer:browserify',
 	    'wiredep',
 	    'template',
 	    'useminPrepare',
@@ -152,10 +157,23 @@ module.exports = function (grunt) {
 
   // Define the configuration for all the tasks
   grunt.initConfig({
-
+	
     // Project settings
     yeoman: appConfig,
 
+	browserify: {
+		dist: {
+			options: {
+				browserifyOptions: {
+					standalone: 'hypothesis'
+				}
+			},
+			// The setup to use browserify-shim is in package.json
+			src: ['./node_modules/ttest/hypothesis.js'],
+			dest: '.tmp/scripts/hypothesis.js'
+		}
+	},
+	
 	execute: {
 		precomputePalette: {
 			src: [
@@ -593,6 +611,7 @@ module.exports = function (grunt) {
     'karma'
   ]);
 
+	// grunt.registerTask('browserify',['browserify']);
   grunt.registerTask('build', buildTasks);
   grunt.registerTask('build:fast', buildTasksFast);
 

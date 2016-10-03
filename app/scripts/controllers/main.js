@@ -931,7 +931,7 @@ angular.module('EPICOApp')
 	
 	$scope.viewChartDataGrid = function(viewClass,rangeData,chart) {
 		var dataGrid = {
-			columns: [ChartService.uiFuncs.getLegendTitle(viewClass),'chromosome','chromosome_start','chromosome_end',chart.yAxisLabel,'payload','analysis_id'],
+			columns: ChartService.getChartSupportingColumnNames(rangeData,chart),
 			table: ChartService.getChartSupportingData(rangeData,chart),
 			title: chart.title,
 		};

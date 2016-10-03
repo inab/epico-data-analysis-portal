@@ -1351,7 +1351,9 @@ factory('QueryService',['$q','$http','portalConfig','ConstantsService','ChartSer
 					rangeData.termNodes.forEach(function(term) {
 						if(term.analysisInRange!==undefined && term.analysisInRange.length >0) {
 							term.analysisInRangeHtml = term.analysisInRange.map(function(an) {
-								return an.analysis_id;
+								var div = document.createElement('span');
+								div.appendChild(document.createTextNode(an.analysis_id));
+								return div.innerHTML;
 							}).join("<br>");
 							
 							var uniqueSampleNames = [];
@@ -1366,7 +1368,11 @@ factory('QueryService',['$q','$http','portalConfig','ConstantsService','ChartSer
 								}
 							});
 							term.samplesInRange = uniqueSamples;
-							term.samplesInRangeHtml = uniqueSampleNames.sort().join("<br>");
+							term.samplesInRangeHtml = uniqueSampleNames.sort().map(function(str) {
+								var div = document.createElement('span');
+								div.appendChild(document.createTextNode(str));
+								return div.innerHTML;
+							}).join("<br>");
 						}
 						
 					});

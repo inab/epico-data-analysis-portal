@@ -499,6 +499,10 @@ $blueprint-inactive-tab-color: aliceblue;
 }
 
 .initial-charts {
+	width: 75%;
+	margin: 0 auto;
+}
+.initial-charts.buttons {
 	width: 25%;
 	margin: 0 auto;
 }

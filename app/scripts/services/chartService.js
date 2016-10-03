@@ -1,10 +1,11 @@
 'use strict';
 
 /*jshint camelcase: false , quotmark: false */
+/* globals Highcharts: false */
 
 angular.
 module('EPICOApp').
-factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorPalette','d3','SimpleStatistics',function($q,$window,portalConfig,ConstantsService,ColorPalette,d3,ss) {
+factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService','ColorPalette','d3','SimpleStatistics','T-Test',function($q,$sce,$window,portalConfig,ConstantsService,ColorPalette,d3,ss,tTest) {
 	
 	var METHYL_GRAPH = 'methyl';
 	var METHYL_HYPER_GRAPH = METHYL_GRAPH+'_hyper';
@@ -120,6 +121,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Gene Expression',
 			floor: 0.0,
 			yAxisLabel: 'FPKM',
+			hasPayload: true,
+			payloadHeaders: ['Ensembl gene Id','gene name'],
 			views: [
 				{
 					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
@@ -127,7 +130,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				{
 					type: GRAPH_TYPE_HEATMAP_HIGHCHARTS,
 					viewPostTitle: ' (t-test)',
-					subtitle: '|t-test| comparison'
+					subtitle: 'pairwise t-test comparisons'
 				},
 				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
@@ -143,6 +146,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			title: 'Transcript Expression',
 			floor: 0.0,
 			yAxisLabel: 'FPKM',
+			hasPayload: true,
+			payloadHeaders: ['Ensembl transcript Id','transcript name'],
 			views: [
 				{
 					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
@@ -150,7 +155,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				{
 					type: GRAPH_TYPE_HEATMAP_HIGHCHARTS,
 					viewPostTitle: ' (t-test)',
-					subtitle: '|t-test| comparison'
+					subtitle: 'pairwise t-test comparisons'
 				},
 				{
 					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
@@ -495,6 +500,40 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		return { x: x, y: y };
 	}
 	
+	function updateNoDataSeriesList(chart,rangeData,viewClass) {
+		// Step 1: get the visible term types hash
+		var visibleHash = {};
+		
+		var seriesNodes = getSeriesNodes(rangeData,viewClass);
+		seriesNodes.forEach(function(seriesNode) {
+			if(seriesNode.wasSeen && !seriesNode.termHidden) {
+				visibleHash[seriesNode.o] = seriesNode;
+			}
+		});
+		
+		// Removing the ones with data
+		chart.allData.forEach(function(series) {
+			if(series.term_type!==undefined && (series.term_type.o in visibleHash) && series.filteredSeriesValues.length > 0) {
+				delete visibleHash[series.term_type.o];
+			}
+		});
+		
+		var noDataSeries = [];
+		for(var o in visibleHash) {
+			noDataSeries.push(visibleHash[o]);
+		}
+		
+		if(noDataSeries.length > 0) {
+			chart.noDataSeriesHtml = $sce.trustAsHtml(noDataSeries.map(function(seriesNode) {
+				var div = document.createElement('span');
+				div.appendChild(document.createTextNode(seriesNode.name));
+				return '<span class="circle" style="border-color: '+seriesNode.color+';background-color: '+seriesNode.color+'"></span><span class="term">'+div.innerHTML+'</span>';
+			}).join("<br>"));
+		} else {
+			chart.noDataSeriesHtml = undefined;
+		}
+	}
+	
 	// This function was designed as a method from chart (i.e. it does not work alone)
 	function plotlyBoxPlotAggregator(doGenerate,stillLoading,filterFunc) {
 		// jshint validthis:true
@@ -582,6 +621,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					}
 					break;
 			}
+			series.visibilityState = visibilityState;
 		});
 		
 		// It is assigned only once
@@ -811,8 +851,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			//console.log("DEBUG "+g.name);
 			//console.log(series.seriesValues);
 			//series.seriesValues = undefined;
+			var visibilityState;
 			if(series.linkedTo === undefined) {
-				var visibilityState;
 				if('term_type' in series) {
 					visibilityState = !stillLoading && !series.term_type.termHidden;
 				} else {
@@ -824,9 +864,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				series.series.showInLegend =  visibilityState && !stillLoading;
 			} else {
 				// Linked series
-				series.series.visible = series.linkedTo.series.visible;
+				visibilityState = series.linkedTo.series.visible;
+				series.series.visible = visibilityState;
 				series.series.showInLegend =  false;
 			}
+			series.visibilityState = visibilityState;
 		});
 		
 		// It is assigned only once
@@ -930,10 +972,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						subchartsData.push(subchartD);
 					}
 					
-					// We enrich the ensGroup with the term_type
-					if('term_type' in series) {
-						ensGroup.term_type = series.term_type;
-					}
+					// We enrich the ensGroup with the series name
+					ensGroup.name = series.name;
 					subchartD.dataSeries.push(ensGroup);
 				});
 			}
@@ -957,11 +997,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					}
 					break;
 			}
+			series.visibilityState = visibilityState;
 		});
 		
 		// Step 3: consolidate for each label through t-tests
 		chart.subcharts = [];
-		subchartsData.forEach(function(subchartD,subchartDi) {
+		subchartsData.forEach(function(subchartD) {
 			var dataSeries = subchartD.dataSeries;
 			var dataSeriesL = dataSeries.length-1;
 			var categoriesX = [];
@@ -971,7 +1012,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 			for(var i=0;i <= dataSeriesL; i++) {
 				var ensGroupY = dataSeries[i];
 				
-				var label = ('term_type' in ensGroupY) ? ensGroupY.term_type.name : 'all';
+				var label = ensGroupY.name;
 				if(i < dataSeriesL) {
 					categoriesY.push(label);
 				}
@@ -982,9 +1023,11 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				// All the categories, but the first
 				for(var j=i+1; j <= dataSeriesL; j++) {
 					var ensGroupX = dataSeries[j];
-					var val = ss.tTestTwoSample(ensGroupX.data,ensGroupY.data);
+					//var val = ss.tTestTwoSample(ensGroupX.data,ensGroupY.data);
+					var stat = tTest(ensGroupX.data,ensGroupY.data,{varEqual: false});
+					var val = stat.pValue();
 					// The category index is shifted
-					data.push([j-1,i,Math.abs(val)]);
+					data.push([j-1,i,val]);
 				}
 			}
 			
@@ -1020,7 +1063,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					//id: 'heatmap_'+subchartDi,
 					dataLabels: {
 						enabled: true,
-						format: '{point.value:.3f}',
+						//format: '{point.value:.3f}',
+						formatter: function() {
+							return (isNaN(this.point.value)) ? 'NA' : Highcharts.numberFormat(this.point.value,3);
+						},
 						style: {
 							textShadow: 'none'
 						},
@@ -1120,6 +1166,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					}
 					break;
 			}
+			series.visibilityState = visibilityState;
 		});
 		
 		// It is assigned only once
@@ -1942,6 +1989,10 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				chart.listTitle = listTitle;
 				chart.subtitle = (gDataView.subtitle!==undefined) ? gDataView.subtitle : null;
 				chart.yAxisLabel = gData.yAxisLabel;
+				chart.hasPayload = !!gData.hasPayload;
+				if(chart.hasPayload) {
+					chart.payloadHeaders = gData.payloadHeaders;
+				}
 				
 				chart.allData = [];
 				chart.regionFeature = rangeData.regionFeature;
@@ -1966,22 +2017,25 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					case LIBRARY_PLOTLY:
 						var axisTitleFont = {
 							family: 'Lucida Grande, Lucida Sans Unicode, Arial, Helvetica, sans-serif',
-							size: '12px'
+							size: 12
 						};
 						chart.options = {
 							autosize: true,
 							title: chart.title,
 							font: {
 								family: axisTitleFont.family,
-								size: '11px'
+								size: 11
 							},
 							titlefont: {
-								size: '18px'
+								size: 18
 							},
 							showlegend: true,
 							legend: {
 								orientation: 'h',
-								y: -0.2
+								y: -0.2,
+								font: {
+									size: 8
+								}
 							},
 							xaxis: {
 								titlefont: axisTitleFont,
@@ -2122,8 +2176,8 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 									//	whiteSpace: 'pre',
 									//},
 									formatter: function() {
-										return 't-test value for <b>' + this.series.xAxis.categories[this.point.x] + '</b><br>and <b>' +
-											this.series.yAxis.categories[this.point.y] + '</b> series <br><b>' + this.point.value + '</b>';
+										return '<b>Pairwise t-test</b><br>' + this.series.xAxis.categories[this.point.x] + '<br>' +
+											this.series.yAxis.categories[this.point.y] + '<br>p-value: <b>' + this.point.value+'</b>';
 									},
 								};
 								chart.options.xAxis = {
@@ -2134,7 +2188,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 								};
 								chart.options.options.colorAxis = {
 									min: 0,
-									max: 20,
+									max: 1,
 									minColor: '#FFFFFF',
 									maxColor: '#FF0000',
 								};
@@ -2832,6 +2886,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 						}
 						
 						// Saving the real series location
+						series.name = seriesName;
 						series.filteredSeriesValue = null;
 						series.seriesValues = seriesValues;
 						switch(chart.library) {
@@ -2991,8 +3046,12 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 					var theFunc = function() {
 						try {
 							chart.seriesAggregator(doGenerate,stillLoading,filterFunc);
+							
 							chart.options.loading = stillLoading;
 							if(rangeData!==undefined) {
+								// Update the list of visible, but empty, series
+								updateNoDataSeriesList(chart,rangeData,viewClass);
+								
 								setChartSubtitle(chart,rangeData,viewClass);
 							}
 							issueChartLibraryProcessSeries(localScope,chart);
@@ -4089,6 +4148,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		issueChartLibraryProcessSeries(rangeData.localScope,chart);
 	}
 	
+	function getChartSupportingColumnNames(rangeData,chart) {
+		var retval = [getLegendTitle(undefined,rangeData),'chromosome','chromosome_start','chromosome_end',chart.yAxisLabel];
+		if(chart.hasPayload) {
+			chart.payloadHeaders.forEach(function(header) {
+				retval.push(header);
+			});
+		}
+		retval.push('analysis_id');
+		return retval;
+	}
+	
 	function getChartSupportingData(rangeData,chart) {
 		var table = [];
 		chart.allData.forEach(function(series) {
@@ -4096,8 +4166,17 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 				var arrayPrefix = [ series.series.name, rangeData.range.chr ];
 				
 				var seriesValues = (series.filteredSeriesValues!==null && series.filteredSeriesValues !== undefined) ? series.filteredSeriesValues : series.seriesValues;
+				
+				var labelTrans = function(label) {
+					return  (label in chart.regionFeature) ? chart.regionFeature[label].label : label;
+				};
 				seriesValues.forEach(function(augData) {
-					table.push(arrayPrefix.concat(augData.sDataS));
+					var tail = [];
+					if(chart.hasPayload) {
+						var relPayload = labelTrans(augData.sDataS[3]);
+						tail.push(augData.sDataS[3],relPayload);
+					}
+					table.push(arrayPrefix.concat(augData.sDataS.slice(0,3),tail.concat(augData.sDataS[4])));
 				});
 			}
 		});
@@ -4131,6 +4210,7 @@ factory('ChartService',['$q','$window','portalConfig','ConstantsService','ColorP
 		chooseLabelFromSymbols: chooseLabelFromSymbols,
 		storeRange: storeRange,
 		
+		getChartSupportingColumnNames: getChartSupportingColumnNames,
 		getChartSupportingData: getChartSupportingData,
 		
 		mapColorsToTerms: mapColorsToTerms,

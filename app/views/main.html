@@ -185,15 +185,18 @@
 				<h4 class="text-center">Please, select above the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 			</div>
 			
-			<!-- Chart selection tree -->
+			<!-- Chart selection -->
 			<div class="row" style="clear:both;" ng-if="rangeData.state==='selectCharts'" ng-unless="::uiFuncs.selectableChartsFromHints(rangeData)">
 				<h3 class="text-center">Step 3: There are {{rangeData.ui.numChartsForSelectedCellTypes}} general charts available for the {{rangeData.ui.numSelectedCellTypes}} selected cellular types in this range</h3>
 				<div class="initial-charts">
-					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes track by chart.chartId" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
-						<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
-						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{:: chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
+					<div class="row">
+						<div class="col-sm-6 pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes track by chart.chartId" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
+							<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
+							<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{:: chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
+						</div>
 					</div>
-					<br />
+				</div>
+				<div class="initial-charts buttons">
 					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of whole data set</label></div>
 					
 					<div><label>Filter by healthy / disease status</label>
@@ -340,16 +343,28 @@
 							</div>
 							-->
 							<div style="float:right;clear:right;">
-								<!-- Hide chart button -->
-								<i class="glyphicon glyphicon-eye-close" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
-								<i class="glyphicon space-glyphicon" ng-class="{'glyphicon-text-height': !chart.showAllTranscripts, 'glyphicon-text-width': chart.showAllTranscripts}" ng-style="{'visibility': chart.fDraw!==undefined ? 'initial':'hidden'}" ng-click="uiFuncs.switchAllTranscripts(chart,rangeData)" uib-tooltip="Show all transcripts / show main transcript" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon space-glyphicon glyphicon glyphicon-warning-sign"
+									ng-style="{'visibility': chart.noDataSeriesHtml!==undefined ? 'initial':'hidden'}"
+									popover-append-to-body="true"
+									popover-title="Series with no data"
+									popover-placement="bottom"
+									uib-popover-html="chart.noDataSeriesHtml"
+									uib-tooltip="Click to see the visible data series with no data for this chart"
+									tooltip-placement="top"
+									tooltip-append-to-body="true">
+								</i>
 								<!-- Switch mean series -->
 								<!-- Functional, but unfancy
 								<i class="glyphicon glyphicon-indent-right" ng-style="{'color': chart.meanSeriesHidden ? 'gray' : 'initial'}"ng-click="uiFuncs.switchMeanSeries(chart,true,rangeData.localScope)" uib-tooltip="Hide/show mean series" tooltip-popup-delay="500" tooltip-popup-close-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								-->
-								<!-- Visible, but not yet functional -->
+								<!-- Inspect (and save) the supporting data -->
 								<i class="glyphicon glyphicon-list-alt" ng-click="viewChartDataGrid(view.viewClass,rangeData,chart)" tooltip-popup-delay="500" uib-tooltip="Inspect the data" tooltip-append-to-body="true" tooltip-placement="top"></i>
-								<i class="glyphicon" ng-class="{'glyphicon-tags': !uiFuncs.isLegendEnabled(chart), 'glyphicon-tag': uiFuncs.isLegendEnabled(chart) }"  ng-click="uiFuncs.switchLegend(chart)" tooltip-popup-delay="500" uib-tooltip="Show / hide legend" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<!--  Switch between the main transcript and all of them -->
+								<i class="glyphicon" ng-class="{'glyphicon-text-height': !chart.showAllTranscripts, 'glyphicon-text-width': chart.showAllTranscripts}" ng-style="{'visibility': chart.fDraw!==undefined ? 'initial':'hidden'}" ng-click="uiFuncs.switchAllTranscripts(chart,rangeData)" uib-tooltip="Show all transcripts / show main transcript" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<!-- Hide / show legend -->
+								<i class="glyphicon space-glyphicon" ng-class="{'glyphicon-tags': !uiFuncs.isLegendEnabled(chart), 'glyphicon-tag': uiFuncs.isLegendEnabled(chart) }"  ng-click="uiFuncs.switchLegend(chart)" tooltip-popup-delay="500" uib-tooltip="Show / hide legend" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<!-- Hide chart button -->
+								<i class="glyphicon glyphicon-eye-close" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Zoom button -->
 								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="doZoom(chart);" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="left" tooltip-popup-delay="500"></i>
 							</div>
@@ -361,7 +376,7 @@
 								<plotly ng-switch-when="plotly" plotly-data="chart.data" plotly-layout="chart.options" plotly-options="chart.plotlyOptions"></plotly>
 							</div>
 							
-							<div class="no-margin-padding" style="float:left;clear:left;z-index:1" ng-if="chart.subcharts !== undefined">
+							<div class="no-margin-padding" style="position:absolute;left:2em;top:0.6em;z-index:1" ng-if="chart.subcharts !== undefined">
 								{{chart.title}} t-tests on <ui-select ng-model="chart.subchartSelected" style="text-align:left;" theme="select2" title="Select EnsId">
 									<ui-select-match placeholder="Choose an EnsId">{{$select.selected.name}}</ui-select-match>
 									<ui-select-choices repeat="subchart in chart.subcharts | filter: { name: $select.search } track by $index">
@@ -369,8 +384,8 @@
 									</ui-select-choices>
 								</ui-select>
 							</div>
-							<div ng-repeat="subchart in chart.subcharts track by $index" ng-if="chart.subcharts !== undefined">
-								<div class="datachart" ng-switch on="::subchart.library" ng-show="chart.subchartSelected && chart.subchartSelected.name === subchart.name">
+							<div class="datachart" ng-repeat="subchart in chart.subcharts track by $index" ng-if="chart.subcharts !== undefined" ng-show="chart.subchartSelected && chart.subchartSelected.name === subchart.name">
+								<div class="datachart" ng-switch on="::subchart.library">
 									<nvd3 ng-switch-when="nvd3" options="subchart.options" data="subchart.data"></nvd3>
 									<canvasjs ng-switch-when="canvasjs" config="subchart.options"></canvasjs>
 									<chartjs ng-switch-when="chartjs" config="subchart.options"></chartjs>

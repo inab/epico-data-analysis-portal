@@ -343,15 +343,16 @@
 							</div>
 							-->
 							<div style="float:right;clear:right;">
-								<sup ng-style="{'visibility': chart.noDataSeriesHtml!==undefined ? 'initial':'hidden'}">{{chart.noDataSeriesCount}}</sup>
+								<sup style="color: red;" ng-style="{'visibility': chart.noDataSeriesHtml!==undefined ? 'initial':'hidden'}">{{chart.noDataSeriesCount}}</sup>
 								<i class="glyphicon space-glyphicon glyphicon glyphicon-warning-sign"
+									style="color: red;"
 									ng-style="{'visibility': chart.noDataSeriesHtml!==undefined ? 'initial':'hidden'}"
 									popover-append-to-body="true"
 									popover-title="{{chart.noDataSeriesCount}} series with no data"
 									popover-placement="bottom"
 									uib-popover-html="chart.noDataSeriesHtml"
 									uib-tooltip="Click to see the visible data series with no data for this chart"
-									tooltip-placement="top"
+									tooltip-placement="left"
 									tooltip-append-to-body="true">
 								</i>
 								<!-- Switch mean series -->
@@ -365,9 +366,9 @@
 								<!-- Hide / show legend -->
 								<i class="glyphicon space-glyphicon" ng-class="{'glyphicon-tags': !uiFuncs.isLegendEnabled(chart), 'glyphicon-tag': uiFuncs.isLegendEnabled(chart) }"  ng-click="uiFuncs.switchLegend(chart)" tooltip-popup-delay="500" uib-tooltip="Show / hide legend" tooltip-append-to-body="true" tooltip-placement="top"></i>
 								<!-- Hide chart button -->
-								<i class="glyphicon glyphicon-eye-close" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="top"></i>
+								<i class="glyphicon glyphicon-eye-close" ng-click="switchChart($event,chart,rangeData)" uib-tooltip="Hide chart (can be re-enabled using charts pane)" tooltip-popup-delay="500" tooltip-append-to-body="true" tooltip-placement="bottom-right"></i>
 								<!-- Zoom button -->
-								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="doZoom(chart);" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="left" tooltip-popup-delay="500"></i>
+								<i class="glyphicon" ng-class="{'glyphicon-resize-full': !chart.isZoomed, 'glyphicon-resize-small': chart.isZoomed}" ng-click="doZoom(chart);" uib-tooltip="Maximize / Restore" tooltip-append-to-body="true" tooltip-placement="bottom-right" tooltip-popup-delay="500"></i>
 							</div>
 							<div class="datachart" ng-switch on="::chart.library" ng-if="chart.subcharts === undefined">
 								<nvd3 ng-switch-when="nvd3" options="chart.options" data="chart.data"></nvd3>

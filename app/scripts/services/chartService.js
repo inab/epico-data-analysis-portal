@@ -1917,10 +1917,10 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 					case GRAPH_TYPE_BOXPLOT_PLOTLY:
 						chart = {
 							seriesAggregator: plotlyBoxPlotAggregator,
-							plotlyOptions: {
-								width: 1500,
-								height: 1500
-							},
+							//plotlyOptions: {
+							//	width: 1500,
+							//	height: 1500
+							//},
 							data: [],
 							library: LIBRARY_PLOTLY,
 						};
@@ -2035,7 +2035,7 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 								orientation: 'h',
 								y: -0.2,
 								font: {
-									size: 8
+									size: 10
 								}
 							},
 							xaxis: {

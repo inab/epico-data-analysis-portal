@@ -132,12 +132,12 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 					viewPostTitle: ' (t-test)',
 					subtitle: 'pairwise t-test comparisons'
 				},
-				{
-					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
-					viewPostTitle: ' (old)',
-					subtitle: '(old 0.9.6 boxplots)',
-					isInitiallyHidden: true,
-				},
+				//{
+				//	type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+				//	viewPostTitle: ' (old)',
+				//	subtitle: '(old 0.9.6 boxplots)',
+				//	isInitiallyHidden: true,
+				//},
 			],
 		},
 		{
@@ -157,12 +157,12 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 					viewPostTitle: ' (t-test)',
 					subtitle: 'pairwise t-test comparisons'
 				},
-				{
-					type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
-					viewPostTitle: ' (old)',
-					subtitle: '(old 0.9.6 boxplots)',
-					isInitiallyHidden: true,
-				},
+				//{
+				//	type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
+				//	viewPostTitle: ' (old)',
+				//	subtitle: '(old 0.9.6 boxplots)',
+				//	isInitiallyHidden: true,
+				//},
 			],
 		},
 		{

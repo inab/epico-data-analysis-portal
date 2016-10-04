@@ -188,15 +188,14 @@
 			<!-- Chart selection -->
 			<div class="row" style="clear:both;" ng-if="rangeData.state==='selectCharts'" ng-unless="::uiFuncs.selectableChartsFromHints(rangeData)">
 				<h3 class="text-center">Step 3: There are {{rangeData.ui.numChartsForSelectedCellTypes}} general charts available for the {{rangeData.ui.numSelectedCellTypes}} selected cellular types in this range</h3>
-				<div class="initial-charts">
-					<div class="row">
-						<div class="col-sm-6 pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes track by chart.chartId" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
-							<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
-							<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{:: chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
-						</div>
+				<div class="initial-charts buttons">
+					<div class="pointer" ng-repeat="chart in rangeData.ui.chartsForSelectedCellTypes track by chart.chartId" ng-click="uiFuncs.switchChart($event,chart,rangeData)">
+						<span class="glyphicon" ng-class="{'glyphicon-unchecked': chart.isHidden,'glyphicon-check': !chart.isHidden}" ng-style="{'color': chart.isHidden ? 'initial' : 'green'}"></span>
+						<span class="term" ng-style="{color: chart.isHidden ? 'gray': 'initial'}">{{:: chart.subtitle!==null ? chart.title + ' '+ chart.subtitle : chart.title}}</span>
 					</div>
 				</div>
 				<div class="initial-charts buttons">
+					<br />
 					<div><label style="font-weight:normal;"><input type="checkbox" ng-model="rangeData.ui.initiallyShowMeanSeries">Initially show mean series of whole data set</label></div>
 					
 					<div><label>Filter by healthy / disease status</label>

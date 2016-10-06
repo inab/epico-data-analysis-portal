@@ -33,6 +33,17 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 	var GRAPH_TYPE_AREARANGE_HIGHCHARTS = 'arearange-'+LIBRARY_HIGHCHARTS;
 	var GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS = 'areasplinerange-'+LIBRARY_HIGHCHARTS;
 	
+	var commonRibbonHelpLine = 'spline+ribbon-based scatter plots that represent the genomic coordinates on the x-axis and the averaged (solid line), minimum and maximum (shadow area)';
+	
+	var methYAxisLabel = 'Methylation level';
+	var methHelpLine = 'The graphs of Methylation data are ' + commonRibbonHelpLine + ' '+methYAxisLabel+' of WGBS experiments on the y-axis';
+	
+	var dnaseYAxisLabel = 'z-score';
+	var dnaseHelpLine = 'The graphs of Regulatory regions data are ' + commonRibbonHelpLine + ' '+dnaseYAxisLabel+' of DNaseI-Seq experiments on the y-axis';
+	
+	var chipYAxisLabel = '-Log10(q-value)';
+	var chipHelpLine = 'The graphs of the Histone peaks data are ' + commonRibbonHelpLine + ' '+chipYAxisLabel+' of ChIP-Seq experiments on the y-axis';
+	
 	var GRAPHS = [
 		{
 			name: METHYL_GRAPH,
@@ -45,12 +56,13 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 				to: 0.75,
 				breakSize: 0.025
 			}],
-			yAxisLabel: 'Methylation level',
+			yAxisLabel: methYAxisLabel,
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
 					subtitle: 'mean series',
-					//subtitle: 'mean series + min / max'
+					//subtitle: 'mean series + min / max',
+					helpline: methHelpLine,
 				},
 				//{
 				//	type: [GRAPH_TYPE_AREARANGE_HIGHCHARTS,GRAPH_TYPE_STEP_HIGHCHARTS],
@@ -72,12 +84,13 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 			title: 'Hyper-methylated regions',
 			ceiling: 1.0,
 			floor: 0.75,
-			yAxisLabel: 'Methylation level',
+			yAxisLabel: methYAxisLabel,
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
 					subtitle: 'mean series',
-					//subtitle: 'mean series + min / max'
+					//subtitle: 'mean series + min / max',
+					helpline: methHelpLine,
 				},
 				//{
 				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
@@ -96,12 +109,13 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 			title: 'Hypo-methylated regions',
 			ceiling: 0.25,
 			floor: 0.0,
-			yAxisLabel: 'Methylation level',
+			yAxisLabel: methYAxisLabel,
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
 					subtitle: 'mean series',
-					//subtitle: 'mean series + min / max'
+					//subtitle: 'mean series + min / max',
+					helpline: methHelpLine,
 				},
 				//{
 				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
@@ -126,11 +140,13 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 			views: [
 				{
 					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
+					helpline: 'RNA-Seq data is represented in box-plots as an expression value for the whole gene (Fragments Per Kilobase Million)',
 				},
 				{
 					type: GRAPH_TYPE_HEATMAP_HIGHCHARTS,
 					viewPostTitle: ' (t-test)',
-					subtitle: 'pairwise t-test comparisons'
+					subtitle: 'pairwise t-test comparisons',
+					helpline: 'RNA-Seq data is represented by heatmaps used to show pairwise Welch\'s t-test comparisons (at p-value level) between pairs of cellular types on the same gene',
 				},
 				//{
 				//	type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
@@ -151,11 +167,13 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 			views: [
 				{
 					type: GRAPH_TYPE_BOXPLOT_PLOTLY,
+					helpline: 'RNA-Seq data is represented in box-plots as an expression value for each transcript (Fragments Per Kilobase Million)',
 				},
 				{
 					type: GRAPH_TYPE_HEATMAP_HIGHCHARTS,
 					viewPostTitle: ' (t-test)',
-					subtitle: 'pairwise t-test comparisons'
+					subtitle: 'pairwise t-test comparisons',
+					helpline: 'RNA-Seq data is represented by heatmaps used to show pairwise Welch\'s t-test comparisons (at p-value level) between pairs of cellular types on the same transcript',
 				},
 				//{
 				//	type: GRAPH_TYPE_BOXPLOT_HIGHCHARTS,
@@ -169,12 +187,13 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 			name: DNASE_GRAPH,
 			noData: 'regulatory regions',
 			title: 'Regulatory regions (DNaseI)',
-			yAxisLabel: 'z-score',
+			yAxisLabel: dnaseYAxisLabel,
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
 					subtitle: 'mean series',
-					//subtitle: 'mean series + min / max'
+					//subtitle: 'mean series + min / max',
+					helpline: dnaseHelpLine,
 				},
 				//{
 				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
@@ -194,12 +213,13 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 			noData: 'narrow histone peaks',
 			title: 'Narrow Histone Peaks',
 			floor: 0.0,
-			yAxisLabel: '-Log10(q-value)',
+			yAxisLabel: chipYAxisLabel,
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
 					subtitle: 'mean series',
-					//subtitle: 'mean series + min / max'
+					//subtitle: 'mean series + min / max',
+					helpline: chipHelpLine,
 				},
 				//{
 				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
@@ -216,12 +236,13 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 			noData: 'broad histone peaks',
 			title: 'Broad Histone Peaks',
 			floor: 0.0,
-			yAxisLabel: '-Log10(q-value)',
+			yAxisLabel: chipYAxisLabel,
 			views: [
 				{
 					type: [GRAPH_TYPE_AREASPLINERANGE_HIGHCHARTS,GRAPH_TYPE_SPLINE_HIGHCHARTS],
 					subtitle: 'mean series',
-					//subtitle: 'mean series + min / max'
+					//subtitle: 'mean series + min / max',
+					helpline: chipHelpLine,
 				},
 				//{
 				//	type: GRAPH_TYPE_STEP_HIGHCHARTS,
@@ -1989,7 +2010,10 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 				chart.title = title;
 				chart.listTitle = listTitle;
 				chart.subtitle = (gDataView.subtitle!==undefined) ? gDataView.subtitle : null;
+				chart.helpline = gDataView.helpline ? gDataView.helpline : '';
+				chart.helpline += '<br/><br/>Click to open the related help';
 				chart.yAxisLabel = gData.yAxisLabel;
+				
 				chart.hasPayload = !!gData.hasPayload;
 				if(chart.hasPayload) {
 					chart.payloadHeaders = gData.payloadHeaders;
@@ -3044,6 +3068,15 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 				} else {
 					// Visual indicator, with different semantics of chart.isLoading
 					chart.options.loading = true;
+					var theNextFunc = function() {
+						try {
+							issueChartLibraryProcessSeries(localScope,chart);
+						} catch(e) {
+							console.log(e);
+						}
+						//chart.pendingRedraws = false;
+						timeoutFunc(charts,iChart+1);
+					};
 					var theFunc = function() {
 						try {
 							chart.seriesAggregator(doGenerate,stillLoading,filterFunc);
@@ -3055,12 +3088,15 @@ factory('ChartService',['$q','$sce','$window','portalConfig','ConstantsService',
 								
 								setChartSubtitle(chart,rangeData,viewClass);
 							}
-							issueChartLibraryProcessSeries(localScope,chart);
 						} catch(e) {
 							console.log(e);
 						}
 						//chart.pendingRedraws = false;
-						timeoutFunc(charts,iChart+1);
+						if(localScope!==undefined) {
+							localScope.$applyAsync(theNextFunc);
+						} else {
+							setTimeout(theNextFunc,10);
+						}
 					};
 					if(localScope!==undefined) {
 						localScope.$applyAsync(theFunc);

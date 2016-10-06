@@ -1,0 +1,63 @@
+<h1 class="help">First steps: knowing the charts</h1>
+<div class="help">
+	<div class="info row img-center" style="width:80%;">
+		<h2 class="help">The graphs of the ChIP-Seq, DNaseI-Seq and Methylation data are spline+ribbon-based scatter plots that represent the genomic coordinates on the x-axis and the averaged (solid line), minimum and maximum (shadow area) -log10(p-value), z-values or methylation levels for the ChIP-Seq, DNA-Seq and WGBS experiments on the y-axis, respectively.</h2>
+		<div class="col-sm-4" style="padding-top:30px;">
+			<h3>
+				<ol type="A">
+					<li>The title and subtitle show what it is being shown, and the filtering conditions.</li>
+					<li>Transcripts, exons, UTRs, CDSs and TSSs (start and stop codons) are shown as special series in charts whose X axis represents chromosomical coordinates.</li>
+					<li>The X axis title shows the genomic range of the search, plus the flanking window.</li>
+					<li>Each chart can be (1) maximized or restored; (2) hidden; (3) the chart legend can be shown / hidden; (4) switch view described in (T) between the condensed gene layout (for each gene, only the transcript from the principal isoform is shown) and the complete one (all the transcripts are shown); (5) data supporting visible series in the chart can be browsed and saved.</li>
+					<li>The legend shows items for each data series and genomic features, which can be hidden / shown by clicking on them.</li>
+					<li>On any chart, a warning sign appears when one or more visible data series have no data. Clicking on it the interface shows the names of the related cellular types or diseases.</li>
+					<li>A brief description of the type of chart is shown putting the pointer over this icon.</li>
+					<li>Any chart with this symbol can be saved as a graphics file (PNG, JPG, PDF, SVG), as well as the data series used to generate the chart.</li>
+				</ol>
+			</h3>
+		</div>
+		<div class="col-sm-8" style="padding:2em;">
+			<img class="img-center" style="display:block;" src="images/help/spline+ribbon_annotated.png">
+		</div>
+	</div>
+	<div class="info row img-center" style="width:80%;">
+		<h2 class="help">RNA-Seq data is represented in box-plots as an expression value for the whole gene or for each transcript (<a href="https://en.wikipedia.org/wiki/RNA-Seq#Gene_expression" target="_blank">Fragments Per Kilobase Million</a>).</h2>
+		<div class="col-sm-4" style="padding-top:30px;">
+			<h3>
+				<ol type="A">
+					<li>The title and subtitle show what it is being shown, and the filtering conditions.</li>
+					<li>Boxplot, as well as its supporting points, are drawn. Boxplots numeric data which is shown when the user puts the cursor over it are the mean, average, Q1, Q3, minimum, maximum, and further outliers.</li>
+					<li>The X axis title shows the genomic range of the search, plus the flanking window.</li>
+					<li>Each chart can be (1) maximized or restored; (2) hidden; (3) the chart legend can be shown / hidden; (5) data supporting visible series in the chart can be browsed and saved.</li>
+					<li>The legend shows items for each data series and genomic features, which can be hidden / shown by clicking on them.</li>
+					<li>On any chart, a warning sign appears when one or more visible data series have no data. Clicking on it the interface shows the names of the related cellular types or diseases.</li>
+					<li>A brief description of the type of chart is shown putting the pointer over this icon.</li>
+					<li>Tools provided by plotly are available on each boxplot.</li>
+				</ol>
+			</h3>
+		</div>
+		<div class="col-sm-8" style="padding:2em;">
+			<img class="img-center" style="display:block;" src="images/help/boxplot_annotated.png">
+		</div>
+	</div>
+	<div class="info row img-center" style="width:80%;">
+		<h2 class="help">RNA-Seq data is also represented by heatmaps used to show Welch's pairwise t-test comparisons (at p-value level) between pairs of cellular types on the same gene or transcript.</h2>
+		<div class="col-sm-4" style="padding-top:30px;">
+			<h3>
+				<ol type="A">
+					<li>The title and subtitle show what it is being shown, and the filtering conditions.</li>
+					<li>As the pairwise comparisons are done at gene or transcript level, there is a selector to navigate among them.</li>
+					<li>The X axis title shows the genomic range of the search, plus the flanking window</li>
+					<li>Each chart can be (1) maximized or restored; (2) hidden; (5) data supporting visible series in the chart can be browsed and saved.</li>
+					<li>Hovering over any cell from the heatmap provides the names of the compared cellular types, and the obtained p-value. When any of the series only has a single element, the cell is drawn in black, with the text 'NA' (not available).</li>
+					<li>On any chart, a warning sign appears when one or more visible data series have no data. Clicking on it the interface shows the names of the related cellular types or diseases.</li>
+					<li>A brief description of the type of chart is shown putting the pointer over this icon.</li>
+					<li>Any chart with this symbol can be saved as a graphics file (PNG, JPG, PDF, SVG), as well as the data series used to generate the chart.</li>
+				</ol>
+			</h3>
+		</div>
+		<div class="col-sm-8" style="padding:2em;">
+			<img class="img-center" style="display:block;" src="images/help/heatmap_annotated.png">
+		</div>
+	</div>
+</div>

@@ -131,6 +131,23 @@ factory('QueryService',['$q','$http','portalConfig','ConstantsService','ChartSer
 		return promise;
 	};
 	
+	function fetchEPICOMetadata(localScope) {
+		if(localScope.EPICOMetadata!==undefined) {
+			return localScope;
+		}
+		
+		return $http.get( [ portalConfig.epicoAPI , EPICO_DOMAIN ].join('/') )
+			.then(function(response) {
+				var theEPICOMetadata;
+				if(typeof(response.data) !== undefined) {
+					localScope.EPICOMetadata = response.data;
+					localScope.dataRelease = localScope.EPICOMetadata.release;
+				}
+				
+				return localScope;
+			});
+	}
+	
 	function getDataModel(localScope) {
 		if(localScope.dataModel!==undefined) {
 			return localScope;
@@ -1851,6 +1868,7 @@ factory('QueryService',['$q','$http','portalConfig','ConstantsService','ChartSer
 	}
 	
 	return {
+		fetchEPICOMetadata: fetchEPICOMetadata,
 		getDataModel: getDataModel,
 		getSampleTrackingData: getSampleTrackingData,
 		getAnalysisMetadata: getAnalysisMetadata,

@@ -8,33 +8,63 @@
 					<li>Basic BLUEPRINT data release metrics.</li>
 					<li>Search field with autocomplete capabilities, based on EnsEMBL, GENCODE and REACTOME dumps, which understands union (+) and difference (-) set operators.</li>
 					<li>Default flanking window around the query regions obtained from the search.</li>
-					<li>Any chart can be saved as a graphics file (PNG, JPG, PDF, SVG), as well as the data series used to generate the chart.</li>
-					<li>Queries (genes, transcripts, complexes, pathways, ...) can return one or more query regions. Each query region is shown as a tab.</li>
-					<li>Main features found in the query region are enumerated, providing links to their authoritative web sites.</li>
-					<li>Metadata (donors, samples, analysis, ...) related to each query region is available to be browsed and saved.</li>
-					<li>On the second step, the user can choose which cellular types with analysis results desires to watch.</li>
+					<li>Any chart with this symbol can be saved as a graphics file (PNG, JPG, PDF, SVG), as well as the data series used to generate the chart.</li>
+					<li>Through the menu the user can access the analysis methods used on BLUEPRINT primary data, several help pages, and contact the developers</li>
 				</ol>
 			</h3>
 		</div>
 		<div class="col-sm-8" style="padding:2em;">
-			<img class="img-center" style="display:block;" src="images/help/interface-1.png">
+			<img class="img-center" style="display:block;" src="images/help/initial_window_annotated.png">
 		</div>
 	</div>
 	<div class="info row img-center" style="width:80%;">
 		<div class="col-sm-4" style="padding-top:30px;">
 			<h3>
-				<ol type="A" start="10">
+				<ol type="A" start="7">
+					<li>Queries (genes, transcripts, complexes, pathways, ...) can return one or more query regions. Each query region is shown as a tab.</li>
+					<li>Main features found in the query region are enumerated, providing links to their authoritative web sites.</li>
+					<li>Metadata (donors, samples, analysis, ...) related to each query region is available to be browsed and saved.</li>
+					<li>On the second step, the user can choose which cellular types with analysis results (i.e. the ones with filled circles) desires to initially inspect.</li>
+					<li>Selected cellular types are marked in bold.</li>
+					<li>It is possible to get from the cellular type the list of samples with analysis data for this search.</li>
+				</ol>
+			</h3>
+		</div>
+		<div class="col-sm-8" style="padding:2em;">
+			<img class="img-center" style="display:block;" src="images/help/step_2_annotated.png">
+		</div>
+	</div>
+	<div class="info row img-center" style="width:80%;">
+		<div class="col-sm-4" style="padding-top:30px;">
+			<h3>
+				<ol type="A" start="13">
+					<li>On the third step, the user can choose which ones of the available charts for the selected cellular types with analysis results are initially shown.</li>
+					<li>The list of selectable charts depend both on available results for the query and the selected cellular types in the previous step.</li>
+					<li>It is also possible to initially filter the used analyses by the diagnosed disease related to the samples used in the experiments.</li>
+				</ol>
+			</h3>
+		</div>
+		<div class="col-sm-8" style="padding:2em;">
+			<img class="img-center" style="display:block;" src="images/help/step_3_annotated.png">
+		</div>
+	</div>
+	<div class="info row img-center" style="width:80%;">
+		<div class="col-sm-4" style="padding-top:30px;">
+			<h3>
+				<ol type="A" start="16">
 					<li>There are several views which allow exploring the analysis data from different points of view. As of BDAP version 0.9.6, the available views are "General", "By tissue" and "Diseases by cellular type".</li>
 					<li>Each cellular type with data on the query region is listed. Their data series can be switched on and off at once on all the charts. For each cellular type it is possible to see the names of the samples with data on the query region.</li>
 					<li>It is possible to focus on a specific disease’s analysis data in “General” and “By tissue” views.</li>
 					<li>Spline+ribbon-based scatter plots (1) are used for almost every chart type, such as the regulatory regions, methylation data and histone marks, showing the averaged series, minimum and maximum. Box-plot charts (2) are used for gene and transcript expression.</li>
 					<li>Transcripts, exons, UTRs, CDSs and TSSs (start and stop codons) are shown as special series in charts whose x axis represents chromosomical coordinates.</li>
-					<li>Each chart can be (1) maximized or restored; (2) hidden; (3) the chart legend can be shown / hidden; (4) switch view described in (M) between the condensed gene layout (for each gene, only the transcript from the principal isoform is shown) and the complete one (all the transcripts are shown); and (5) data supporting visible series in the chart can be browsed and saved.</li>
+					<li>Each chart can be (1) maximized or restored; (2) hidden; (3) the chart legend can be shown / hidden; (4) switch view described in (T) between the condensed gene layout (for each gene, only the transcript from the principal isoform is shown) and the complete one (all the transcripts are shown); (5) data supporting visible series in the chart can be browsed and saved.</li>
+					<li>On any chart, a warning sign appears when one or more visible data series have no data. Clicking on it the interface shows the names of the related cellular types or diseases.</li>
+					<li>A brief description of the type of chart is shown putting the pointer over this icon</li>
 				</ol>
 			</h3>
 		</div>
 		<div class="col-sm-8" style="padding:2em;">
-			<img class="img-center" style="display:block;" src="images/help/interface-2.png">
+			<img class="img-center" style="display:block;" src="images/help/charts_general_annotated.png">
 		</div>
 	</div>
 </div>

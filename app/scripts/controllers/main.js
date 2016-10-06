@@ -992,6 +992,7 @@ angular.module('EPICOApp')
 		promise = promise
 				.then(function(localScope) {
 					return $q.all([
+						QueryService.fetchEPICOMetadata(localScope),
 						QueryService.getDataModel(localScope),
 						QueryService.getSampleTrackingData(localScope),
 						QueryService.getAnalysisMetadata(localScope),

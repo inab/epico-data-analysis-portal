@@ -58,6 +58,10 @@ var app = angular.module('EPICOApp', [
         templateUrl: 'views/doing-a-search.html',
         controller: 'AboutCtrl'
       })
+      .when('/charts-help', {
+        templateUrl: 'views/charts-help.html',
+        controller: 'AboutCtrl'
+      })
       .otherwise({
         redirectTo: '/'
       });

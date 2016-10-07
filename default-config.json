@@ -1,5 +1,5 @@
 {
-	"epicoAPI": "http://blueprint-data.bsc.es/epico-api",
+	"epicoAPI": "/epico-api",
 	"epicoDomain": "EPICO:2016-08",
 	"useLocalExportServer": "http://blueprint-dev.bioinfo.cnio.es/export-server/index.php",
 	"dataRelease": "August 2016",

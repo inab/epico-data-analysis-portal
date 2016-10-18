@@ -37,6 +37,10 @@ module.exports = function (grunt) {
   if(dataportalConfig.useLocalExportServer===undefined) {
 	dataportalConfig.useLocalExportServer = false;
   }
+
+  if(dataportalConfig.distdir!==undefined) {
+	  appConfig.dist = dataportalConfig.distdir;
+  }
   
   var useminPrepare;
   var buildTasks;

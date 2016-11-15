@@ -1,7 +1,7 @@
 {
   "name": "epico-data-analysis-portal",
-  "version": "1.0.4",
-  "description": "EPICO / BLUEPRINT Data Analysis Portal",
+  "version": "1.0.5",
+  "description": "BLUEPRINT / EPICO Data Analysis Portal",
   "dependencies": {
     "es5-shim": "~4.5.7",
     "json3": "~3.3.2",

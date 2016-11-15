@@ -184,7 +184,7 @@
 					<br />
 					<span class="glyphicon glyphicon-eye-open" style="color:black;"></span>&nbsp;<span>Click it to see the sample names from the cellular type with data in the search range</span>
 				</div>
-				<h4 class="text-center">Please, select below the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
+				<h4 class="text-center">Please, select below the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button><div style="font-size: 0.7em;">(if no cellular type with data in the project is selected, then all the cellular types are considered!)</div></h4>
 				<div class="col-sm-1 text-center">
 					<div style="margin-bottom:1em">
 						<button class="btn btn-primary" type="button" ng-click="deselectAllVisibleCellTypes(rangeData)" uib-tooltip="Unselect all the cellular types" tooltip-append-to-body="true">Clear!</button>
@@ -198,7 +198,7 @@
 						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}" uib-tooltip-template="'tooltip/step2term.html'" tooltip-append-to-body="true" tooltip-popup-delay="250"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}" uib-tooltip-template="'tooltip/step2term.html'" tooltip-append-to-body="true" tooltip-popup-delay="250">{{node.name}} <i class="glyphicon glyphicon-eye-open" ng-show="node.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{node.samplesInRange.length}}" popover-placement="right" uib-popover-html="node.samplesInRangeHtml" uib-tooltip="Click to see the sample names from this cellular type with data in this range" tooltip-placement="left" tooltip-append-to-body="true"></i> (<a href="{{node.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{node.o}}</a>)</span>
 					</treecontrol>
 				</div>
-				<h4 class="text-center">Please, select above the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
+				<h4 class="text-center">Please, select above the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button><div style="font-size: 0.7em;">(if no cellular type with data in the project is selected, then all the cellular types are considered!)</div></h4>
 			</div>
 			
 			<!-- Chart selection -->

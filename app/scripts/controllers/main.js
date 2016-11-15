@@ -809,14 +809,18 @@ angular.module('EPICOApp')
 	
 	$scope.suggestSearch = QueryService.suggestSearch;
 	
+	$scope.clickSearch = function() {
+		//if($scope.resultsSearch.length > 0) {
+		//	$scope.search($scope.resultsSearch[0]);
+		//} else {
+		if($scope.query.length > 0) {
+			$scope.search();
+		}
+	};
+
 	$scope.enterSearch = function(keyEvent) {
 		if(keyEvent.which === 13) {
-			//if($scope.resultsSearch.length > 0) {
-			//	$scope.search($scope.resultsSearch[0]);
-			//} else {
-			if($scope.query.length > 0) {
-				$scope.search();
-			}
+			$scope.clickSearch();
 			keyEvent.preventDefault();
 		}
 	};

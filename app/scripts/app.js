@@ -23,7 +23,6 @@ var app = angular.module('EPICOApp', [
     'treeControl',
     'highcharts-ng',
     'plotly',
-    'ngAnimate',
     'ngCookies',
     'ngResource',
     'ngRoute',

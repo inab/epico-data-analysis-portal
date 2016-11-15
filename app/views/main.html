@@ -91,6 +91,11 @@
 	<span><b>Click</b>: switches chart visibility<br /><b>Ctrl+Click</b>: hide all charts but this<br /><b>Shift+Click</b>: Switch mean series from chart</span>
 </script>
 
+<script type="text/ng-template" id="step2legend.html">
+	<div ng-transclude></div>
+</script>
+
+
 <div class="row info" style="padding-top:20px;padding-bottom:20px;">
             <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 text-center vertical-center" style="max-width: 350px;">
 		<div class="row" ng-switch on="::subtotals.library">
@@ -168,6 +173,17 @@
 			<!-- Selection tree -->
 			<div class="row" style="clear:both;" ng-if="rangeData.state==='selectCellTypes'" ng-unless="::uiFuncs.selectableCellTypesFromHints(rangeData)">
 				<h3 class="text-center">Step 2: Found {{rangeData.ui.numCellTypesInRange}} cellular types which are involved on {{rangeData.ui.numAnalysesInRange}} analysis products in this range</h3>
+				<div uib-alert template-url="step2legend.html" class="alert alert-success" style="width: 42em; margin: 0 auto;">
+					<div style="text-align:center; font-weight: bold;">Tree symbols legend</div>
+					
+					<span class="rounded-square" style="color:black;background-color:white;"></span>&nbsp;<span style="font-style: italic">No data about this concrete cellular type in the project</span>
+					<br />
+					<span class="circle" style="color:black;background-color:white;"></span>&nbsp;<span style="font-style: italic">No data available for this concrete cellular type in the search range</span>
+					<br />
+					<span class="circle" style="color:black;background-color:black;"></span>&nbsp;<span>Data available for this cellular type in the search range</span>
+					<br />
+					<span class="glyphicon glyphicon-eye-open" style="color:black;"></span>&nbsp;<span>Click it to see the sample names from the cellular type with data in the search range</span>
+				</div>
 				<h4 class="text-center">Please, select below the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
 				<div class="col-sm-1 text-center">
 					<div style="margin-bottom:1em">
@@ -179,7 +195,7 @@
 				</div>
 				<div class="col-sm-11">
 					<treecontrol style="margin-bottom:1em" ng-repeat="ontology in rangeData.treedata" class="col-sm-6 tree-light" tree-model="ontology.root" selected-nodes="ontology.selectedNodes" expanded-nodes="ontology.expandedNodes" on-selection="onTreeSelection(ontology,node,selected,$event)" options="commonTreeControlOptions">
-						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}" uib-tooltip-template="'tooltip/step2term.html'" tooltip-append-to-body="true" tooltip-popup-delay="250"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}" uib-tooltip-template="'tooltip/step2term.html'" tooltip-append-to-body="true" tooltip-popup-delay="250">{{node.name}} <i class="glyphicon glyphicon-eye-open" ng-show="node.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{node.samplesInRange.length}}" popover-placement="right" uib-popover-html="node.samplesInRangeHtml" uib-tooltip="Click to see the sample names from this cellular type in this range" tooltip-placement="left" tooltip-append-to-body="true"></i> (<a href="{{node.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{node.o}}</a>)</span>
+						<span ng-class="{circle: node.color!==undefined,'rounded-square': node.color===undefined}" ng-style="{'border-color': node.wasSeen ? node.color : 'gray', 'background-color': node.wasSeen ? node.color : 'white'}" uib-tooltip-template="'tooltip/step2term.html'" tooltip-append-to-body="true" tooltip-popup-delay="250"></span><span ng-style="{color: node.wasSeen ? 'black' : 'initial','font-style': node.color===undefined ? 'italic': 'initial'}" uib-tooltip-template="'tooltip/step2term.html'" tooltip-append-to-body="true" tooltip-popup-delay="250">{{node.name}} <i class="glyphicon glyphicon-eye-open" ng-show="node.samplesInRangeHtml!==undefined" onclick="event.stopPropagation()" popover-append-to-body="true" popover-title="Samples: {{node.samplesInRange.length}}" popover-placement="right" uib-popover-html="node.samplesInRangeHtml" uib-tooltip="Click to see the sample names from this cellular type with data in this range" tooltip-placement="left" tooltip-append-to-body="true"></i> (<a href="{{node.o_uri}}" target="_blank" onclick="event.stopPropagation()">{{node.o}}</a>)</span>
 					</treecontrol>
 				</div>
 				<h4 class="text-center">Please, select above the cellular types you are interested in, and press <button class="btn btn-primary" type="button" ng-click="selectVisibleCellTypes(rangeData)">Continue</button></h4>
